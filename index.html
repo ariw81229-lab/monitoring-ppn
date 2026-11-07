@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#2563eb">
-<title>Monitoring PPN</title>
+<title>Monitoring PPN Rekanan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -65,7 +65,24 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .login-box h2{font-size:24px;font-weight:800}
 .login-box .sub{color:var(--muted);margin:4px 0 26px}
 .login-err{background:rgba(220,38,38,.1);color:var(--danger);padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px}
-.login-hint{margin-top:18px;font-size:12.5px;color:var(--muted);background:var(--surface-2);padding:10px 12px;border-radius:10px;border:1px dashed var(--border)}
+.hero-title{font-size:46px;line-height:1.1;font-weight:800;letter-spacing:.01em;max-width:560px;position:relative}
+.form-kicker{font-size:12.5px;font-weight:800;letter-spacing:.12em;color:var(--primary);margin-bottom:22px}
+/* ---------- Logo ---------- */
+.logos{display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:relative}
+.logo-box{display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:14px;padding:8px 14px;height:72px;min-width:72px;box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.logo-box img{max-height:100%;max-width:170px;object-fit:contain;display:block}
+.logo-box .ph{font-weight:800;color:#0f172a;font-size:13px;letter-spacing:.04em;text-align:center;line-height:1.15}
+.logo-box.sm{height:42px;min-width:42px;padding:5px 9px;border-radius:10px;box-shadow:none;border:1px solid var(--border)}
+.logo-box.sm img{max-width:96px}
+.logo-box.sm .ph{font-size:10px}
+.logo-slot{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--border);border-radius:12px}
+.logo-slot .logo-box{width:130px;height:60px;box-shadow:none;border:1px solid var(--border)}
+.side-brand{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.side-brand b{font-size:13.5px;font-weight:800;letter-spacing:.03em}
+.spinner{width:36px;height:36px;border:3px solid rgba(var(--primary-rgb),.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+.spin-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.drop.busy{pointer-events:none;border-style:solid;border-color:var(--primary)}
 .login-swatches{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
 .brand-logo{width:38px;height:38px;border-radius:11px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px}
@@ -254,11 +271,8 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 <!-- ================= LOGIN ================= -->
 <section id="login" hidden>
   <div class="login-hero">
-    <div class="brand"><div class="brand-logo">PPN</div> Monitoring PPN</div>
-    <div>
-      <h1>Pantau Pajak Masukan &amp; PPN setiap bulan, dalam satu dashboard.</h1>
-      <p>Upload data faktur dari Excel per masa pajak, lihat rekap kurang/lebih bayar, dan pantau kelengkapan data sejak tahun 2026.</p>
-    </div>
+    <div class="logos" data-logos=""></div>
+    <h1 class="hero-title">MONITORING PPN REKANAN</h1>
     <div class="hero-stats">
       <div><b>12</b>Masa pajak / tahun</div>
       <div><b>Excel</b>Import .xlsx / .xls / .csv</div>
@@ -267,14 +281,14 @@ tfoot td{font-weight:800;background:var(--surface-2)}
   </div>
   <div class="login-panel">
     <form class="login-box" id="loginForm" autocomplete="off">
-      <div class="brand" style="margin-bottom:28px"><div class="brand-logo">PPN</div> Monitoring PPN</div>
+      <div class="logos" data-logos="sm" style="margin-bottom:14px"></div>
+      <div class="form-kicker">MONITORING PPN REKANAN</div>
       <h2>Masuk Admin</h2>
       <p class="sub">Silakan masuk untuk mengelola data PPN.</p>
       <div class="login-err" id="loginErr" hidden></div>
       <div class="field"><label for="lu">Username</label><input class="input" id="lu" placeholder="admin" required></div>
       <div class="field"><label for="lp">Password</label><input class="input" id="lp" type="password" placeholder="••••••••" required></div>
       <button class="btn btn-primary" style="width:100%;padding:12px" type="submit">Masuk</button>
-      <div class="login-hint">Login awal: <b>admin</b> / <b>admin123</b> — segera ganti di menu Pengaturan.</div>
       <div class="login-swatches" id="loginSwatches"></div>
     </form>
   </div>
@@ -283,7 +297,7 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 <!-- ================= APP ================= -->
 <div id="app" hidden>
   <aside class="sidebar" id="sidebar">
-    <div class="brand"><div class="brand-logo">PPN</div> Monitoring PPN</div>
+    <div class="side-brand"><div class="logos" data-logos="sm"></div><b>MONITORING PPN REKANAN</b></div>
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <div class="user-card"><div class="avatar" id="uAvatar">A</div><div style="flex:1;min-width:0"><b id="uName">Admin</b><small>Administrator</small></div>
@@ -371,29 +385,101 @@ const TYPE_INFO = {
 };
 
 /* =========================================================
-   PENYIMPANAN (localStorage browser)
+   PENYIMPANAN — IndexedDB (kapasitas besar, tanpa batas 5 MB)
+   Cadangan: localStorage, lalu memori sementara.
 ========================================================= */
+const THEME_KEY = 'monitoring_ppn_theme';
+const XLSX_URL  = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+let STORAGE_MODE = 'idb';   // 'idb' | 'local' | 'memory'
+let idb = null;
+
 function defaultDB(){
   return { users:[{username:'admin',password:'admin123',name:'Administrator'}],
-           settings:{color:THEMES[0].color, mode:'light'},
+           settings:{color:THEMES[0].color, mode:'light', logos:{djp:null,nk:null}},
            data:{PM:{},PK:{}} };
 }
-function loadDB(){
-  try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if(raw){
-      const d = JSON.parse(raw), def = defaultDB();
-      return { users: (d.users && d.users.length) ? d.users : def.users,
-               settings:{...def.settings, ...(d.settings||{})},
-               data:{PM:{},PK:{}, ...(d.data||{})} };
-    }
-  }catch(e){}
-  return defaultDB();
+function normalizeDB(d){
+  const def=defaultDB(); if(!d) return def;
+  return { users:(d.users&&d.users.length)?d.users:def.users,
+           settings:{...def.settings,...(d.settings||{})},
+           data:{PM:{},PK:{},...(d.data||{})} };
 }
-let DB = loadDB();
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    if(!('indexedDB' in window)) return rej(new Error('IndexedDB tidak tersedia'));
+    const r=indexedDB.open('monitoring_ppn',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('kv');
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); r.onblocked=()=>rej(new Error('blocked'));
+  });
+}
+function idbGet(k){ return new Promise((res,rej)=>{ const q=idb.transaction('kv','readonly').objectStore('kv').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
+function idbPut(k,v){ return new Promise((res,rej)=>{ const tx=idb.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k);
+  tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error||new Error('Penyimpanan dibatalkan browser')); }); }
+
+async function loadDB(){
+  let legacy=null;
+  try{ const raw=localStorage.getItem(STORE_KEY); if(raw) legacy=JSON.parse(raw); }catch(e){}
+  try{
+    idb=await idbOpen();
+    let d=await idbGet('db');
+    if(!d && legacy){ d=legacy; await idbPut('db',d); try{localStorage.removeItem(STORE_KEY);}catch(e){} } // migrasi data lama
+    try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
+    STORAGE_MODE='idb'; return normalizeDB(d);
+  }catch(e){
+    console.warn('IndexedDB gagal, pakai localStorage',e); idb=null;
+    try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); STORAGE_MODE='local'; }
+    catch(_){ STORAGE_MODE='memory'; }
+    return normalizeDB(legacy);
+  }
+}
+let DB = defaultDB();
+try{ const t=JSON.parse(localStorage.getItem(THEME_KEY)||'null'); if(t) Object.assign(DB.settings,t); }catch(e){}
+
+let saveChain = Promise.resolve(true);
 function save(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); return true; }
-  catch(e){ toast('Gagal menyimpan: penyimpanan browser penuh atau diblokir','error'); return false; }
+  try{ localStorage.setItem(THEME_KEY, JSON.stringify({color:DB.settings.color,mode:DB.settings.mode})); }catch(e){}
+  saveChain = saveChain.then(async()=>{
+    if(STORAGE_MODE==='idb') await idbPut('db',DB);
+    else if(STORAGE_MODE==='local') localStorage.setItem(STORE_KEY,JSON.stringify(DB));
+    return true;
+  }).catch(e=>{ console.error(e); toast('Gagal menyimpan data: '+((e&&e.message)||'penyimpanan penuh'),'error'); return false; });
+  return saveChain;
+}
+const fmtSize = b => b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+
+/* =========================================================
+   LOGO (DJP & Nindya Karya)
+   Prioritas: logo yang diunggah di Pengaturan → file di folder yang sama
+   (logo-djp.png / logo-nindya-karya.png) → teks pengganti.
+========================================================= */
+const LOGO_DEF = {
+  djp:{file:'logo-djp.png', ph:'DJP', title:'Direktorat Jenderal Pajak'},
+  nk: {file:'logo-nindya-karya.png', ph:'NINDYA<br>KARYA', title:'Nindya Karya'},
+};
+function logoBox(k,size){
+  const L=LOGO_DEF[k], src=(DB.settings.logos||{})[k]||L.file;
+  return `<span class="logo-box ${size||''}" title="${L.title}"><img src="${src}" alt="${L.title}" onerror="logoFail(this,'${k}')"></span>`;
+}
+function logoFail(img,k){ const s=document.createElement('span'); s.className='ph'; s.innerHTML=LOGO_DEF[k].ph; img.replaceWith(s); }
+function applyLogos(){ document.querySelectorAll('[data-logos]').forEach(el=>{ el.innerHTML=logoBox('djp',el.dataset.logos)+logoBox('nk',el.dataset.logos); }); }
+function uploadLogo(k,file){
+  if(!file) return;
+  if(!/^image\//.test(file.type)){ toast('File logo harus berupa gambar (PNG/JPG/SVG)','error'); return; }
+  const fr=new FileReader();
+  fr.onload=()=>{
+    if(file.type==='image/svg+xml'){ setLogo(k,fr.result); return; }
+    const img=new Image();
+    img.onload=()=>{ const s=Math.min(1,600/Math.max(img.width,img.height)); const c=document.createElement('canvas');
+      c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      setLogo(k,c.toDataURL('image/png')); };
+    img.onerror=()=>toast('Gambar tidak dapat dibaca','error');
+    img.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+async function setLogo(k,v){
+  DB.settings.logos={...(DB.settings.logos||{}),[k]:v};
+  if(await save()){ applyLogos(); render(); toast(v?'Logo diperbarui':'Logo dihapus','success'); }
 }
 const session = {
   get(){ try{return sessionStorage.getItem('ppn_user')}catch(e){return window.__u||null} },
@@ -441,7 +527,7 @@ function toNum(v){
 }
 function toDate(v){
   if(v==null || v==='') return '';
-  if(typeof v==='number' && window.XLSX){ const d=XLSX.SSF.parse_date_code(v); if(d&&d.y) return `${d.y}-${pad(d.m)}-${pad(d.d)}`; }
+  if(typeof v==='number' && typeof XLSX!=='undefined'){ const d=XLSX.SSF.parse_date_code(v); if(d&&d.y) return `${d.y}-${pad(d.m)}-${pad(d.d)}`; }
   if(v instanceof Date && !isNaN(v)) return `${v.getFullYear()}-${pad(v.getMonth()+1)}-${pad(v.getDate())}`;
   const s=String(v).trim(); let m;
   if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
@@ -610,7 +696,7 @@ function renderDashboard(){
   <div class="grid two" style="margin-bottom:18px">
     <div class="card">
       <div class="card-h"><div><h3>Grafik PPN per Bulan</h3><p>PPN Masukan vs Keluaran tahun ${y}</p></div>
-        <button class="btn btn-primary btn-sm" onclick="state.view='PM';openImport()">${icon('upload')} Import Pajak Masukan</button></div>
+        <button class="btn btn-primary btn-sm" onclick="openImport('PM')">${icon('upload')} Import Pajak Masukan</button></div>
       <div class="card-b"><div class="chart-box"><canvas id="chartPPN"></canvas></div></div>
     </div>
     <div class="card">
@@ -760,16 +846,15 @@ function clearMonth(){
    IMPORT EXCEL
 ========================================================= */
 let IMPORT=null;
-function openImport(){
+function openImport(type){
   if(!window.XLSX){ toast('Library Excel gagal dimuat — periksa koneksi internet lalu muat ulang halaman.','error'); return; }
-  if(state.view!=='PM' && state.view!=='PK'){ state.view='PM'; render(); }
-  const t=state.view;
+  const t = type || (state.view==='PK'?'PK':'PM');
   IMPORT={type:t,records:null,fileName:''};
   openModal(`
     <div class="modal-h"><h3>Import ${TYPE_INFO[t].label} dari Excel</h3><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b">
-      <label class="drop" id="drop">${icon('upload')}<b id="dropTitle">Pilih atau seret file Excel ke sini</b><small>Format .xlsx, .xls, atau .csv</small>
-        <input type="file" id="fileIn" accept=".xlsx,.xls,.csv" hidden></label>
+      <label class="drop" id="drop"><div id="dropIco">${icon('upload')}</div><b id="dropTitle">Pilih atau seret file Excel ke sini</b><small id="dropSub">Format .xlsx, .xls, atau .csv — tanpa batas ukuran file</small>
+        <input type="file" id="fileIn" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" hidden></label>
       <label class="check" style="margin-top:14px"><input type="checkbox" id="autoSplit" onchange="updatePlan()">
         <span><b>Pisahkan otomatis per bulan</b><small>Gunakan kolom Masa Pajak/Tahun (atau Tanggal Faktur) di file. Cocok untuk 1 file berisi beberapa bulan.</small></span></label>
       <div class="row2" id="targetBox">
@@ -785,7 +870,7 @@ function openImport(){
     </div>
     <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="btnSave" disabled onclick="commitImport()">${icon('check')} Simpan Data</button></div>`);
   const drop=$('#drop'), fi=$('#fileIn');
-  fi.onchange=()=>fi.files[0]&&readFile(fi.files[0]);
+  fi.onchange=()=>{ const f=fi.files[0]; fi.value=''; if(f) readFile(f); };
   ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
   ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
   drop.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) readFile(f); });
@@ -800,45 +885,100 @@ function mapHeaders(hdr){
   return map;
 }
 
-function readFile(file){
-  const isCsv=/\.csv$/i.test(file.name);
-  const fr=new FileReader();
-  fr.onload=e=>{
-    try{
-      const wb = isCsv ? XLSX.read(e.target.result,{type:'string',raw:true}) : XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-      let best=null;
-      for(const sn of wb.SheetNames){
-        const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});
-        for(let r=0;r<Math.min(15,aoa.length);r++){
-          const map=mapHeaders(aoa[r]); const score=Object.keys(map).length;
-          if(('ppn' in map || 'nofaktur' in map) && (!best || score>best.score)) best={aoa,hr:r,map,score,sheet:sn};
-        }
-        if(best && best.score>=5) break;
-      }
-      if(!best){ toast('Header kolom tidak dikenali. Gunakan template yang disediakan.','error'); return; }
-      const {aoa,hr,map}=best, recs=[]; let empty=0;
-      const g=(row,f)=> f in map ? row[map[f]] : '';
-      for(let r=hr+1;r<aoa.length;r++){
-        const row=aoa[r]; if(!row || row.every(v=>v===''||v==null)) continue;
-        const rec={ id:uid(), npwp:String(g(row,'npwp')).trim(), nama:String(g(row,'nama')).trim(),
-          nofaktur:String(g(row,'nofaktur')).trim(), tanggal:toDate(g(row,'tanggal')),
-          masa:toMonth(g(row,'masa')), tahun:parseInt(g(row,'tahun'),10)||null,
-          status:String(g(row,'status')).trim(), dpp:toNum(g(row,'dpp')), dppLain:toNum(g(row,'dppLain')),
-          ppn:toNum(g(row,'ppn')), ppnbm:toNum(g(row,'ppnbm')), ket:String(g(row,'ket')).trim() };
-        if(!rec.nofaktur && !rec.ppn && !rec.dpp){ empty++; continue; }
-        if(/^total|^jumlah/i.test(rec.npwp+rec.nama) && !rec.nofaktur){ empty++; continue; }
-        recs.push(rec);
-      }
-      IMPORT.records=recs; IMPORT.fileName=file.name; IMPORT.empty=empty;
-      IMPORT.hasMasa=('masa' in map)||('tanggal' in map);
-      $('#dropTitle').textContent=`📄 ${file.name} (sheet: ${best.sheet})`;
-      if(('masa' in map) && recs.length){ // otomatis centang bila file berisi lebih dari 1 masa
-        const ms=new Set(recs.map(r=>r.masa)); if(ms.size>1) $('#autoSplit').checked=true;
-      }
-      updatePlan();
-    }catch(err){ console.error(err); toast('Gagal membaca file: '+err.message,'error'); }
-  };
-  isCsv ? fr.readAsText(file) : fr.readAsArrayBuffer(file);
+/* Parser workbook — dipakai di Web Worker (agar halaman tidak macet) dan sebagai cadangan di halaman utama */
+function parseWorkbook(input,isCsv){
+  const opts={cellFormula:false,cellHTML:false,cellText:false,cellStyles:false,cellNF:false,bookVBA:false};
+  const wb = isCsv ? XLSX.read(input,Object.assign({type:'string',raw:true},opts)) : XLSX.read(input,Object.assign({type:'array'},opts));
+  let best=null;
+  for(const sn of wb.SheetNames){
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:'',blankrows:false});
+    for(let r=0;r<Math.min(25,aoa.length);r++){
+      const map=mapHeaders(aoa[r]||[]); const score=Object.keys(map).length;
+      if(('ppn' in map || 'nofaktur' in map) && score>=2 && (!best || score>best.score)) best={aoa,hr:r,map,score,sheet:sn};
+    }
+    if(best && best.score>=5) break;
+  }
+  if(!best) return {error:'Header kolom tidak dikenali. Pastikan file memiliki kolom seperti "Nomor Faktur Pajak" dan "PPN", atau gunakan template.'};
+  const aoa=best.aoa, map=best.map, recs=[]; let empty=0;
+  const g=(row,f)=> (f in map && row[map[f]]!=null) ? row[map[f]] : '';
+  const str=v=> typeof v==='number' ? (Number.isInteger(v)?v.toFixed(0):String(v)) : String(v).trim();
+  for(let r=best.hr+1;r<aoa.length;r++){
+    const row=aoa[r]; if(!row || !row.length) continue;
+    const rec={ npwp:str(g(row,'npwp')), nama:str(g(row,'nama')), nofaktur:str(g(row,'nofaktur')),
+      tanggal:toDate(g(row,'tanggal')), masa:toMonth(g(row,'masa')), tahun:parseInt(g(row,'tahun'),10)||null,
+      status:str(g(row,'status')), dpp:toNum(g(row,'dpp')), dppLain:toNum(g(row,'dppLain')),
+      ppn:toNum(g(row,'ppn')), ppnbm:toNum(g(row,'ppnbm')), ket:str(g(row,'ket')) };
+    if(!rec.nofaktur && !rec.ppn && !rec.dpp){ empty++; continue; }
+    if(/^(total|jumlah|grand)/i.test(rec.npwp+rec.nama) && !rec.nofaktur){ empty++; continue; }
+    recs.push(rec);
+  }
+  const masas=new Set(recs.map(r=>r.masa));
+  return {records:recs, empty, sheet:best.sheet, multiMasa:('masa' in map) && masas.size>1};
+}
+
+let parserWorker=null;
+function getParserWorker(){
+  if(parserWorker) return parserWorker;
+  const src = `importScripts(${JSON.stringify(XLSX_URL)});
+const ALIASES=${JSON.stringify(ALIASES)};
+const MONTH_PREFIX=${JSON.stringify(MONTH_PREFIX)};
+const pad=n=>String(n).padStart(2,'0');
+${mapHeaders.toString()}
+${toNum.toString()}
+${toDate.toString()}
+${toMonth.toString()}
+${parseWorkbook.toString()}
+onmessage=e=>{ try{ postMessage({ok:true,result:parseWorkbook(e.data.input,e.data.isCsv)}); }
+  catch(err){ postMessage({ok:false,error:String((err&&err.message)||err)}); } };`;
+  parserWorker = new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+  return parserWorker;
+}
+function parseInWorker(input,isCsv){
+  return new Promise((res,rej)=>{
+    let w; try{ w=getParserWorker(); }catch(e){ return rej(e); }
+    w.onmessage=e=>{ if(e.data.ok) res(e.data.result); else { const er=new Error(e.data.error); er.fromParser=true; rej(er); } };
+    w.onerror=e=>{ if(e&&e.preventDefault) e.preventDefault(); try{w.terminate();}catch(_){} parserWorker=null; rej(new Error('worker-failed')); };
+    w.postMessage({input,isCsv}); // dikirim sebagai salinan, agar cadangan di halaman utama tetap bisa jalan
+  });
+}
+function setDropBusy(busy,title,sub){
+  const d=$('#drop'); if(!d) return;
+  d.classList.toggle('busy',busy);
+  $('#dropIco').innerHTML = busy ? '<div class="spinner"></div>' : icon(title?'file':'upload');
+  $('#dropTitle').textContent = title || 'Pilih atau seret file Excel ke sini';
+  $('#dropSub').textContent = sub || 'Format .xlsx, .xls, atau .csv — tanpa batas ukuran file';
+}
+function readAs(file,asText){
+  if(asText && file.text) return file.text();
+  if(!asText && file.arrayBuffer) return file.arrayBuffer();
+  return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(fr.error); asText?fr.readAsText(file):fr.readAsArrayBuffer(file); });
+}
+async function readFile(file){
+  if(!IMPORT) return;
+  if(!window.XLSX){ toast('Library Excel gagal dimuat — periksa koneksi internet lalu muat ulang halaman.','error'); return; }
+  const token=IMPORT, isCsv=/\.csv$/i.test(file.name);
+  token.records=null; token.plan=null; $('#planBox').innerHTML=''; $('#btnSave').disabled=true;
+  setDropBusy(true,`Membaca ${file.name} (${fmtSize(file.size)})…`,'Mohon tunggu, file besar membutuhkan beberapa detik');
+  try{
+    const input=await readAs(file,isCsv);
+    let res;
+    try{ res=await parseInWorker(input,isCsv); }
+    catch(e){
+      if(e.fromParser) throw e;
+      await new Promise(r=>setTimeout(r,50)); // beri waktu spinner tampil, lalu proses di halaman utama
+      res=parseWorkbook(input,isCsv);
+    }
+    if(IMPORT!==token) return; // modal sudah ditutup
+    if(res.error){ setDropBusy(false); toast(res.error,'error'); return; }
+    if(!res.records.length){ setDropBusy(false); toast('Tidak ada baris faktur yang terbaca di file ini.','error'); return; }
+    token.records=res.records; token.fileName=file.name; token.empty=res.empty;
+    setDropBusy(false,`📄 ${file.name}`,`${fmt(res.records.length)} baris terbaca · sheet "${res.sheet}" · ${fmtSize(file.size)} — klik untuk ganti file`);
+    if(res.multiMasa) $('#autoSplit').checked=true;
+    updatePlan();
+  }catch(err){
+    console.error(err);
+    if(IMPORT===token){ setDropBusy(false); toast('Gagal membaca file: '+(err.message||err),'error'); }
+  }
 }
 
 function buildPlan(){
@@ -888,17 +1028,20 @@ function updatePlan(){
     ${replWarn?`<div class="note warn">Mode <b>Ganti</b>: data lama pada bulan di atas akan dihapus dan diganti dengan data dari file ini.</div>`:''}`;
   $('#btnSave').disabled = !all.length;
 }
-function commitImport(){
-  const p=IMPORT.plan, t=IMPORT.type; if(!p) return;
-  const backup=JSON.stringify(DB.data[t]);
+async function commitImport(){
+  if(!IMPORT || !IMPORT.plan) return;
+  const p=IMPORT.plan, t=IMPORT.type, btn=$('#btnSave');
+  btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…';
+  const backup={...DB.data[t]};
   let n=0, firstKey=null;
   Object.keys(p.groups).sort().forEach(k=>{
     DB.data[t][k] = p.mode==='replace' ? p.groups[k] : (DB.data[t][k]||[]).concat(p.groups[k]);
     n+=p.groups[k].length; if(!firstKey) firstKey=k;
   });
-  if(!save()){ DB.data[t]=JSON.parse(backup); return; }
+  const ok=await save();
+  if(!ok){ DB.data[t]=backup; btn.disabled=false; btn.innerHTML=icon('check')+' Simpan Data'; return; }
   if(firstKey){ state.year=+firstKey.slice(0,4); state.month=+firstKey.slice(5)-1; }
-  closeModal(); state.page=1; state.search=''; state.status='all'; render();
+  state.view=t; closeModal(); state.page=1; state.search=''; state.status='all'; render();
   toast(`${fmt(n)} faktur berhasil diimport`,'success');
 }
 
@@ -931,8 +1074,18 @@ function exportMonth(){
 ========================================================= */
 function renderSettings(){
   const u=currentUser();
-  const used=new Blob([localStorage.getItem(STORE_KEY)||'']).size;
+  const lg=DB.settings.logos||{};
   $('#view').innerHTML = `
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-h"><div><h3>Logo</h3><p>Unggah file logo resmi (PNG/JPG/SVG). Logo tampil di halaman login dan menu samping.</p></div></div>
+    <div class="card-b grid settings-grid">${['djp','nk'].map(k=>`
+      <div class="logo-slot">${logoBox(k,'')}
+        <div style="flex:1;min-width:0"><b>Logo ${LOGO_DEF[k].title}</b><small style="display:block;color:var(--muted)">${lg[k]?'Logo sudah diunggah':'Belum diunggah'}</small>
+          <div class="toolbar" style="margin-top:8px"><label class="btn btn-outline btn-sm">${icon('upload')} Unggah<input type="file" accept="image/*" hidden onchange="uploadLogo('${k}',this.files[0]);this.value=''"></label>
+          ${lg[k]?`<button class="btn btn-danger btn-sm" onclick="setLogo('${k}',null)">Hapus</button>`:''}</div></div>
+      </div>`).join('')}
+    </div>
+  </div>
   <div class="card" style="margin-bottom:18px">
     <div class="card-h"><div><h3>Tema Warna</h3><p>Pilih warna referensi atau tentukan warna sendiri</p></div>
       <div class="mode-toggle" style="width:220px"><button class="${DB.settings.mode==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button><button class="${DB.settings.mode==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button></div></div>
@@ -955,7 +1108,7 @@ function renderSettings(){
       </form>
     </div>
     <div class="card">
-      <div class="card-h"><div><h3>Data &amp; Backup</h3><p>Data tersimpan di browser ini (± ${(used/1024).toFixed(0)} KB)</p></div></div>
+      <div class="card-h"><div><h3>Data &amp; Backup</h3><p id="storeInfo">Menghitung pemakaian penyimpanan…</p></div></div>
       <div class="card-b">
         <div class="toolbar" style="margin-bottom:12px">
           <button class="btn btn-outline" onclick="backupData()">${icon('download')} Backup (.json)</button>
@@ -966,6 +1119,10 @@ function renderSettings(){
       </div>
     </div>
   </div>`;
+  (async()=>{ const el=$('#storeInfo'); if(!el) return;
+    let txt={idb:'Tersimpan di database browser (IndexedDB)',local:'Tersimpan di localStorage (terbatas ±5 MB)',memory:'⚠️ Penyimpanan diblokir — data hanya sementara'}[STORAGE_MODE];
+    try{ if(navigator.storage&&navigator.storage.estimate){ const e=await navigator.storage.estimate(); txt+=` · terpakai ${fmtSize(e.usage||0)} dari kapasitas ${fmtSize(e.quota||0)}`; } }catch(_){}
+    el.textContent=txt; })();
 }
 function saveAccount(e){
   e.preventDefault();
@@ -989,7 +1146,7 @@ function restoreData(file){
       if(!d.data || !d.data.PM) throw new Error('format tidak valid');
       confirmBox('Restore data?','Data saat ini akan diganti dengan isi file backup.','Restore',()=>{
         DB.data={PM:d.data.PM||{},PK:d.data.PK||{}}; if(d.settings) DB.settings={...DB.settings,...d.settings};
-        save(); applyTheme(); render(); toast('Data berhasil direstore','success');
+        save(); applyTheme(); applyLogos(); render(); toast('Data berhasil direstore','success');
       });
     }catch(err){ toast('File backup tidak valid','error'); } };
   fr.readAsText(file);
@@ -1004,10 +1161,14 @@ function resetData(){
    INIT
 ========================================================= */
 applyTheme();
-renderLoginSwatches();
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#modalRoot').innerHTML) closeModal(); closeSidebar(); } });
 window.addEventListener('resize',()=>{ if(window.innerWidth>960) closeSidebar(); });
-if(currentUser()) showApp(); else $('#login').hidden=false;
+(async function init(){
+  DB = await loadDB();
+  applyTheme(); applyLogos(); renderLoginSwatches();
+  if(currentUser()) showApp(); else $('#login').hidden=false;
+  if(STORAGE_MODE==='memory') toast('Penyimpanan browser diblokir — data hanya sementara. Buka file langsung di Chrome/Edge.','error');
+})();
 </script>
 </body>
 </html>
