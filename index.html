@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#2563eb">
-<title>Monitoring PPN Rekanan</title>
+<title>Monitoring Data Pajak — Proyek Dusem Segmen-1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
@@ -29,11 +29,11 @@ window.LIBS_READY=Promise.all([
 </script>
 <style>
 :root{
-  --primary:#2563eb; --primary-rgb:37,99,235; --primary-dark:#1d4ed8;
+  --primary:#2563eb; --primary-rgb:37,99,235; --primary-dark:#1d4ed8; --primary-deep:#172554;
   --bg:#f3f5fa; --surface:#ffffff; --surface-2:#f7f9fc; --text:#0f172a; --muted:#64748b; --border:#e4e8f0;
   --success:#16a34a; --danger:#dc2626; --warning:#d97706;
   --radius:14px; --shadow:0 1px 2px rgba(15,23,42,.04),0 6px 20px rgba(15,23,42,.06);
-  --sidebar:260px;
+  --sidebar:264px;
 }
 [data-mode="dark"]{
   --bg:#0b1120; --surface:#111827; --surface-2:#172033; --text:#e5e9f2; --muted:#94a3b8; --border:#243047;
@@ -42,7 +42,7 @@ window.LIBS_READY=Promise.all([
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-button,input,select{font:inherit;color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:none;background:none}
 svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 [hidden]{display:none!important}
@@ -51,94 +51,122 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:10px;font-weight:600;font-size:13.5px;transition:.15s;white-space:nowrap;border:1px solid transparent}
 .btn-primary{background:var(--primary);color:#fff}
 .btn-primary:hover{background:var(--primary-dark)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-outline{border-color:var(--border);background:var(--surface)}
 .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-ghost{color:var(--muted)}
 .btn-ghost:hover{background:var(--surface-2);color:var(--text)}
 .btn-danger{background:rgba(220,38,38,.1);color:var(--danger)}
 .btn-danger:hover{background:var(--danger);color:#fff}
+.btn-success{background:rgba(22,163,74,.12);color:var(--success)}
+.btn-success:hover{background:var(--success);color:#fff}
 .btn-sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
 .icon-btn{width:38px;height:38px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted)}
 .icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.icon-btn.xs{width:30px;height:30px}
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .field label{font-size:12.5px;font-weight:600;color:var(--muted)}
-.input,.select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);outline:none;transition:.15s}
-.input:focus,.select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15)}
+.field label .req{color:var(--danger)}
+.input,.select,.textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);outline:none;transition:.15s}
+.textarea{min-height:70px;resize:vertical}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15)}
 .select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.link{color:var(--primary);font-weight:700;cursor:pointer}
+.link:hover{text-decoration:underline}
 
-/* ---------- Login ---------- */
-#login{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
-.login-hero{background:linear-gradient(140deg,var(--primary),var(--primary-dark));color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
-.login-hero::before,.login-hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}
-.login-hero::before{width:420px;height:420px;right:-120px;top:-120px}
-.login-hero::after{width:300px;height:300px;left:-80px;bottom:-100px}
-.login-hero h1{font-size:34px;line-height:1.2;font-weight:800;max-width:440px;position:relative}
-.login-hero p{opacity:.85;max-width:420px;margin-top:14px;position:relative}
-.hero-stats{display:flex;gap:14px;flex-wrap:wrap;position:relative}
-.hero-stats div{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:12px 16px;border-radius:12px;font-size:12.5px}
-.hero-stats b{display:block;font-size:18px}
-.login-panel{display:flex;align-items:center;justify-content:center;padding:32px 20px;background:var(--surface)}
-.login-box{width:100%;max-width:380px}
-.login-box h2{font-size:24px;font-weight:800}
-.login-box .sub{color:var(--muted);margin:4px 0 26px}
-.login-err{background:rgba(220,38,38,.1);color:var(--danger);padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px}
-.hero-title{font-size:46px;line-height:1.1;font-weight:800;letter-spacing:.01em;max-width:560px;position:relative}
-.form-kicker{font-size:12.5px;font-weight:800;letter-spacing:.12em;color:var(--primary);margin-bottom:22px}
 /* ---------- Logo ---------- */
-.logos{display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:relative}
-.logo-box{display:inline-flex;align-items:center;justify-content:center;background:transparent;height:72px;min-width:40px}
+.logos{display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:relative}
+.logo-box{display:inline-flex;align-items:center;justify-content:center;background:transparent;height:72px;min-width:40px;flex:none}
 .logo-box img{max-height:100%;max-width:180px;object-fit:contain;display:block}
-.logo-box .ph{font-weight:800;color:inherit;font-size:14px;letter-spacing:.06em;line-height:1.15;opacity:.9}
+.logo-box .ph{font-weight:800;color:inherit;font-size:14px;letter-spacing:.06em;line-height:1.15;opacity:.9;text-align:center}
+.logo-box.boxed{background:#fff;border-radius:14px;padding:8px 14px;box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.logo-box.boxed .ph{color:#0f172a}
 .logo-box.sm{height:40px}
 .logo-box.sm img{max-width:100px}
 .logo-box.sm .ph{font-size:11px}
-.logo-slot{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--border);border-radius:12px}
-.logo-slot .logo-box{width:130px;height:60px;flex:none}
-.logo-slot .logo-box img{max-width:130px}
-.logo-grid{grid-template-columns:repeat(3,1fr)}
-.fmt-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fmt input{display:none}
-.fmt span{display:flex;flex-direction:column;gap:4px;padding:14px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:.15s;height:100%}
-.fmt span svg{width:24px;height:24px;color:var(--primary)}
-.fmt span small{color:var(--muted);font-size:12px}
-.fmt input:checked+span{border-color:var(--primary);background:rgba(var(--primary-rgb),.06)}
-.switch-row{display:flex;gap:12px;align-items:flex-start;cursor:pointer}
-.switch-row input{width:18px;height:18px;margin-top:2px;accent-color:var(--primary);flex:none}
-@media (max-width:960px){.logo-grid{grid-template-columns:1fr}}
+.logo-box.sm.boxed{padding:5px 9px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid var(--border)}
 .side-brand{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
-.side-brand b{font-size:13.5px;font-weight:800;letter-spacing:.03em}
-.side-brand .logos{flex-wrap:nowrap;gap:10px}
-.side-brand .logo-box.sm{height:30px;min-width:0}
-.side-brand .logo-box.sm img{max-width:68px}
-.spinner{width:36px;height:36px;border:3px solid rgba(var(--primary-rgb),.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
-.spin-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
-@keyframes spin{to{transform:rotate(360deg)}}
-.drop.busy{pointer-events:none;border-style:solid;border-color:var(--primary)}
-.login-swatches{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
-.brand-logo{width:38px;height:38px;border-radius:11px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px}
-.login-hero .brand-logo{background:rgba(255,255,255,.18)}
+.side-brand .logos{flex-wrap:nowrap;gap:8px}
+.side-brand .logo-box.sm{height:32px;min-width:0}
+.side-brand .logo-box.sm img{max-width:66px}
+.side-brand b{font-size:13.5px;font-weight:800;letter-spacing:.03em;line-height:1.25}
+.side-brand small{display:block;font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+.logo-slot{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--border);border-radius:12px;flex-wrap:wrap}
+.logo-slot .prev{width:140px;height:72px;display:flex;align-items:center;justify-content:center;border-radius:10px;flex:none;
+  background:repeating-conic-gradient(var(--surface-2) 0% 25%, var(--surface) 0% 50%) 50%/16px 16px;border:1px dashed var(--border)}
+.logo-slot .prev .logo-box{height:56px}
+.logo-slot .prev .logo-box img{max-width:120px}
+.logo-grid{grid-template-columns:repeat(3,1fr)}
+
+/* ---------- LOGIN ---------- */
+#login{min-height:100vh;display:grid;grid-template-columns:1.15fr 1fr;background:var(--surface)}
+.lg-hero{position:relative;overflow:hidden;color:#fff;padding:44px 52px;display:flex;flex-direction:column;justify-content:space-between;gap:30px;
+  background:radial-gradient(900px 500px at 0% 0%,rgba(255,255,255,.16),transparent 60%),linear-gradient(140deg,var(--primary) 0%,var(--primary-dark) 50%,var(--primary-deep) 100%)}
+.lg-hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:46px 46px;
+  -webkit-mask-image:radial-gradient(ellipse at 35% 45%,#000 10%,transparent 72%);mask-image:radial-gradient(ellipse at 35% 45%,#000 10%,transparent 72%)}
+.orb{position:absolute;border-radius:50%;filter:blur(50px);opacity:.5;animation:float 16s ease-in-out infinite;pointer-events:none}
+.orb.o1{width:420px;height:420px;background:rgba(255,255,255,.35);top:-140px;right:-100px}
+.orb.o2{width:340px;height:340px;background:rgba(255,255,255,.18);bottom:-120px;left:-80px;animation-delay:-6s}
+.orb.o3{width:240px;height:240px;background:rgba(255,255,255,.22);top:46%;left:58%;animation-delay:-10s}
+.ring{position:absolute;border-radius:50%;border:1.5px dashed rgba(255,255,255,.22);pointer-events:none;animation:spin 60s linear infinite}
+.ring.r1{width:520px;height:520px;right:-180px;bottom:-200px}
+.ring.r2{width:340px;height:340px;right:-90px;bottom:-110px;border-style:solid;border-color:rgba(255,255,255,.12);animation-direction:reverse;animation-duration:45s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(34px,-26px) scale(1.07)}66%{transform:translate(-22px,22px) scale(.95)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)}50%{box-shadow:0 0 0 7px rgba(74,222,128,0)}}
+.lg-hero>*:not(.orb):not(.ring){position:relative;z-index:1}
+.hero-chip{display:inline-flex;gap:9px;align-items:center;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);font-size:12.5px;font-weight:700;letter-spacing:.02em}
+.hero-chip .live{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite}
+.hero-title{font-size:clamp(32px,3.7vw,54px);font-weight:800;line-height:1.06;letter-spacing:-.015em;margin-top:20px;max-width:640px}
+.hero-title span{display:block;margin-top:6px;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.62) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-mods{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+.hero-mods span{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(10px);font-weight:600;font-size:12.5px}
+.hero-mods svg.i{width:15px;height:15px}
+.hero-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;font-size:12.5px}
+.hero-foot .copy{opacity:.75}
+.hero-clock{text-align:right;opacity:.92}
+.hero-clock b{display:block;font-size:24px;font-weight:800;letter-spacing:.02em;line-height:1.1}
+.lg-panel{position:relative;display:flex;align-items:center;justify-content:center;padding:70px 24px 60px}
+.lg-tools{position:absolute;top:18px;right:20px;display:flex;gap:4px}
+.lg-box{width:100%;max-width:410px;animation:rise .5s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.lg-box .logos{margin-bottom:26px}
+.lg-kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--primary);background:rgba(var(--primary-rgb),.08);padding:6px 12px;border-radius:999px;margin-bottom:14px}
+.lg-box h2{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.lg-box .sub{color:var(--muted);margin:6px 0 28px}
+.input-ic{position:relative}
+.input-ic>svg.i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);width:18px;height:18px;pointer-events:none}
+.input-ic .input{padding-left:44px;height:50px;border-radius:12px;background:var(--surface-2)}
+.input-ic .input:focus{background:var(--surface)}
+.input-ic .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%)}
+.lg-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 0 22px;font-size:13px}
+.lg-row label{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--muted);font-weight:600}
+.lg-row input{width:16px;height:16px;accent-color:var(--primary)}
+.btn-lg{width:100%;height:52px;border-radius:12px;font-size:15px;box-shadow:0 12px 26px rgba(var(--primary-rgb),.32)}
+.btn-lg:hover{transform:translateY(-1px)}
+.login-err{background:rgba(220,38,38,.1);color:var(--danger);padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px;display:flex;gap:8px;align-items:center}
+.secure{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:24px;color:var(--muted);font-size:12.5px}
+.secure svg.i{width:16px;height:16px;color:var(--success)}
+.lg-foot{position:absolute;bottom:18px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted)}
 
 /* ---------- Layout ---------- */
 #app{display:flex;min-height:100vh}
 .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);position:fixed;inset:0 auto 0 0;display:flex;flex-direction:column;z-index:40;transition:transform .25s}
-.sidebar .brand{padding:20px 20px 18px;border-bottom:1px solid var(--border)}
-.nav{padding:14px 12px;display:flex;flex-direction:column;gap:4px;flex:1;overflow-y:auto}
-.nav-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:12px 10px 6px}
-.nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--muted);font-weight:600;cursor:pointer;text-decoration:none;transition:.15s}
+.nav{padding:12px;display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto}
+.nav-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:12px 10px 5px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;color:var(--muted);font-weight:600;cursor:pointer;text-decoration:none;transition:.15s}
 .nav a:hover{background:var(--surface-2);color:var(--text)}
 .nav a.active{background:rgba(var(--primary-rgb),.12);color:var(--primary)}
 .side-foot{padding:14px;border-top:1px solid var(--border)}
 .user-card{display:flex;align-items:center;gap:10px;padding:8px}
-.avatar{width:36px;height:36px;border-radius:50%;background:rgba(var(--primary-rgb),.15);color:var(--primary);display:grid;place-items:center;font-weight:700}
+.avatar{width:36px;height:36px;border-radius:50%;background:rgba(var(--primary-rgb),.15);color:var(--primary);display:grid;place-items:center;font-weight:700;flex:none}
 .user-card small{display:block;color:var(--muted);font-size:12px}
 .main{flex:1;margin-left:var(--sidebar);min-width:0;display:flex;flex-direction:column}
 .topbar{height:66px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 24px;position:sticky;top:0;z-index:30}
 .topbar h2{font-size:18px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .select{width:auto;padding:8px 32px 8px 12px}
 #menuBtn{display:none}
-.content{padding:24px;max-width:1400px;width:100%;margin:0 auto}
+.content{padding:24px;max-width:1440px;width:100%;margin:0 auto}
 .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:35}
 
 /* ---------- Cards ---------- */
@@ -148,13 +176,20 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .card-h p{font-size:12.5px;color:var(--muted)}
 .card-b{padding:20px}
 .grid{display:grid;gap:18px}
+.mb{margin-bottom:18px}
 .kpis{grid-template-columns:repeat(4,1fr)}
 .kpi{padding:18px 20px;position:relative;overflow:hidden}
 .kpi .lbl{color:var(--muted);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px}
-.kpi .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(var(--primary-rgb),.12);color:var(--primary)}
+.ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(var(--primary-rgb),.12);color:var(--primary);flex:none}
+.ico.g{background:rgba(22,163,74,.12);color:var(--success)}
+.ico.o{background:rgba(217,119,6,.13);color:var(--warning)}
 .kpi .val{font-size:22px;font-weight:800;margin-top:12px;letter-spacing:-.02em;word-break:break-word}
 .kpi .foot{font-size:12px;color:var(--muted);margin-top:4px}
+.kpi.hl{background:linear-gradient(140deg,var(--primary),var(--primary-dark));color:#fff;border-color:transparent}
+.kpi.hl .lbl,.kpi.hl .foot{color:rgba(255,255,255,.85)}
+.kpi.hl .ico{background:rgba(255,255,255,.2);color:#fff}
 .two{grid-template-columns:2fr 1fr}
+.three{grid-template-columns:repeat(3,1fr)}
 .chart-box{height:320px;position:relative}
 .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
 .b-success{background:rgba(22,163,74,.12);color:var(--success)}
@@ -162,34 +197,69 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .b-warning{background:rgba(217,119,6,.13);color:var(--warning)}
 .b-muted{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
 .b-primary{background:rgba(var(--primary-rgb),.12);color:var(--primary)}
+button.badge{cursor:pointer;border:none;transition:.15s}
+button.badge:hover{filter:brightness(.92);box-shadow:0 0 0 2px currentColor inset}
 .progress{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--border)}
 .progress span{display:block;height:100%;background:var(--primary);border-radius:99px}
 .month-pills{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:14px}
 .month-pills span{text-align:center;font-size:11.5px;font-weight:700;padding:6px 0;border-radius:8px;background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
 .month-pills span.ok{background:var(--primary);color:#fff;border-color:var(--primary)}
 .top-list{list-style:none}
-.top-list li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--border)}
+.top-list li{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed var(--border)}
 .top-list li:last-child{border:none}
 .top-list .rank{width:28px;height:28px;border-radius:8px;background:rgba(var(--primary-rgb),.12);color:var(--primary);display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
 .top-list .nm{flex:1;min-width:0}
 .top-list .nm b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top-list .nm small{color:var(--muted);font-size:11.5px}
 .top-list .amt{font-weight:700;font-size:13px;white-space:nowrap}
+/* pembayaran */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:14px}
+.pay-box{border-radius:12px;padding:16px;border:1px solid}
+.pay-box.ok{background:rgba(22,163,74,.06);border-color:rgba(22,163,74,.25)}
+.pay-box.no{background:rgba(217,119,6,.07);border-color:rgba(217,119,6,.3)}
+.pay-h{display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:8px;flex-wrap:wrap}
+.pay-box.ok .pay-h{color:var(--success)}
+.pay-box.no .pay-h{color:var(--warning)}
+.pay-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 0;border-top:1px dashed var(--border)}
+.pay-row small{color:var(--muted);font-weight:600}
+.pay-row b{font-size:16px;text-align:right;word-break:break-word}
+.pay-side{border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.pay-side h4{font-size:13px;margin-bottom:4px}
+.pay-bar{height:12px;border-radius:99px;background:rgba(217,119,6,.28);overflow:hidden;margin-top:18px}
+.pay-bar span{display:block;height:100%;background:var(--success);border-radius:99px}
+.pay-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px;flex-wrap:wrap;gap:6px;font-weight:600}
+.sum-card{padding:18px 20px;cursor:pointer;transition:.15s}
+.sum-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+.sum-card .val{font-size:20px;font-weight:800;margin-top:10px}
+.sum-card .foot{font-size:12px;color:var(--muted);margin-top:2px}
+.mp{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:14px}
+.mp i{height:8px;border-radius:3px;background:var(--surface-2);border:1px solid var(--border)}
+.mp i.ok{background:var(--success);border-color:var(--success)}
+.mp i.wait{background:#f59e0b;border-color:#f59e0b}
+.legend-mini{display:flex;gap:12px;font-size:11px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend-mini i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
 
 /* ---------- Tables ---------- */
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:11px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
 tbody tr:hover{background:rgba(var(--primary-rgb),.04)}
 tr.clickable{cursor:pointer}
-tr.canceled td{opacity:.5;text-decoration:line-through}
-tr.canceled td:last-child,tr.canceled td:nth-last-child(2){text-decoration:none}
+tr.canceled td{opacity:.5}
+tr.canceled td.strike{text-decoration:line-through}
+tr.sel{background:rgba(var(--primary-rgb),.07)}
 .num{text-align:right;font-variant-numeric:tabular-nums}
+td.wide{max-width:260px;overflow:hidden;text-overflow:ellipsis}
 tfoot td{font-weight:800;background:var(--surface-2)}
 .empty{padding:48px 20px;text-align:center;color:var(--muted)}
 .empty svg{width:44px;height:44px;margin-bottom:10px;opacity:.5}
 .empty b{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
+.chk{width:16px;height:16px;accent-color:var(--primary);cursor:pointer;vertical-align:middle}
+.row-act{display:flex;gap:2px;align-items:center}
+.file-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:rgba(var(--primary-rgb),.08);border:1px solid rgba(var(--primary-rgb),.2);font-size:12px;font-weight:700;max-width:200px;cursor:pointer;color:var(--primary)}
+.file-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-pill svg.i{width:14px;height:14px}
 
 /* ---------- Month tabs ---------- */
 .mtabs{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin-bottom:18px}
@@ -199,33 +269,55 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .mtab .cnt{font-size:10.5px;padding:1px 7px;border-radius:99px;background:rgba(var(--primary-rgb),.12);color:var(--primary)}
 .mtab.active .cnt{background:rgba(255,255,255,.25);color:#fff}
 .mtab .dot{width:6px;height:6px;border-radius:50%;background:var(--border)}
+.mtab .flag{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%}
+.mtab .flag.ok{background:var(--success)}
+.mtab .flag.wait{background:#f59e0b}
+.mtab.active .flag{box-shadow:0 0 0 2px #fff}
 .minis{grid-template-columns:repeat(4,1fr);margin-bottom:18px}
 .mini{padding:14px 16px}
 .mini small{color:var(--muted);font-size:12px;font-weight:600}
 .mini b{display:block;font-size:17px;margin-top:4px;word-break:break-word}
+.mini .sub{font-size:12px;color:var(--muted);font-weight:600}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .search{position:relative;flex:1;min-width:180px}
 .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);width:16px;height:16px}
 .search .input{padding-left:34px}
+.filters .select{width:auto;min-width:150px}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .pager .btns{display:flex;gap:6px}
+.bulk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 20px;background:rgba(var(--primary-rgb),.07);border-top:1px solid var(--border);font-size:13px;font-weight:700;margin-top:16px}
+.bulk .sp{flex:1}
+/* laporan PPh */
+.rep-card{margin-bottom:18px}
+.rep-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.rep-item{padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);min-width:0}
+.rep-item small{color:var(--muted);display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.rep-item b{font-size:14px;word-break:break-word}
+.rep-item .badge{margin-top:2px}
 
 /* ---------- Modal ---------- */
-.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .15s}
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .15s;backdrop-filter:blur(2px)}
 .modal{background:var(--surface);border-radius:16px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:pop .18s}
-.modal.sm{max-width:420px}
-.modal-h{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border)}
+.modal form{display:flex;flex-direction:column;min-height:0}
+.modal.sm{max-width:440px}
+.modal.lg{max-width:760px}
+.modal-h{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);gap:10px}
 .modal-h h3{font-size:16px;font-weight:700}
+.modal-h p{font-size:12.5px;color:var(--muted)}
 .modal-b{padding:20px 22px;overflow-y:auto}
 .modal-f{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--border);flex-wrap:wrap}
 @keyframes fade{from{opacity:0}}
 @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}}
-.drop{border:2px dashed var(--border);border-radius:14px;padding:28px 16px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface-2)}
+.drop{border:2px dashed var(--border);border-radius:14px;padding:26px 16px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface-2);display:block}
 .drop:hover,.drop.over{border-color:var(--primary);background:rgba(var(--primary-rgb),.06)}
-.drop svg{width:38px;height:38px;color:var(--primary);margin-bottom:8px}
+.drop svg{width:36px;height:36px;color:var(--primary);margin-bottom:8px}
 .drop b{display:block}
 .drop small{color:var(--muted)}
+.drop.busy{pointer-events:none;border-style:solid;border-color:var(--primary)}
+.drop.has{border-style:solid;border-color:var(--success);background:rgba(22,163,74,.05)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.form-grid .full{grid-column:1/-1}
 .check{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;cursor:pointer}
 .check input{margin-top:3px;accent-color:var(--primary);width:16px;height:16px}
 .check small{display:block;color:var(--muted);font-size:12px}
@@ -233,6 +325,8 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .seg label{flex:1;text-align:center;padding:8px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted)}
 .seg input{display:none}
 .seg label:has(input:checked){background:var(--surface);color:var(--primary);box-shadow:var(--shadow)}
+.seg.sm{margin:0;display:inline-flex}
+.seg.sm label{padding:5px 10px;font-size:12px}
 .preview{margin-top:16px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
 .preview-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
 .preview-sum div{background:var(--surface);padding:10px 12px}
@@ -240,52 +334,79 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .preview-sum b{font-size:15px}
 .preview-groups{padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--border)}
 .note{font-size:12.5px;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px;margin-top:12px;border:1px solid var(--border)}
+.note svg.i{width:15px;height:15px;vertical-align:-3px}
 .note.warn{background:rgba(217,119,6,.08);border-color:rgba(217,119,6,.3);color:var(--warning)}
+.fmt-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fmt input{display:none}
+.fmt span{display:flex;flex-direction:column;gap:4px;padding:14px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:.15s;height:100%}
+.fmt span svg{width:24px;height:24px;color:var(--primary)}
+.fmt span small{color:var(--muted);font-size:12px}
+.fmt input:checked+span{border-color:var(--primary);background:rgba(var(--primary-rgb),.06)}
+.spinner{width:36px;height:36px;border:3px solid rgba(var(--primary-rgb),.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+.spin-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* ---------- Theme ---------- */
-.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
-.swatch{display:flex;align-items:center;gap:10px;padding:10px;border:2px solid var(--border);border-radius:12px;background:var(--surface);font-weight:600;font-size:12.5px;text-align:left}
-.swatch i{width:26px;height:26px;border-radius:8px;flex:none}
+/* ---------- Tema ---------- */
+.pal-group{margin-bottom:16px}
+.pal-group h4{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.swatch{display:flex;align-items:center;gap:10px;padding:9px 10px;border:2px solid var(--border);border-radius:12px;background:var(--surface);font-weight:600;font-size:12.5px;text-align:left;transition:.15s}
+.swatch:hover{transform:translateY(-1px);border-color:var(--muted)}
+.swatch i{width:28px;height:28px;border-radius:8px;flex:none;display:grid;place-items:center;color:#fff}
+.swatch i svg.i{width:15px;height:15px;stroke-width:3}
+.swatch small{display:block;color:var(--muted);font-size:10.5px;font-weight:600;font-family:monospace}
 .swatch.active{border-color:var(--primary);background:rgba(var(--primary-rgb),.06)}
-.dot-sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--border);cursor:pointer}
+.theme-side{display:grid;grid-template-columns:1fr 300px;gap:20px}
+.custom-color{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.custom-color input[type=color]{width:46px;height:40px;border:1px solid var(--border);border-radius:10px;padding:2px;background:var(--surface);cursor:pointer}
+.custom-color .input{width:120px;font-family:monospace;text-transform:uppercase}
+.preview-box{border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.preview-box .pv-top{height:64px;background:linear-gradient(140deg,var(--primary),var(--primary-deep));padding:14px;color:#fff;font-weight:800;font-size:13px}
+.preview-box .pv-b{padding:14px;display:flex;flex-direction:column;gap:10px}
+.dot-sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--border);cursor:pointer;transition:.12s}
+.dot-sw:hover{transform:scale(1.12)}
 .dot-sw.active{box-shadow:0 0 0 2px var(--primary)}
-.popover{position:absolute;right:0;top:48px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.18);padding:14px;width:250px;z-index:50}
-.popover h4{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
-.pop-dots{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;justify-items:center;margin-bottom:14px}
+.popover{position:absolute;right:0;top:46px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.18);padding:14px;width:286px;z-index:70;color:var(--text);text-align:left}
+.popover h4{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.pop-dots{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;justify-items:center;margin-bottom:14px}
 .mode-toggle{display:flex;gap:6px}
-.mode-toggle button{flex:1;padding:8px;border-radius:9px;border:1px solid var(--border);font-weight:600;font-size:12.5px}
+.mode-toggle button{flex:1;padding:8px;border-radius:9px;border:1px solid var(--border);font-weight:600;font-size:12.5px;background:var(--surface)}
 .mode-toggle button.active{border-color:var(--primary);color:var(--primary);background:rgba(var(--primary-rgb),.08)}
-.custom-color{display:flex;align-items:center;gap:10px;margin-top:12px}
-.custom-color input[type=color]{width:44px;height:36px;border:1px solid var(--border);border-radius:9px;padding:2px;background:var(--surface);cursor:pointer}
 .settings-grid{grid-template-columns:1fr 1fr}
+.recovery{font-family:ui-monospace,Consolas,monospace;font-size:17px;letter-spacing:.12em;font-weight:800;padding:10px 14px;border:1px dashed var(--primary);border-radius:10px;background:rgba(var(--primary-rgb),.06);color:var(--primary);display:inline-block}
 
 /* ---------- Toast ---------- */
 #toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:90}
-.toast{background:var(--text);color:var(--surface);padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;max-width:340px;animation:pop .2s}
+.toast{background:var(--text);color:var(--surface);padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;max-width:360px;animation:pop .2s}
 .toast.success{background:var(--success);color:#fff}
 .toast.error{background:var(--danger);color:#fff}
 
 /* ---------- Responsive ---------- */
-@media (max-width:1200px){.kpis{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+@media (max-width:1200px){.kpis{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.pay-grid{grid-template-columns:1fr 1fr}.pay-side{grid-column:1/-1}.theme-side{grid-template-columns:1fr}}
 @media (max-width:960px){
   .sidebar{transform:translateX(-100%)}
   .sidebar.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.25)}
   .main{margin-left:0}
   #menuBtn{display:inline-flex}
   .mtabs{grid-template-columns:repeat(6,1fr)}
-  .minis{grid-template-columns:repeat(2,1fr)}
-  .settings-grid{grid-template-columns:1fr}
+  .minis,.rep-grid{grid-template-columns:repeat(2,1fr)}
+  .settings-grid,.logo-grid,.three{grid-template-columns:1fr}
   #login{grid-template-columns:1fr}
-  .login-hero{display:none}
+  .lg-hero{padding:28px 22px 30px;gap:18px}
+  .hero-title{font-size:28px;margin-top:14px}
+  .hero-mods{margin-top:16px}
+  .hero-foot{display:none}
+  .lg-panel{padding:40px 20px 70px}
+  .lg-box .logos{display:none}
 }
 @media (max-width:600px){
   .content{padding:16px}
   .topbar{padding:0 12px;gap:6px}
   .topbar h2{font-size:16px}
-  .kpis{grid-template-columns:1fr}
+  .kpis,.pay-grid{grid-template-columns:1fr}
   .kpi .val{font-size:20px}
   .mtabs{grid-template-columns:repeat(4,1fr)}
-  .row2{grid-template-columns:1fr}
+  .row2,.form-grid{grid-template-columns:1fr}
   .preview-sum{grid-template-columns:repeat(2,1fr)}
   .card-h,.card-b{padding:14px 16px}
   .hide-sm{display:none!important}
@@ -295,6 +416,7 @@ tfoot td{font-weight:800;background:var(--surface-2)}
   .modal{max-height:94vh;border-radius:16px 16px 0 0}
   #toasts{left:12px;right:12px}
   .toast{max-width:none}
+  .filters .select{flex:1}
 }
 </style>
 </head>
@@ -302,34 +424,58 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 
 <!-- ================= LOGIN ================= -->
 <section id="login" hidden>
-  <div class="login-hero">
+  <div class="lg-hero">
+    <i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><i class="ring r1"></i><i class="ring r2"></i>
     <div class="logos" data-logos=""></div>
-    <h1 class="hero-title">MONITORING PPN REKANAN</h1>
-    <div class="hero-stats">
-      <div><b>12</b>Masa pajak / tahun</div>
-      <div><b>Excel</b>Import .xlsx / .xls / .csv</div>
-      <div><b>Tema</b>Warna bisa dipilih</div>
+    <div>
+      <span class="hero-chip"><i class="live"></i> Sistem Monitoring Pajak Proyek</span>
+      <h1 class="hero-title">MONITORING DATA PAJAK<span>PROYEK DUSEM SEGMEN-1</span></h1>
+      <div class="hero-mods">
+        <span><svg class="i"><use href="#i-in"/></svg>PPN Masukan &amp; Keluaran</span>
+        <span><svg class="i"><use href="#i-users"/></svg>PPh 21</span>
+        <span><svg class="i"><use href="#i-receipt"/></svg>PPh Unifikasi</span>
+        <span><svg class="i"><use href="#i-shield"/></svg>SPT Rekanan</span>
+      </div>
+    </div>
+    <div class="hero-foot">
+      <div class="copy">© <span id="yearNow">2026</span> Proyek Dusem Segmen-1</div>
+      <div class="hero-clock" id="heroClock"></div>
     </div>
   </div>
-  <div class="login-panel">
-    <form class="login-box" id="loginForm" autocomplete="off">
-      <div class="logos" data-logos="sm" style="margin-bottom:14px"></div>
-      <div class="form-kicker">MONITORING PPN REKANAN</div>
-      <h2>Masuk Admin</h2>
-      <p class="sub">Silakan masuk untuk mengelola data PPN.</p>
+  <div class="lg-panel">
+    <div class="lg-tools">
+      <div style="position:relative">
+        <button class="icon-btn" title="Tema warna" onclick="togglePop(event,'loginPop')"><svg class="i"><use href="#i-palette"/></svg></button>
+        <div class="popover" id="loginPop" hidden onclick="event.stopPropagation()"></div>
+      </div>
+      <button class="icon-btn" title="Mode terang/gelap" onclick="setMode(DB.settings.mode==='dark'?'light':'dark')"><svg class="i"><use href="#i-moon"/></svg></button>
+    </div>
+    <form class="lg-box" id="loginForm" autocomplete="off" novalidate>
+      <div class="logos" data-logos="sm"></div>
+      <div class="lg-kicker"><svg class="i" style="width:14px;height:14px"><use href="#i-shield"/></svg> AREA ADMINISTRATOR</div>
+      <h2>Selamat datang kembali</h2>
+      <p class="sub">Masuk untuk mengelola data pajak proyek.</p>
       <div class="login-err" id="loginErr" hidden></div>
-      <div class="field"><label for="lu">Username</label><input class="input" id="lu" placeholder="admin" required></div>
-      <div class="field"><label for="lp">Password</label><input class="input" id="lp" type="password" placeholder="••••••••" required></div>
-      <button class="btn btn-primary" style="width:100%;padding:12px" type="submit">Masuk</button>
-      <div class="login-swatches" id="loginSwatches"></div>
+      <div class="field"><label for="lu">Username</label>
+        <div class="input-ic"><svg class="i"><use href="#i-user"/></svg><input class="input" id="lu" placeholder="Masukkan username" autocomplete="username"></div></div>
+      <div class="field"><label for="lp">Password</label>
+        <div class="input-ic"><svg class="i"><use href="#i-lock"/></svg><input class="input" id="lp" type="password" placeholder="Masukkan password" autocomplete="current-password">
+          <button type="button" class="icon-btn eye" title="Tampilkan password" onclick="toggleEye('lp',this)"><svg class="i"><use href="#i-eye"/></svg></button></div></div>
+      <div class="lg-row">
+        <label><input type="checkbox" id="remember"> Ingat saya</label>
+        <a class="link" onclick="openForgot()">Lupa password?</a>
+      </div>
+      <button class="btn btn-primary btn-lg" type="submit" id="loginBtn">Masuk <svg class="i"><use href="#i-arrow"/></svg></button>
+      <div class="secure"><svg class="i"><use href="#i-shield"/></svg> Akses terbatas untuk administrator proyek</div>
     </form>
+    <div class="lg-foot">Monitoring Data Pajak · Proyek Dusem Segmen-1</div>
   </div>
 </section>
 
 <!-- ================= APP ================= -->
 <div id="app" hidden>
   <aside class="sidebar" id="sidebar">
-    <div class="side-brand"><div class="logos" data-logos="sm"></div><b>MONITORING PPN REKANAN</b></div>
+    <div class="side-brand"><div class="logos" data-logos="sm"></div><div><b>MONITORING DATA PAJAK</b><small>PROYEK DUSEM SEGMEN-1</small></div></div>
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <div class="user-card"><div class="avatar" id="uAvatar">A</div><div style="flex:1;min-width:0"><b id="uName">Admin</b><small>Administrator</small></div>
@@ -343,7 +489,7 @@ tfoot td{font-weight:800;background:var(--surface-2)}
       <h2 id="pageTitle">Dashboard</h2>
       <select class="select" id="yearSel" title="Tahun pajak"></select>
       <div style="position:relative">
-        <button class="icon-btn" title="Tema warna" onclick="togglePop(event)"><svg class="i"><use href="#i-palette"/></svg></button>
+        <button class="icon-btn" title="Tema warna" onclick="togglePop(event,'themePop')"><svg class="i"><use href="#i-palette"/></svg></button>
         <div class="popover" id="themePop" hidden onclick="event.stopPropagation()"></div>
       </div>
       <button class="icon-btn hide-sm" title="Keluar" onclick="logout()"><svg class="i"><use href="#i-logout"/></svg></button>
@@ -370,9 +516,23 @@ tfoot td{font-weight:800;background:var(--surface-2)}
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
-  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M5 21h14M7 8l-4 8a4 4 0 0 0 8 0zM17 8l-4 8a4 4 0 0 0 8 0zM5 8h14"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
   <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 3 2 2-2 2 2 3-2 3 2V2l-3 2-3-2-2 2-2-2-3 2z"/><path d="M8 9h8M8 13h6"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M18 5l2 2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16" cy="14" r="1.3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-refund" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 8v8M9.5 10.5c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.6-1 1.4-2.5 1.5-2.5.6-2.5 1.6 1 1.6 2.5 1.6 2.5-.6 2.5-1.6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></symbol>
 </svg>
 
 <script>
@@ -381,59 +541,142 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 ========================================================= */
 const START_YEAR = 2026;
 const STORE_KEY  = 'monitoring_ppn_v1';
+const THEME_KEY  = 'monitoring_ppn_theme';
 const PER_PAGE   = 25;
+const APP_KICKER = 'MONITORING DATA PAJAK PROYEK DUSEM SEGMEN-1';
 const MONTHS   = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const MONTHS_S = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-const THEMES = [
-  {name:'Biru Korporat', color:'#2563eb'},
-  {name:'Hijau Teal',    color:'#0f766e'},
-  {name:'Emerald',       color:'#059669'},
-  {name:'Ungu Royal',    color:'#7c3aed'},
-  {name:'Indigo',        color:'#4f46e5'},
-  {name:'Oranye',        color:'#ea580c'},
-  {name:'Merah Marun',   color:'#9f1239'},
-  {name:'Kuning Emas',   color:'#b45309'},
-  {name:'Pink Fuchsia',  color:'#c026d3'},
-  {name:'Slate',         color:'#334155'},
+const THEME_GROUPS = [
+  {g:'Biru',            c:[['Biru Korporat','#2563eb'],['Biru Laut','#0369a1'],['Navy','#1e3a8a'],['Biru Langit','#0284c7'],['Cyan','#0891b2']]},
+  {g:'Hijau',           c:[['Hijau Teal','#0f766e'],['Emerald','#059669'],['Hijau Daun','#15803d'],['Hijau Botol','#166534'],['Zaitun','#4d7c0f']]},
+  {g:'Ungu',            c:[['Ungu Royal','#7c3aed'],['Indigo','#4f46e5'],['Violet','#6d28d9'],['Plum','#86198f'],['Fuchsia','#c026d3']]},
+  {g:'Merah & Pink',    c:[['Merah','#dc2626'],['Merah Marun','#9f1239'],['Crimson','#be123c'],['Rose','#e11d48'],['Pink','#db2777']]},
+  {g:'Oranye & Coklat', c:[['Oranye','#ea580c'],['Terracotta','#c2410c'],['Amber','#d97706'],['Kuning Emas','#b45309'],['Coklat','#92400e']]},
+  {g:'Netral',          c:[['Slate','#334155'],['Biru Baja','#475569'],['Grafit','#3f3f46'],['Stone','#57534e'],['Hitam Elegan','#111827']]},
 ];
-// Nama kolom Excel yang dikenali (dinormalisasi: huruf kecil, tanpa spasi/simbol)
-const ALIASES = {
-  npwp:     ['npwppenjual','npwppembeli','npwp','npwplawantransaksi','npwpnikpenjual','npwpnikpembeli','npwppenjualpembeli'],
-  nama:     ['namapenjual','namapembeli','nama','namalawantransaksi','namapenjualpembeli','namasupplier','namavendor','namapelanggan'],
-  nofaktur: ['nomorfakturpajak','nofakturpajak','nomorfaktur','nofaktur','nofp','nomorfp','nsfp'],
-  tanggal:  ['tanggalfakturpajak','tanggalfaktur','tglfaktur','tglfakturpajak','tanggal','tgl'],
-  masa:     ['masapajak','masa','bulan','masapajakpengkreditan'],
-  tahun:    ['tahunpajak','tahun','tahunpajakpengkreditan'],
-  status:   ['statusfaktur','status','statusapproval','statusfp'],
-  dpp:      ['hargajualpenggantiandpp','hargajualpenggantiandasarpengenaanpajak','dpp','dpprp','jumlahdpp','hargajual'],
-  dppLain:  ['dppnilailain','dppnilailainlain','dpplain'],
-  ppn:      ['ppn','ppnrp','jumlahppn','nilaippn','ppn11','ppn12'],
-  ppnbm:    ['ppnbm','ppnbmrp','jumlahppnbm'],
-  ket:      ['keterangan','catatan','referensi'],
+const THEMES = THEME_GROUPS.flatMap(g=>g.c.map(([name,color])=>({name,color})));
+
+/* ---------- Skema data tiap modul ---------- */
+const MASA  = {t:'m',a:['masapajak','masa','bulan','masapajakpengkreditan']};
+const TAHUN = {t:'i',a:['tahunpajak','tahun','tahunpajakpengkreditan']};
+const KET   = {t:'s',a:['keterangan','catatan','referensi']};
+const PPN_FIELDS = {
+  npwp:{t:'s',a:['npwppenjual','npwppembeli','npwp','npwplawantransaksi','npwpnikpenjual','npwpnikpembeli','npwppenjualpembeli','npwprekanan']},
+  nama:{t:'s',a:['namapenjual','namapembeli','nama','namalawantransaksi','namapenjualpembeli','namasupplier','namavendor','namapelanggan','namarekanan']},
+  nofaktur:{t:'s',a:['nomorfakturpajak','nofakturpajak','nomorfaktur','nofaktur','nofp','nomorfp','nsfp']},
+  tanggal:{t:'d',a:['tanggalfakturpajak','tanggalfaktur','tglfaktur','tglfakturpajak','tanggal','tgl']},
+  masa:MASA, tahun:TAHUN,
+  status:{t:'s',a:['statusfaktur','status','statusapproval','statusfp']},
+  dpp:{t:'n',a:['hargajualpenggantiandpp','hargajualpenggantiandasarpengenaanpajak','dpp','dpprp','jumlahdpp','hargajual']},
+  dppLain:{t:'n',a:['dppnilailain','dppnilailainlain','dpplain']},
+  ppn:{t:'n',a:['ppn','ppnrp','jumlahppn','nilaippn','ppn11','ppn12']},
+  ppnbm:{t:'n',a:['ppnbm','ppnbmrp','jumlahppnbm']},
+  bayar:{t:'b',a:['statuspembayaran','statusbayar','pembayaran','sudahdibayar','dibayar','statuslunas','lunas']},
+  tglBayar:{t:'d',a:['tanggalpembayaran','tanggalbayar','tglbayar','tglpembayaran']},
+  ket:KET,
 };
-const TYPE_INFO = {
-  PM:{label:'Pajak Masukan', party:'Penjual'},
-  PK:{label:'Pajak Keluaran', party:'Pembeli'},
+const BUKTI = {t:'s',a:['nomorbuktipotong','nomorbuktipemotongan','nomorbuktipemotonganpemungutan','nobuktipotong','nomorbupot','nobupot','nomorbukti','nobukti','nomorbp']};
+const TGLBP = {t:'d',a:['tanggalbuktipotong','tanggalbuktipemotongan','tanggalpemotongan','tglbuktipotong','tglpemotongan','tanggalbupot','tanggal','tgl']};
+const KODE  = {t:'s',a:['kodeobjekpajak','kodeobjek','kop','kodeop']};
+const TARIF = {t:'s',a:['tarif','tarifter','ter','tarifpersen']};
+const STBP  = {t:'s',a:['statusbuktipotong','statusbupot','statusdokumen','status']};
+const PPH21_FIELDS = {
+  npwp:{t:'s',a:['npwpnikpenerima','npwpnikpenerimapenghasilan','npwppenerima','nikpenerima','npwpnik','npwp','nik','nitku']},
+  nama:{t:'s',a:['namapenerima','namapenerimapenghasilan','nama','namapegawai','namakaryawan','namapekerja']},
+  nobukti:BUKTI, tanggal:TGLBP, masa:MASA, tahun:TAHUN, kode:KODE,
+  bruto:{t:'n',a:['penghasilanbruto','jumlahpenghasilanbruto','bruto','jumlahbruto','dpp','dasarpengenaanpajak','penghasilan']},
+  tarif:TARIF,
+  pph:{t:'n',a:['pphdipotong','pph21dipotong','pph21','pph','jumlahpphdipotong','pphyangdipotong','jumlahpph','pphterutang']},
+  status:STBP, ket:KET,
 };
+const PPHU_FIELDS = {
+  npwp:{t:'s',a:['npwppenerima','npwpnikpenerima','npwplawantransaksi','npwprekanan','npwpnik','npwp','nik','nitku']},
+  nama:{t:'s',a:['namapenerima','namapenerimapenghasilan','namalawantransaksi','nama','namarekanan','namavendor']},
+  nobukti:BUKTI, tanggal:TGLBP, masa:MASA, tahun:TAHUN,
+  jenis:{t:'s',a:['jenispph','jenispajak','pphpasal','jenispasal','pasal','jenis']},
+  kode:KODE,
+  dpp:{t:'n',a:['dpp','dasarpengenaanpajak','jumlahdpp','penghasilanbruto','jumlahpenghasilanbruto','bruto','nilaiobjekpajak']},
+  tarif:TARIF,
+  pph:{t:'n',a:['pphdipotong','pphdipungut','pph','jumlahpph','pphyangdipotong','jumlahpphdipotong','pphterutang']},
+  status:STBP, ket:KET,
+};
+const JENIS_PPH = ['PPh 4(2)','PPh 15','PPh 22','PPh 23','PPh 26','Lainnya'];
+const ppnForm = pay => [
+  {k:'nofaktur',l:'Nomor Faktur Pajak',req:1},{k:'tanggal',l:'Tanggal Faktur',type:'date'},
+  {k:'npwp',l:'NPWP'},{k:'nama',l:'Nama',req:1},
+  {k:'dpp',l:'DPP',type:'num'},{k:'dppLain',l:'DPP Nilai Lain',type:'num'},
+  {k:'ppn',l:'PPN',type:'num',req:1},{k:'ppnbm',l:'PPnBM',type:'num'},
+  {k:'status',l:'Status Faktur',list:['APPROVED','AMENDED','DIBATALKAN']},
+  ...(pay?[{k:'bayar',l:'Status Pembayaran',type:'bayar'},{k:'tglBayar',l:'Tanggal Pembayaran',type:'date'}]:[]),
+  {k:'ket',l:'Keterangan',full:1}];
+const pphForm = jenis => [
+  {k:'nobukti',l:'Nomor Bukti Potong',req:1},{k:'tanggal',l:'Tanggal Bukti Potong',type:'date'},
+  ...(jenis?[{k:'jenis',l:'Jenis PPh',type:'select',opts:JENIS_PPH}]:[]),
+  {k:'kode',l:'Kode Objek Pajak'},{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Penerima',req:1},
+  {k:jenis?'dpp':'bruto',l:jenis?'DPP':'Penghasilan Bruto',type:'num'},{k:'tarif',l:'Tarif'},
+  {k:'pph',l:'PPh Dipotong',type:'num',req:1},{k:'status',l:'Status',list:['NORMAL','PEMBETULAN','DIBATALKAN']},
+  {k:'ket',l:'Keterangan',full:1}];
+const TYPES = {
+  PM:{label:'Pajak Masukan',group:'PPN',party:'Penjual',unit:'faktur',fields:PPN_FIELDS,id:'nofaktur',amount:'ppn',base:'dpp',amountLabel:'PPN',baseLabel:'DPP',
+      need:['ppn','nofaktur'],key:['nofaktur','ppn','dpp'],needLabel:'Nomor Faktur Pajak" dan "PPN',pay:true,
+      cols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nofaktur',l:'Nomor Faktur',f:'strong'},{k:'npwp',l:'NPWP Penjual'},{k:'nama',l:'Nama Penjual',f:'wide'},
+            {k:'dpp',l:'DPP',f:'num'},{k:'ppn',l:'PPN',f:'num'},{k:'ppnbm',l:'PPnBM',f:'num'},{k:'status',l:'Status',f:'status'},{k:'bayar',l:'Pembayaran',f:'bayar'}],
+      xcols:[{k:'tanggal',l:'Tanggal Faktur',f:'date'},{k:'nofaktur',l:'Nomor Faktur'},{k:'npwp',l:'NPWP Penjual'},{k:'nama',l:'Nama Penjual',w:36},{k:'status',l:'Status Faktur',f:'status'},
+            {k:'dpp',l:'DPP',f:'num'},{k:'dppLain',l:'DPP Nilai Lain',f:'num'},{k:'ppn',l:'PPN',f:'num'},{k:'ppnbm',l:'PPnBM',f:'num'},{k:'bayar',l:'Pembayaran',f:'bayar'},{k:'tglBayar',l:'Tgl Bayar',f:'date'}],
+      form:ppnForm(true),
+      tpl:[['NPWP Penjual','Nama Penjual','Nomor Faktur Pajak','Tanggal Faktur Pajak','Masa Pajak','Tahun','Status Faktur','Harga Jual/Penggantian/DPP','DPP Nilai Lain','PPN','PPnBM','Status Pembayaran','Tanggal Pembayaran','Keterangan'],
+           ['0123456789012345','PT Contoh Sukses Makmur','04002600000000001','15/01/2026','01','2026','APPROVED',10000000,9166667,1100000,0,'Sudah','25/01/2026',''],
+           ['0987654321098765','CV Sumber Berkah','04002600000000002','20/01/2026','01','2026','APPROVED',5000000,4583333,550000,0,'Belum','','']]},
+  PK:{label:'Pajak Keluaran',group:'PPN',party:'Pembeli',unit:'faktur',fields:PPN_FIELDS,id:'nofaktur',amount:'ppn',base:'dpp',amountLabel:'PPN',baseLabel:'DPP',
+      need:['ppn','nofaktur'],key:['nofaktur','ppn','dpp'],needLabel:'Nomor Faktur Pajak" dan "PPN',
+      cols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nofaktur',l:'Nomor Faktur',f:'strong'},{k:'npwp',l:'NPWP Pembeli'},{k:'nama',l:'Nama Pembeli',f:'wide'},
+            {k:'dpp',l:'DPP',f:'num'},{k:'ppn',l:'PPN',f:'num'},{k:'ppnbm',l:'PPnBM',f:'num'},{k:'status',l:'Status',f:'status'}],
+      xcols:[{k:'tanggal',l:'Tanggal Faktur',f:'date'},{k:'nofaktur',l:'Nomor Faktur'},{k:'npwp',l:'NPWP Pembeli'},{k:'nama',l:'Nama Pembeli',w:36},{k:'status',l:'Status Faktur',f:'status'},
+            {k:'dpp',l:'DPP',f:'num'},{k:'dppLain',l:'DPP Nilai Lain',f:'num'},{k:'ppn',l:'PPN',f:'num'},{k:'ppnbm',l:'PPnBM',f:'num'}],
+      form:ppnForm(false),
+      tpl:[['NPWP Pembeli','Nama Pembeli','Nomor Faktur Pajak','Tanggal Faktur Pajak','Masa Pajak','Tahun','Status Faktur','Harga Jual/Penggantian/DPP','DPP Nilai Lain','PPN','PPnBM','Keterangan'],
+           ['0123456789012345','PT Pemberi Kerja','01002600000000001','15/01/2026','01','2026','APPROVED',100000000,91666667,11000000,0,'']]},
+  PPH21:{label:'PPh 21',group:'PPh',party:'Penerima',unit:'bukti potong',fields:PPH21_FIELDS,id:'nobukti',amount:'pph',base:'bruto',amountLabel:'PPh Dipotong',baseLabel:'Penghasilan Bruto',
+      need:['pph','nobukti'],key:['nobukti','pph','bruto'],needLabel:'Nomor Bukti Potong" dan "PPh Dipotong',report:true,
+      cols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nobukti',l:'Nomor Bukti Potong',f:'strong'},{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Penerima',f:'wide'},
+            {k:'kode',l:'Kode Objek'},{k:'bruto',l:'Penghasilan Bruto',f:'num'},{k:'tarif',l:'Tarif'},{k:'pph',l:'PPh Dipotong',f:'num'},{k:'status',l:'Status',f:'status'}],
+      form:pphForm(false),
+      tpl:[['NPWP/NIK Penerima','Nama Penerima','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Kode Objek Pajak','Penghasilan Bruto','Tarif','PPh Dipotong','Status','Keterangan'],
+           ['3171000000000001','Budi Santoso','2600000001','25/01/2026','01','2026','21-100-01',8000000,'1,5%',120000,'NORMAL','']]},
+  PPHU:{label:'PPh Unifikasi',group:'PPh',party:'Penerima',unit:'bukti potong',fields:PPHU_FIELDS,id:'nobukti',amount:'pph',base:'dpp',amountLabel:'PPh Dipotong',baseLabel:'DPP',
+      need:['pph','nobukti'],key:['nobukti','pph','dpp'],needLabel:'Nomor Bukti Potong" dan "PPh Dipotong',report:true,
+      cols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nobukti',l:'Nomor Bukti Potong',f:'strong'},{k:'jenis',l:'Jenis',f:'jenis'},{k:'npwp',l:'NPWP Penerima'},{k:'nama',l:'Nama Penerima',f:'wide'},
+            {k:'kode',l:'Kode Objek'},{k:'dpp',l:'DPP',f:'num'},{k:'tarif',l:'Tarif'},{k:'pph',l:'PPh Dipotong',f:'num'},{k:'status',l:'Status',f:'status'}],
+      form:pphForm(true),
+      tpl:[['NPWP Penerima','Nama Penerima','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Jenis PPh','Kode Objek Pajak','DPP','Tarif','PPh Dipotong','Status','Keterangan'],
+           ['0123456789012345','CV Mitra Konstruksi','2600000101','20/01/2026','01','2026','PPh 4(2)','28-409-07',100000000,'2,65%',2650000,'NORMAL',''],
+           ['0987654321098765','PT Jasa Teknik','2600000102','22/01/2026','01','2026','PPh 23','24-104-14',20000000,'2%',400000,'NORMAL','']]},
+};
+TYPES.PPH21.xcols=TYPES.PPH21.cols.map(c=>c.k==='nama'?{...c,w:34}:c);
+TYPES.PPHU.xcols=TYPES.PPHU.cols.map(c=>c.k==='nama'?{...c,w:32}:c);
+const DATA_TYPES = Object.keys(TYPES);
 
 /* =========================================================
-   PENYIMPANAN — IndexedDB (kapasitas besar, tanpa batas 5 MB)
-   Cadangan: localStorage, lalu memori sementara.
+   PENYIMPANAN — IndexedDB (kapasitas besar), cadangan localStorage / memori
 ========================================================= */
-const THEME_KEY = 'monitoring_ppn_theme';
-let STORAGE_MODE = 'idb';   // 'idb' | 'local' | 'memory'
-let idb = null;
-
+let STORAGE_MODE='idb', idb=null;
+const MEMFILES={};
+function genCode(){
+  const ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let a;
+  try{ a=crypto.getRandomValues(new Uint32Array(12)); }catch(e){ a=Array.from({length:12},()=>Math.floor(Math.random()*1e9)); }
+  let s=''; for(let i=0;i<12;i++){ s+=ch[a[i]%ch.length]; if(i===3||i===7) s+='-'; } return s;
+}
 function defaultDB(){
-  return { users:[{username:'admin',password:'admin123',name:'Administrator'}],
-           settings:{color:THEMES[0].color, mode:'light', logos:{djp:null,nk:null,lain:null}, kso:true, cleanLogo:true},
-           data:{PM:{},PK:{}} };
+  return { users:[{username:'admin',password:'admin123',name:'Administrator',recovery:genCode()}],
+           settings:{color:THEMES[0].color, mode:'light', logos:{djp:null,nk:null,lain:null}, logoBox:{djp:false,nk:false,lain:false}, cleanLogo:true},
+           data:{PM:{},PK:{},PPH21:{},PPHU:{}}, reports:{PPH21:{},PPHU:{}}, spt:{} };
 }
 function normalizeDB(d){
   const def=defaultDB(); if(!d) return def;
-  return { users:(d.users&&d.users.length)?d.users:def.users,
-           settings:{...def.settings,...(d.settings||{})},
-           data:{PM:{},PK:{},...(d.data||{})} };
+  const users=(d.users&&d.users.length)?d.users:def.users; users.forEach(u=>{ if(!u.recovery) u.recovery=genCode(); });
+  const s=d.settings||{};
+  return { users, settings:{...def.settings,...s,logos:{...def.settings.logos,...(s.logos||{})},logoBox:{...def.settings.logoBox,...(s.logoBox||{})}},
+           data:{...def.data,...(d.data||{})}, reports:{...def.reports,...(d.reports||{})}, spt:d.spt||{} };
 }
 function idbOpen(){
   return new Promise((res,rej)=>{
@@ -443,65 +686,178 @@ function idbOpen(){
     r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); r.onblocked=()=>rej(new Error('blocked'));
   });
 }
-function idbGet(k){ return new Promise((res,rej)=>{ const q=idb.transaction('kv','readonly').objectStore('kv').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
-function idbPut(k,v){ return new Promise((res,rej)=>{ const tx=idb.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k);
-  tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error||new Error('Penyimpanan dibatalkan browser')); }); }
-
+function idbReq(mode,fn){ return new Promise((res,rej)=>{ const tx=idb.transaction('kv',mode), st=tx.objectStore('kv'); const q=fn(st); let out;
+  if(q) q.onsuccess=()=>{ out=q.result; }; tx.oncomplete=()=>res(out); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error||new Error('Penyimpanan dibatalkan browser')); }); }
+const idbGet=k=>idbReq('readonly',st=>st.get(k));
+const idbPut=(k,v)=>idbReq('readwrite',st=>st.put(v,k));
+const idbDel=k=>idbReq('readwrite',st=>st.delete(k));
 async function loadDB(){
   let legacy=null;
   try{ const raw=localStorage.getItem(STORE_KEY); if(raw) legacy=JSON.parse(raw); }catch(e){}
   try{
     idb=await idbOpen();
     let d=await idbGet('db');
-    if(!d && legacy){ d=legacy; await idbPut('db',d); try{localStorage.removeItem(STORE_KEY);}catch(e){} } // migrasi data lama
+    if(!d && legacy){ d=legacy; await idbPut('db',d); try{localStorage.removeItem(STORE_KEY);}catch(e){} }
     try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
     STORAGE_MODE='idb'; return normalizeDB(d);
   }catch(e){
     console.warn('IndexedDB gagal, pakai localStorage',e); idb=null;
-    try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); STORAGE_MODE='local'; }
-    catch(_){ STORAGE_MODE='memory'; }
+    try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); STORAGE_MODE='local'; }catch(_){ STORAGE_MODE='memory'; }
     return normalizeDB(legacy);
   }
 }
-let DB = defaultDB();
+let DB=defaultDB();
 try{ const t=JSON.parse(localStorage.getItem(THEME_KEY)||'null'); if(t) Object.assign(DB.settings,t); }catch(e){}
-
-let saveChain = Promise.resolve(true);
+let saveChain=Promise.resolve(true);
 function save(){
-  try{ localStorage.setItem(THEME_KEY, JSON.stringify({color:DB.settings.color,mode:DB.settings.mode})); }catch(e){}
-  saveChain = saveChain.then(async()=>{
+  try{ localStorage.setItem(THEME_KEY,JSON.stringify({color:DB.settings.color,mode:DB.settings.mode})); }catch(e){}
+  saveChain=saveChain.then(async()=>{
     if(STORAGE_MODE==='idb') await idbPut('db',DB);
     else if(STORAGE_MODE==='local') localStorage.setItem(STORE_KEY,JSON.stringify(DB));
     return true;
   }).catch(e=>{ console.error(e); toast('Gagal menyimpan data: '+((e&&e.message)||'penyimpanan penuh'),'error'); return false; });
   return saveChain;
 }
+/* File PDF (SPT, bukti lapor) disimpan terpisah sebagai Blob */
+async function putFile(id,blob){ if(STORAGE_MODE==='idb') return idbPut('file:'+id,blob); MEMFILES[id]=blob; }
+async function getFile(id){ if(STORAGE_MODE==='idb') return idbGet('file:'+id); return MEMFILES[id]; }
+async function delFile(id){ if(!id) return; try{ if(STORAGE_MODE==='idb') await idbDel('file:'+id); else delete MEMFILES[id]; }catch(e){} }
+async function openStoredFile(id,name,download){
+  const blob=await getFile(id); if(!blob){ toast('File tidak ditemukan di penyimpanan browser','error'); return; }
+  const url=URL.createObjectURL(blob.type?blob:new Blob([blob],{type:'application/pdf'}));
+  if(download){ const a=document.createElement('a'); a.href=url; a.download=name||'dokumen.pdf'; document.body.appendChild(a); a.click(); a.remove(); }
+  else { const w=window.open(url,'_blank'); if(!w){ const a=document.createElement('a'); a.href=url; a.download=name||'dokumen.pdf'; a.click(); } }
+  setTimeout(()=>URL.revokeObjectURL(url),120000);
+}
 const fmtSize = b => b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 
 /* =========================================================
-   LOGO (DJP & Nindya Karya)
-   Prioritas: logo yang diunggah di Pengaturan → file di folder yang sama
-   (logo-djp.png / logo-nindya-karya.png) → teks pengganti.
+   UTIL
 ========================================================= */
-const LOGO_KEYS = ['djp','nk','lain'];
-const LOGO_DEF = {
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,'0');
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf = new Intl.NumberFormat('id-ID',{maximumFractionDigits:0});
+const fmt = n => nf.format(Math.round(n||0));
+const rp  = n => (n<0?'(Rp ':'Rp ') + fmt(Math.abs(n)) + (n<0?')':'');
+const short = v => { const a=Math.abs(v), s=v<0?'-':''; if(a>=1e12)return s+(a/1e12).toFixed(1).replace('.',',')+' T'; if(a>=1e9)return s+(a/1e9).toFixed(1).replace('.',',')+' M'; if(a>=1e6)return s+(a/1e6).toFixed(1).replace('.',',')+' jt'; if(a>=1e3)return s+(a/1e3).toFixed(0)+' rb'; return s+Math.round(a); };
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const key = (y,m) => `${y}-${pad(m+1)}`;
+const icon = (n,cls='i') => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
+const getRows = (t,y,m) => DB.data[t][key(y,m)] || [];
+const isCanceled = r => /batal|cancel|reject|tolak|diganti/i.test(r.status||'');
+const sumF = (rows,f) => rows.reduce((a,r)=> a + (isCanceled(r)?0:(+r[f]||0)), 0);
+const fakturKey = s => String(s||'').replace(/[^0-9a-z]/gi,'').toUpperCase();
+const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+function fmtDate(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); return m?`${m[3]}/${m[2]}/${m[1]}`:(iso||'-'); }
+function years(){
+  const set=new Set(), now=new Date().getFullYear();
+  for(let y=START_YEAR;y<=Math.max(now+1,START_YEAR+1);y++) set.add(y);
+  DATA_TYPES.forEach(t=>Object.keys(DB.data[t]||{}).forEach(k=>set.add(+k.slice(0,4))));
+  return [...set].filter(y=>y>=START_YEAR).sort();
+}
+function toNum(v){
+  if(v==null || v==='') return 0;
+  if(typeof v==='number') return v;
+  let s=String(v).trim();
+  const neg=/^\(.*\)$/.test(s) || /^-/.test(s);
+  s=s.replace(/[^\d,.]/g,'');
+  if(!s) return 0;
+  const lc=s.lastIndexOf(','), ld=s.lastIndexOf('.');
+  if(lc>-1 && ld>-1){ s = lc>ld ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,''); }
+  else if(lc>-1){ const p=s.split(','); s=(p.length===2 && p[1].length!==3) ? s.replace(',','.') : s.replace(/,/g,''); }
+  else if(ld>-1){ const p=s.split('.'); if(p.length>2 || (p.length===2 && p[1].length===3)) s=s.replace(/\./g,''); }
+  const n=parseFloat(s); return isNaN(n)?0:(neg?-n:n);
+}
+function toDate(v){
+  if(v==null || v==='') return '';
+  if(typeof v==='number' && typeof XLSX!=='undefined'){ const d=XLSX.SSF.parse_date_code(v); if(d&&d.y) return `${d.y}-${pad(d.m)}-${pad(d.d)}`; }
+  if(v instanceof Date && !isNaN(v)) return `${v.getFullYear()}-${pad(v.getMonth()+1)}-${pad(v.getDate())}`;
+  const s=String(v).trim(); let m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  if((m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/))){ let y=+m[3]; if(y<100)y+=2000; return `${y}-${pad(m[2])}-${pad(m[1])}`; }
+  return s;
+}
+const MONTH_PREFIX={jan:0,feb:1,mar:2,apr:3,mei:4,may:4,jun:5,jul:6,agu:7,ags:7,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11};
+function toMonth(v){
+  if(v==null || v==='') return null;
+  if(typeof v==='number') return (v>=1&&v<=12)?v-1:null;
+  const s=String(v).trim().toLowerCase();
+  if(/^\d+$/.test(s)){
+    const n=parseInt(s,10);
+    if(n>=1&&n<=12) return n-1;
+    if(s.length===6){ const mm=+s.slice(0,2); if(mm>=1&&mm<=12) return mm-1; }
+    return null;
+  }
+  const k=s.slice(0,3); return k in MONTH_PREFIX ? MONTH_PREFIX[k] : null;
+}
+function toBool(v){
+  if(v==null || v==='') return null;
+  if(typeof v==='boolean') return v;
+  if(typeof v==='number') return v!==0;
+  const s=String(v).trim().toLowerCase();
+  if(/^(belum|tidak|no\b|n$|false|unpaid|outstanding|0$|-$|x$)/.test(s)) return false;
+  if(/^(sudah|lunas|ya|y$|yes|true|paid|dibayar|1$|done|selesai|v$|ok|✓|✔)/.test(s)) return true;
+  return null;
+}
+
+/* =========================================================
+   TEMA
+========================================================= */
+function hexToRgb(h){ h=h.replace('#',''); if(h.length===3)h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+function shade(hex,p){ const f=v=>Math.max(0,Math.min(255,Math.round(v*(1+p)))); return '#'+hexToRgb(hex).map(f).map(v=>v.toString(16).padStart(2,'0')).join(''); }
+function applyTheme(){
+  const c=DB.settings.color, r=document.documentElement;
+  r.style.setProperty('--primary',c);
+  r.style.setProperty('--primary-rgb',hexToRgb(c).join(','));
+  r.style.setProperty('--primary-dark',shade(c,-.2));
+  r.style.setProperty('--primary-deep',shade(c,-.55));
+  r.dataset.mode=DB.settings.mode;
+  document.querySelector('meta[name=theme-color]').content=c;
+}
+function setColor(c){
+  if(!/^#[0-9a-f]{6}$/i.test(c)){ toast('Kode warna tidak valid (contoh: #2563EB)','error'); return; }
+  DB.settings.color=c.toLowerCase(); save(); applyTheme(); refreshThemeUI();
+}
+function setMode(m){ DB.settings.mode=m; save(); applyTheme(); refreshThemeUI(); }
+function refreshThemeUI(){
+  ['themePop','loginPop'].forEach(id=>{ const p=document.getElementById(id); if(p && !p.hidden) renderThemePop(id); });
+  if(!$('#app').hidden) render();
+}
+function themeName(c){ const t=THEMES.find(x=>x.color===c); return t?t.name:'Warna kustom'; }
+function renderThemePop(id){
+  document.getElementById(id).innerHTML = `
+    <h4>Warna Tema · ${esc(themeName(DB.settings.color))}</h4>
+    <div class="pop-dots">${THEMES.map(t=>`<span class="dot-sw ${t.color===DB.settings.color?'active':''}" style="background:${t.color}" title="${t.name}" onclick="setColor('${t.color}')"></span>`).join('')}</div>
+    <h4>Mode</h4>
+    <div class="mode-toggle">
+      <button class="${DB.settings.mode==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button>
+      <button class="${DB.settings.mode==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button>
+    </div>
+    <div class="custom-color" style="margin-top:12px"><input type="color" value="${DB.settings.color}" onchange="setColor(this.value)"><small style="color:var(--muted)">Pilih warna sendiri</small></div>`;
+}
+function togglePop(e,id){ e.stopPropagation(); const p=document.getElementById(id); const open=p.hidden; document.querySelectorAll('.popover').forEach(x=>x.hidden=true); p.hidden=!open; if(open) renderThemePop(id); }
+document.addEventListener('click',()=>document.querySelectorAll('.popover').forEach(x=>x.hidden=true));
+
+/* =========================================================
+   LOGO (DJP, Nindya Karya, Logo Tambahan)
+========================================================= */
+const LOGO_KEYS=['djp','nk','lain'];
+const LOGO_DEF={
   djp: {file:'logo-djp.png', ph:'DJP', title:'Direktorat Jenderal Pajak', label:'Logo DJP'},
   nk:  {file:'logo-nindya-karya.png', ph:'NINDYA<br>KARYA', title:'Nindya Karya', label:'Logo Nindya Karya'},
-  lain:{file:'logo-lain.png', ph:'', title:'Logo Lain', label:'Logo Tambahan'},
+  lain:{file:'logo-lain.png', ph:'', title:'Logo Tambahan', label:'Logo Tambahan'},
 };
 function logoBox(k,size,preview){
-  const L=LOGO_DEF[k], up=(DB.settings.logos||{})[k];
-  if(!up && !L.ph && !preview) return `<span class="logo-box ${size||''}" data-opt="1"><img src="${L.file}" alt="" onerror="this.parentNode.remove()"></span>`;
-  if(!up && !L.ph) return `<span class="logo-box ${size||''}"><span class="ph" style="opacity:.45">Belum ada</span></span>`;
-  return `<span class="logo-box ${size||''}" title="${L.title}"><img src="${up||L.file}" alt="${L.title}" onerror="logoFail(this,'${k}')"></span>`;
+  const L=LOGO_DEF[k], up=(DB.settings.logos||{})[k], boxed=(DB.settings.logoBox||{})[k]?' boxed':'';
+  if(!up && !L.ph && !preview) return `<span class="logo-box ${size||''}${boxed}"><img src="${L.file}" alt="" onerror="this.parentNode.remove()"></span>`;
+  if(!up && !L.ph) return `<span class="logo-box ${size||''}"><span class="ph" style="opacity:.45;font-size:12px">Belum ada</span></span>`;
+  return `<span class="logo-box ${size||''}${boxed}" title="${L.title}"><img src="${up||L.file}" alt="${L.title}" onerror="logoFail(this,'${k}')"></span>`;
 }
 function logoFail(img,k){ const s=document.createElement('span'); s.className='ph'; s.innerHTML=LOGO_DEF[k].ph; img.replaceWith(s); }
 function applyLogos(){ document.querySelectorAll('[data-logos]').forEach(el=>{ el.innerHTML=LOGO_KEYS.map(k=>logoBox(k,el.dataset.logos)).join(''); }); }
-
 function loadImg(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
-/* Menghapus latar putih / kotak putih membulat di sekeliling logo:
-   area putih atau transparan yang tersambung ke tepi gambar dibuat transparan,
-   warna putih DI DALAM logo tetap dipertahankan. */
+/* Menghapus latar putih / kotak putih di sekeliling logo (bagian putih DI DALAM logo tetap) */
 function removeWhiteBg(ctx,w,h){
   const id=ctx.getImageData(0,0,w,h), d=id.data, seen=new Uint8Array(w*h), cleared=new Uint8Array(w*h), st=[];
   const isBg=i=>{ const p=i*4; return d[p+3]<24 || (d[p]>222 && d[p+1]>222 && d[p+2]>222); };
@@ -509,7 +865,6 @@ function removeWhiteBg(ctx,w,h){
   while(st.length){ const i=st.pop(); if(seen[i]) continue; seen[i]=1; if(!isBg(i)) continue;
     cleared[i]=1; d[i*4+3]=0; const x=i%w;
     if(x>0) st.push(i-1); if(x<w-1) st.push(i+1); if(i>=w) st.push(i-w); if(i<w*(h-1)) st.push(i+w); }
-  // haluskan tepi (piksel terang yang bersebelahan dengan latar yang dihapus)
   for(let i=0;i<w*h;i++){ if(cleared[i]) continue; const x=i%w;
     const nb=(x>0&&cleared[i-1])||(x<w-1&&cleared[i+1])||(i>=w&&cleared[i-w])||(i<w*(h-1)&&cleared[i+w]); if(!nb) continue;
     const p=i*4, mn=Math.min(d[p],d[p+1],d[p+2]); if(mn>180) d[p+3]=Math.min(d[p+3],Math.round(255*(255-mn)/75)); }
@@ -528,8 +883,7 @@ async function processLogo(src,clean){
   let c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.naturalWidth*s)); c.height=Math.max(1,Math.round(img.naturalHeight*s));
   const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height);
   if(clean) removeWhiteBg(ctx,c.width,c.height);
-  c=trimCanvas(c);
-  return c.toDataURL('image/png');
+  return trimCanvas(c).toDataURL('image/png');
 }
 function uploadLogo(k,file){
   if(!file) return;
@@ -538,130 +892,21 @@ function uploadLogo(k,file){
   fr.onload=async()=>{ try{ setLogo(k, await processLogo(fr.result, DB.settings.cleanLogo!==false)); }catch(e){ toast(e.message,'error'); } };
   fr.readAsDataURL(file);
 }
-async function cleanExistingLogo(k){
-  const src=(DB.settings.logos||{})[k]; if(!src) return;
-  try{ setLogo(k, await processLogo(src,true)); }catch(e){ toast(e.message,'error'); }
-}
-async function setLogo(k,v){
-  DB.settings.logos={...(DB.settings.logos||{}),[k]:v};
-  if(await save()){ applyLogos(); render(); toast(v?'Logo diperbarui':'Logo dihapus','success'); }
-}
-async function setSetting(key,val){ DB.settings[key]=val; await save(); render(); }
-const session = {
-  get(){ try{return sessionStorage.getItem('ppn_user')}catch(e){return window.__u||null} },
-  set(v){ try{sessionStorage.setItem('ppn_user',v)}catch(e){window.__u=v} },
-  clear(){ try{sessionStorage.removeItem('ppn_user')}catch(e){} window.__u=null; }
-};
-
-/* =========================================================
-   UTIL
-========================================================= */
-const $ = s => document.querySelector(s);
-const pad = n => String(n).padStart(2,'0');
-const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const nf = new Intl.NumberFormat('id-ID',{maximumFractionDigits:0});
-const fmt = n => nf.format(Math.round(n||0));
-const rp  = n => (n<0?'(Rp ':'Rp ') + fmt(Math.abs(n)) + (n<0?')':'');
-const short = v => { const a=Math.abs(v), s=v<0?'-':''; if(a>=1e12)return s+(a/1e12).toFixed(1).replace('.',',')+' T'; if(a>=1e9)return s+(a/1e9).toFixed(1).replace('.',',')+' M'; if(a>=1e6)return s+(a/1e6).toFixed(1).replace('.',',')+' jt'; if(a>=1e3)return s+(a/1e3).toFixed(0)+' rb'; return s+a; };
-const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-const key = (y,m) => `${y}-${pad(m+1)}`;
-const icon = (n,cls='i') => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
-const getRows = (t,y,m) => DB.data[t][key(y,m)] || [];
-const isCanceled = r => /batal|cancel|reject|tolak|diganti/i.test(r.status||'');
-const sumF = (rows,f) => rows.reduce((a,r)=> a + (isCanceled(r)?0:(+r[f]||0)), 0);
-const fakturKey = s => String(s||'').replace(/[^0-9a-z]/gi,'').toUpperCase();
-function fmtDate(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); return m?`${m[3]}/${m[2]}/${m[1]}`:esc(iso||'-'); }
-function years(){
-  const set = new Set(); const now = new Date().getFullYear();
-  for(let y=START_YEAR; y<=Math.max(now+1, START_YEAR+1); y++) set.add(y);
-  ['PM','PK'].forEach(t=>Object.keys(DB.data[t]).forEach(k=>set.add(+k.slice(0,4))));
-  return [...set].filter(y=>y>=START_YEAR).sort();
-}
-
-function toNum(v){
-  if(v==null || v==='') return 0;
-  if(typeof v==='number') return v;
-  let s = String(v).trim();
-  const neg = /^\(.*\)$/.test(s) || /^-/.test(s);
-  s = s.replace(/[^\d,.]/g,'');
-  if(!s) return 0;
-  const lc=s.lastIndexOf(','), ld=s.lastIndexOf('.');
-  if(lc>-1 && ld>-1){ s = lc>ld ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,''); }
-  else if(lc>-1){ const p=s.split(','); s = (p.length===2 && p[1].length!==3) ? s.replace(',','.') : s.replace(/,/g,''); }
-  else if(ld>-1){ const p=s.split('.'); if(p.length>2 || (p.length===2 && p[1].length===3)) s=s.replace(/\./g,''); }
-  const n = parseFloat(s); return isNaN(n)?0:(neg?-n:n);
-}
-function toDate(v){
-  if(v==null || v==='') return '';
-  if(typeof v==='number' && typeof XLSX!=='undefined'){ const d=XLSX.SSF.parse_date_code(v); if(d&&d.y) return `${d.y}-${pad(d.m)}-${pad(d.d)}`; }
-  if(v instanceof Date && !isNaN(v)) return `${v.getFullYear()}-${pad(v.getMonth()+1)}-${pad(v.getDate())}`;
-  const s=String(v).trim(); let m;
-  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
-  if((m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/))){ let y=+m[3]; if(y<100)y+=2000; return `${y}-${pad(m[2])}-${pad(m[1])}`; }
-  return s;
-}
-const MONTH_PREFIX = {jan:0,feb:1,mar:2,apr:3,mei:4,may:4,jun:5,jul:6,agu:7,ags:7,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11};
-function toMonth(v){
-  if(v==null || v==='') return null;
-  if(typeof v==='number') return (v>=1&&v<=12)?v-1:null;
-  const s=String(v).trim().toLowerCase();
-  if(/^\d+$/.test(s)){
-    const n=parseInt(s,10);
-    if(n>=1&&n<=12) return n-1;
-    if(s.length===6){ const mm=+s.slice(0,2); if(mm>=1&&mm<=12) return mm-1; } // format MMYYYY
-    return null;
-  }
-  const k=s.slice(0,3); return k in MONTH_PREFIX ? MONTH_PREFIX[k] : null;
-}
-
-/* =========================================================
-   TEMA
-========================================================= */
-function hexToRgb(h){ h=h.replace('#',''); if(h.length===3)h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return [(n>>16)&255,(n>>8)&255,n&255]; }
-function shade(hex,p){ const f=v=>Math.max(0,Math.min(255,Math.round(v*(1+p)))); return '#'+hexToRgb(hex).map(f).map(v=>v.toString(16).padStart(2,'0')).join(''); }
-function applyTheme(){
-  const c=DB.settings.color, r=document.documentElement;
-  r.style.setProperty('--primary',c);
-  r.style.setProperty('--primary-rgb',hexToRgb(c).join(','));
-  r.style.setProperty('--primary-dark',shade(c,-.18));
-  r.dataset.mode = DB.settings.mode;
-  document.querySelector('meta[name=theme-color]').content = c;
-}
-function setColor(c){ DB.settings.color=c; save(); applyTheme(); refreshThemeUI(); }
-function setMode(m){ DB.settings.mode=m; save(); applyTheme(); refreshThemeUI(); }
-function refreshThemeUI(){
-  renderLoginSwatches();
-  if(!$('#themePop').hidden) renderThemePop();
-  if(!$('#app').hidden) render();
-}
-function renderLoginSwatches(){
-  $('#loginSwatches').innerHTML = '<span>Tema:</span>' + THEMES.slice(0,6).map(t=>
-    `<span class="dot-sw ${t.color===DB.settings.color?'active':''}" style="background:${t.color}" title="${t.name}" onclick="setColor('${t.color}')"></span>`).join('');
-}
-function renderThemePop(){
-  $('#themePop').innerHTML = `
-    <h4>Warna Tema</h4>
-    <div class="pop-dots">${THEMES.map(t=>`<span class="dot-sw ${t.color===DB.settings.color?'active':''}" style="background:${t.color}" title="${t.name}" onclick="setColor('${t.color}')"></span>`).join('')}</div>
-    <h4>Mode</h4>
-    <div class="mode-toggle">
-      <button class="${DB.settings.mode==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button>
-      <button class="${DB.settings.mode==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button>
-    </div>
-    <div class="custom-color"><input type="color" value="${DB.settings.color}" onchange="setColor(this.value)"><small style="color:var(--muted)">Pilih warna sendiri</small></div>`;
-}
-function togglePop(e){ e.stopPropagation(); const p=$('#themePop'); p.hidden=!p.hidden; if(!p.hidden) renderThemePop(); }
-document.addEventListener('click',()=>{ const p=$('#themePop'); if(p) p.hidden=true; });
+async function cleanExistingLogo(k){ const src=(DB.settings.logos||{})[k]; if(!src) return; try{ setLogo(k, await processLogo(src,true)); }catch(e){ toast(e.message,'error'); } }
+async function setLogo(k,v){ DB.settings.logos={...(DB.settings.logos||{}),[k]:v}; if(await save()){ applyLogos(); render(); toast(v?'Logo diperbarui':'Logo dihapus','success'); } }
+async function setLogoBox(k,on){ DB.settings.logoBox={...(DB.settings.logoBox||{}),[k]:on}; await save(); applyLogos(); render(); }
+async function setSetting(k,v){ DB.settings[k]=v; await save(); render(); }
 
 /* =========================================================
    TOAST & MODAL
 ========================================================= */
 function toast(msg,type=''){
   const el=document.createElement('div'); el.className='toast '+type;
-  el.innerHTML = (type==='success'?icon('check'):'') + `<span>${esc(msg)}</span>`;
-  $('#toasts').appendChild(el); setTimeout(()=>el.remove(),3500);
+  el.innerHTML=(type==='success'?icon('check'):type==='error'?icon('alert'):'')+`<span>${esc(msg)}</span>`;
+  $('#toasts').appendChild(el); setTimeout(()=>el.remove(),3800);
 }
 function openModal(html,size=''){
-  $('#modalRoot').innerHTML = `<div class="modal-bg" onmousedown="if(event.target===this)closeModal()"><div class="modal ${size}">${html}</div></div>`;
+  $('#modalRoot').innerHTML=`<div class="modal-bg" onmousedown="if(event.target===this)closeModal()"><div class="modal ${size}">${html}</div></div>`;
 }
 function closeModal(){ $('#modalRoot').innerHTML=''; IMPORT=null; }
 function confirmBox(title,msg,okLabel,onOk){
@@ -670,110 +915,204 @@ function confirmBox(title,msg,okLabel,onOk){
     <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="cfOk" style="background:var(--danger)">${esc(okLabel)}</button></div>`,'sm');
   $('#cfOk').onclick=()=>{ closeModal(); onOk(); };
 }
+function toggleEye(id,btn){ const i=document.getElementById(id); const show=i.type==='password'; i.type=show?'text':'password'; btn.innerHTML=icon(show?'eye-off':'eye'); }
 
 /* =========================================================
-   LOGIN
+   LOGIN, SESI & LUPA PASSWORD
 ========================================================= */
-$('#loginForm').addEventListener('submit',e=>{
+const session={
+  get(){ try{ return sessionStorage.getItem('ppn_user')||localStorage.getItem('ppn_user_r'); }catch(e){ return window.__u||null; } },
+  set(v,rem){ try{ if(rem) localStorage.setItem('ppn_user_r',v); else sessionStorage.setItem('ppn_user',v); }catch(e){ window.__u=v; } },
+  clear(){ try{ sessionStorage.removeItem('ppn_user'); localStorage.removeItem('ppn_user_r'); }catch(e){} window.__u=null; }
+};
+const LOGIN={fails:0,lockUntil:0};
+function loginError(msg){ const er=$('#loginErr'); er.innerHTML=icon('alert')+`<span>${esc(msg)}</span>`; er.hidden=false; }
+$('#loginForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const u=$('#lu').value.trim(), p=$('#lp').value;
-  const user = DB.users.find(x=>x.username.toLowerCase()===u.toLowerCase() && x.password===p);
-  if(!user){ const er=$('#loginErr'); er.textContent='Username atau password salah.'; er.hidden=false; return; }
-  session.set(user.username); $('#lp').value=''; $('#loginErr').hidden=true; showApp();
+  const u=$('#lu').value.trim(), p=$('#lp').value, btn=$('#loginBtn');
+  if(Date.now()<LOGIN.lockUntil){ loginError(`Terlalu banyak percobaan. Coba lagi dalam ${Math.ceil((LOGIN.lockUntil-Date.now())/1000)} detik.`); return; }
+  if(!u||!p){ loginError('Username dan password wajib diisi.'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Memeriksa…';
+  await new Promise(r=>setTimeout(r,450));
+  btn.disabled=false; btn.innerHTML=`Masuk ${icon('arrow')}`;
+  const user=DB.users.find(x=>x.username.toLowerCase()===u.toLowerCase() && x.password===p);
+  if(!user){
+    LOGIN.fails++;
+    if(LOGIN.fails>=5){ LOGIN.lockUntil=Date.now()+30000; LOGIN.fails=0; loginError('Terlalu banyak percobaan gagal. Login dikunci selama 30 detik.'); }
+    else loginError(`Username atau password salah. Sisa percobaan: ${5-LOGIN.fails}.`);
+    return;
+  }
+  LOGIN.fails=0; session.set(user.username,$('#remember').checked); $('#lp').value=''; $('#loginErr').hidden=true; showApp();
 });
+function openForgot(){
+  openModal(`
+    <div class="modal-h"><div><h3>Lupa Password</h3><p>Atur ulang password menggunakan kode pemulihan</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form class="modal-b" id="fgForm" onsubmit="doReset(event)">
+      <div class="note" style="margin:0 0 16px">${icon('key')} Kode pemulihan dapat dilihat di menu <b>Pengaturan → Akun Admin</b> setelah login. Jika tidak memilikinya, hubungi administrator sistem proyek.</div>
+      <div class="field"><label>Username</label><input class="input" id="fgUser" required></div>
+      <div class="field"><label>Kode Pemulihan</label><input class="input" id="fgCode" placeholder="XXXX-XXXX-XXXX" style="text-transform:uppercase;font-family:monospace;letter-spacing:.08em" required></div>
+      <div class="row2">
+        <div class="field"><label>Password Baru</label><input class="input" id="fgNew" type="password" minlength="6" required></div>
+        <div class="field"><label>Ulangi Password</label><input class="input" id="fgNew2" type="password" minlength="6" required></div>
+      </div>
+      <div class="login-err" id="fgErr" hidden></div>
+      <button class="btn btn-primary" style="width:100%;height:46px" type="submit">${icon('key')} Atur Ulang Password</button>
+    </form>`,'sm');
+  setTimeout(()=>$('#fgUser')&&$('#fgUser').focus(),50);
+}
+async function doReset(e){
+  e.preventDefault();
+  const err=m=>{ const el=$('#fgErr'); el.innerHTML=icon('alert')+`<span>${esc(m)}</span>`; el.hidden=false; };
+  const u=$('#fgUser').value.trim(), code=$('#fgCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), n1=$('#fgNew').value, n2=$('#fgNew2').value;
+  const user=DB.users.find(x=>x.username.toLowerCase()===u.toLowerCase());
+  if(!user || String(user.recovery||'').replace(/-/g,'')!==code) return err('Username atau kode pemulihan tidak cocok.');
+  if(n1.length<6) return err('Password baru minimal 6 karakter.');
+  if(n1!==n2) return err('Konfirmasi password tidak sama.');
+  user.password=n1; user.recovery=genCode(); await save();
+  closeModal(); $('#lu').value=user.username; $('#lp').value=''; $('#lp').focus();
+  toast('Password berhasil diatur ulang. Silakan masuk dengan password baru.','success');
+}
 function currentUser(){ const u=session.get(); return DB.users.find(x=>x.username===u); }
-function logout(){ session.clear(); $('#app').hidden=true; $('#login').hidden=false; closeSidebar(); }
+function logout(){ session.clear(); $('#app').hidden=true; $('#login').hidden=false; closeSidebar(); tickClock(); }
 function showApp(){
   const u=currentUser(); if(!u){ logout(); return; }
   $('#login').hidden=true; $('#app').hidden=false;
   $('#uName').textContent=u.name||u.username; $('#uAvatar').textContent=(u.name||u.username)[0].toUpperCase();
   render();
 }
+function tickClock(){
+  const el=$('#heroClock'); if(!el || $('#login').hidden) return; const d=new Date();
+  let t; try{ t=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',timeZoneName:'short'}); }catch(_){ t=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
+  el.innerHTML=`<b>${t}</b>${d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}`;
+  $('#yearNow').textContent=d.getFullYear();
+}
+setInterval(tickClock,15000);
 
 /* =========================================================
    NAVIGASI & STATE
 ========================================================= */
-const now = new Date();
-const state = {
-  view:'dashboard',
-  year: Math.max(START_YEAR, now.getFullYear()),
-  month: now.getFullYear()>=START_YEAR ? now.getMonth() : 0,
-  search:'', status:'all', page:1
-};
-const NAV = [
-  {sec:'Menu'},
-  {id:'dashboard', label:'Dashboard PPN', ic:'grid'},
-  {id:'PM', label:'Pajak Masukan', ic:'in'},
-  {id:'PK', label:'Pajak Keluaran', ic:'out'},
-  {sec:'Sistem'},
-  {id:'settings', label:'Pengaturan & Tema', ic:'gear'},
+const now=new Date();
+const state={view:'dashboard', year:Math.max(START_YEAR,now.getFullYear()), month:now.getFullYear()>=START_YEAR?now.getMonth():0,
+  search:'', f:{status:'all',bayar:'all',jenis:'all',spt:'all'}, page:1, sel:new Set()};
+const NAV=[
+  {sec:'Utama'},{id:'dashboard',label:'Dashboard',ic:'grid'},
+  {sec:'PPN'},{id:'PM',label:'Pajak Masukan',ic:'in'},{id:'PK',label:'Pajak Keluaran',ic:'out'},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
+  {sec:'PPh'},{id:'PPH21',label:'PPh 21',ic:'users'},{id:'PPHU',label:'PPh Unifikasi',ic:'receipt'},
+  {sec:'Sistem'},{id:'settings',label:'Pengaturan & Tema',ic:'gear'},
 ];
-function go(v){ state.view=v; state.page=1; state.search=''; state.status='all'; closeSidebar(); render(); window.scrollTo(0,0); }
+const TITLES={dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PK:'Monitoring Pajak Keluaran',PPH21:'Laporan PPh 21',PPHU:'Laporan PPh Unifikasi',spt:'Monitoring Status SPT Rekanan',settings:'Pengaturan'};
+function resetFilters(){ state.page=1; state.search=''; state.f={status:'all',bayar:'all',jenis:'all',spt:'all'}; state.sel=new Set(); }
+function go(v){ state.view=v; resetFilters(); closeSidebar(); render(); window.scrollTo(0,0); }
 function openSidebar(){ $('#sidebar').classList.add('open'); $('#overlay').hidden=false; }
 function closeSidebar(){ $('#sidebar').classList.remove('open'); $('#overlay').hidden=true; }
-$('#yearSel').addEventListener('change',e=>{ state.year=+e.target.value; state.page=1; render(); });
-
+$('#yearSel').addEventListener('change',e=>{ state.year=+e.target.value; state.page=1; state.sel=new Set(); render(); });
 function render(){
-  $('#nav').innerHTML = NAV.map(n=> n.sec ? `<div class="nav-label">${n.sec}</div>`
-    : `<a class="${state.view===n.id?'active':''}" onclick="go('${n.id}')">${icon(n.ic)}<span>${n.label}</span></a>`).join('');
-  $('#yearSel').innerHTML = years().map(y=>`<option value="${y}" ${y===state.year?'selected':''}>Tahun ${y}</option>`).join('');
-  $('#yearSel').hidden = state.view==='settings';
-  const titles = {dashboard:'Dashboard PPN', PM:'Monitoring Pajak Masukan', PK:'Monitoring Pajak Keluaran', settings:'Pengaturan'};
-  $('#pageTitle').textContent = titles[state.view];
+  $('#nav').innerHTML=NAV.map(n=>n.sec?`<div class="nav-label">${n.sec}</div>`
+    :`<a class="${state.view===n.id?'active':''}" onclick="go('${n.id}')">${icon(n.ic)}<span>${n.label}</span></a>`).join('');
+  $('#yearSel').innerHTML=years().map(y=>`<option value="${y}" ${y===state.year?'selected':''}>Tahun ${y}</option>`).join('');
+  $('#yearSel').hidden=state.view==='settings';
+  $('#pageTitle').textContent=TITLES[state.view];
   if(state.view==='dashboard') renderDashboard();
   else if(state.view==='settings') renderSettings();
-  else renderPajak(state.view);
+  else if(state.view==='spt') renderSpt();
+  else renderData(state.view);
+}
+
+/* =========================================================
+   PERHITUNGAN
+========================================================= */
+function rekapData(y){
+  return MONTHS.map((n,i)=>{
+    const pm=getRows('PM',y,i), pk=getRows('PK',y,i), ok=pm.filter(r=>!isCanceled(r));
+    const paid=ok.filter(r=>r.bayar), unpaid=ok.filter(r=>!r.bayar), S=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0);
+    const vPM=S(ok,'ppn');
+    return {i,n,cPM:pm.length,cPK:pk.length,vPM,dPM:S(ok,'dpp'),vPK:sumF(pk,'ppn'),dPK:sumF(pk,'dpp'),
+      paidPPN:S(paid,'ppn'),paidDPP:S(paid,'dpp'),paidN:paid.length,unpaidPPN:S(unpaid,'ppn'),unpaidDPP:S(unpaid,'dpp'),unpaidN:unpaid.length,
+      restitusi:vPM,has:!!(pm.length||pk.length)};
+  });
+}
+/* Proyek KSO dengan fasilitas: status selalu Lebih Bayar dan PPN Masukan diajukan restitusi */
+const statusText = r => r.has?'Lebih Bayar':'Belum ada data';
+const rkKey = r => { const d=String(r.npwp||'').replace(/\D/g,''); return d?d:'N:'+String(r.nama||'').trim().toUpperCase(); };
+function sptList(y,m){
+  const g={};
+  getRows('PM',y,m).forEach(r=>{ if(isCanceled(r)) return; const k=rkKey(r);
+    const o=g[k]||(g[k]={rk:k,nama:r.nama||'-',npwp:r.npwp||'',n:0,dpp:0,ppn:0});
+    o.n++; o.dpp+=+r.dpp||0; o.ppn+=+r.ppn||0; });
+  return Object.values(g).map(o=>({...o,spt:DB.spt[`${key(y,m)}|${o.rk}`]||null})).sort((a,b)=>b.ppn-a.ppn);
+}
+function sptYear(y){ let tot=0,up=0; for(let m=0;m<12;m++){ const l=sptList(y,m); tot+=l.length; up+=l.filter(x=>x.spt).length; } return {tot,up}; }
+function repOf(t,y,m){ return (DB.reports[t]||{})[key(y,m)]||null; }
+function pphSummary(y,t){
+  let total=0,base=0,n=0,withData=0,lapor=0; const months=[];
+  for(let m=0;m<12;m++){ const rows=getRows(t,y,m), rep=repOf(t,y,m);
+    total+=sumF(rows,'pph'); base+=sumF(rows,TYPES[t].base); n+=rows.length;
+    const has=rows.length>0, done=rep&&rep.lapor==='Sudah';
+    if(has) withData++; if(done) lapor++;
+    months.push(done?'ok':has?'wait':''); }
+  return {total,base,n,withData,lapor,months};
 }
 
 /* =========================================================
    DASHBOARD
 ========================================================= */
 let chart=null;
-const isKSO = () => DB.settings.kso!==false;
-function rekapData(y){
-  return MONTHS.map((n,i)=>{
-    const pm=getRows('PM',y,i), pk=getRows('PK',y,i);
-    const vPM=sumF(pm,'ppn'), vPK=sumF(pk,'ppn');
-    return {i,n,cPM:pm.length,cPK:pk.length,vPM,vPK,dPM:sumF(pm,'dpp'),dPK:sumF(pk,'dpp'),diff:vPK-vPM,has:!!(pm.length||pk.length)};
-  });
-}
-/* Proyek KSO dengan fasilitas: status selalu Lebih Bayar (tidak ada Kurang Bayar) */
-function statusText(r){
-  if(!r.has) return 'Belum ada data';
-  if(isKSO()) return 'Lebih Bayar';
-  return r.diff>0?'Kurang Bayar':r.diff<0?'Lebih Bayar':'Nihil';
-}
 function renderDashboard(){
-  const y=state.year;
-  const rec = rekapData(y);
-  const tPM=rec.reduce((a,r)=>a+r.vPM,0), tPK=rec.reduce((a,r)=>a+r.vPK,0), diff=tPK-tPM;
-  const dPM=rec.reduce((a,r)=>a+r.dPM,0), dPK=rec.reduce((a,r)=>a+r.dPK,0);
-  const cnt=rec.reduce((a,r)=>a+r.cPM,0), uploaded=rec.filter(r=>r.cPM).length;
-
-  // Top supplier
-  const agg={};
-  for(let i=0;i<12;i++) getRows('PM',y,i).forEach(r=>{ if(isCanceled(r))return; const k=r.npwp||r.nama||'-'; agg[k]=agg[k]||{nama:r.nama||'-',npwp:r.npwp||'',ppn:0,n:0}; agg[k].ppn+=+r.ppn||0; agg[k].n++; });
+  const y=state.year, rec=rekapData(y), T=f=>rec.reduce((a,r)=>a+r[f],0);
+  const tPM=T('vPM'), tPK=T('vPK'), dPM=T('dPM'), dPK=T('dPK'), cnt=T('cPM'), uploaded=rec.filter(r=>r.cPM).length;
+  const resMonths=rec.filter(r=>r.restitusi>0).length;
+  const pP=T('paidPPN'), pD=T('paidDPP'), pN=T('paidN'), uP=T('unpaidPPN'), uD=T('unpaidDPP'), uN=T('unpaidN');
+  const pct=(pP+uP)?pP/(pP+uP)*100:0;
+  const agg={}, un={};
+  for(let i=0;i<12;i++) getRows('PM',y,i).forEach(r=>{ if(isCanceled(r))return; const k=rkKey(r);
+    (agg[k]=agg[k]||{nama:r.nama||'-',npwp:r.npwp||'',ppn:0,n:0}); agg[k].ppn+=+r.ppn||0; agg[k].n++;
+    if(!r.bayar){ (un[k]=un[k]||{nama:r.nama||'-',npwp:r.npwp||'',ppn:0,dpp:0,n:0}); un[k].ppn+=+r.ppn||0; un[k].dpp+=+r.dpp||0; un[k].n++; } });
   const top=Object.values(agg).sort((a,b)=>b.ppn-a.ppn).slice(0,6);
+  const topUn=Object.values(un).sort((a,b)=>b.ppn-a.ppn).slice(0,4);
+  const p21=pphSummary(y,'PPH21'), pu=pphSummary(y,'PPHU'), sp=sptYear(y);
+  const mp=s=>`<div class="mp">${s.months.map((c,i)=>`<i class="${c}" title="${MONTHS[i]}"></i>`).join('')}</div>`;
 
-  const statusBadge = r => { const t=statusText(r);
-    return `<span class="badge ${t==='Lebih Bayar'?'b-success':t==='Kurang Bayar'?'b-danger':t==='Nihil'?'b-primary':'b-muted'}">${t}</span>`; };
-  const kso=isKSO(), anyData=rec.some(r=>r.has);
-  const diffColor = v => kso ? 'inherit' : v>0?'var(--danger)':v<0?'var(--success)':'inherit';
-
-  $('#view').innerHTML = `
-  <div class="grid kpis" style="margin-bottom:18px">
+  $('#view').innerHTML=`
+  <div class="grid kpis mb">
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('in')}</span>PPN Masukan ${y}</div><div class="val">${rp(tPM)}</div><div class="foot">DPP ${rp(dPM)}</div></div>
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('out')}</span>PPN Keluaran ${y}</div><div class="val">${rp(tPK)}</div><div class="foot">DPP ${rp(dPK)}</div></div>
-    <div class="card kpi"><div class="lbl"><span class="ico">${icon('scale')}</span>Status PPN ${y}</div>
-      <div class="val" style="color:${!anyData?'var(--muted)':kso||diff<0?'var(--success)':diff>0?'var(--danger)':'inherit'}">${!anyData?'Belum ada data':kso?'Lebih Bayar':diff>0?'Kurang Bayar':diff<0?'Lebih Bayar':'Nihil'}</div>
-      <div class="foot">Selisih PK − PM: ${rp(diff)}${kso?'<br>Fasilitas KSO':''}</div></div>
+    <div class="card kpi hl"><div class="lbl"><span class="ico">${icon('refund')}</span>Total Pengajuan Restitusi ${y}</div><div class="val">${rp(tPM)}</div>
+      <div class="foot">${resMonths} masa pajak diajukan restitusi · Lebih Bayar (fasilitas KSO)</div></div>
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('receipt')}</span>Faktur Pajak Masukan</div><div class="val">${fmt(cnt)} <span style="font-size:13px;color:var(--muted);font-weight:600">faktur</span></div>
       <div class="foot" style="margin-bottom:8px">${uploaded} dari 12 bulan sudah diupload</div><div class="progress"><span style="width:${uploaded/12*100}%"></span></div></div>
   </div>
 
-  <div class="grid two" style="margin-bottom:18px">
+  <div class="card mb">
+    <div class="card-h"><div><h3>Status Pembayaran Pajak Masukan ${y}</h3><p>DPP dan PPN atas faktur pajak masukan yang sudah dan belum dibayar kepada rekanan</p></div>
+      <button class="btn btn-outline btn-sm" onclick="go('PM')">${icon('wallet')} Kelola pembayaran</button></div>
+    <div class="card-b">
+      <div class="pay-grid">
+        <div class="pay-box ok"><div class="pay-h">${icon('check')} Sudah Dibayar <span class="badge b-success">${fmt(pN)} faktur</span></div>
+          <div class="pay-row"><small>DPP</small><b>${rp(pD)}</b></div><div class="pay-row"><small>PPN</small><b>${rp(pP)}</b></div><div class="pay-row"><small>DPP + PPN</small><b>${rp(pD+pP)}</b></div></div>
+        <div class="pay-box no"><div class="pay-h">${icon('clock')} Belum Dibayar <span class="badge b-warning">${fmt(uN)} faktur</span></div>
+          <div class="pay-row"><small>DPP</small><b>${rp(uD)}</b></div><div class="pay-row"><small>PPN</small><b>${rp(uP)}</b></div><div class="pay-row"><small>DPP + PPN</small><b>${rp(uD+uP)}</b></div></div>
+        <div class="pay-side"><h4>Rekanan belum dibayar (terbesar)</h4>
+          ${topUn.length?`<ul class="top-list">${topUn.map((t,i)=>`<li><span class="rank" style="background:rgba(217,119,6,.13);color:var(--warning)">${i+1}</span><div class="nm"><b title="${esc(t.nama)}">${esc(t.nama)}</b><small>${t.n} faktur · DPP ${short(t.dpp)}</small></div><span class="amt">${short(t.ppn)}</span></li>`).join('')}</ul>`
+            :`<div class="empty" style="padding:22px 0">${cnt?'Semua faktur sudah dibayar 🎉':'Belum ada data pajak masukan.'}</div>`}</div>
+      </div>
+      <div class="pay-bar"><span style="width:${pct}%"></span></div>
+      <div class="pay-legend"><span style="color:var(--success)">● PPN sudah dibayar ${pct.toFixed(1).replace('.',',')}%</span><span style="color:var(--warning)">● Belum dibayar ${(100-pct).toFixed(1).replace('.',',')}%</span></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Masa Pajak</th><th class="num">Faktur</th><th class="num">DPP Dibayar</th><th class="num">PPN Dibayar</th><th class="num">DPP Belum Dibayar</th><th class="num">PPN Belum Dibayar</th><th class="num">% Dibayar</th></tr></thead>
+      <tbody>${rec.filter(r=>r.cPM).map(r=>{ const t=r.paidPPN+r.unpaidPPN, p=t?r.paidPPN/t*100:0;
+        return `<tr class="clickable" onclick="state.month=${r.i};go('PM')"><td><b>${r.n}</b></td><td class="num">${fmt(r.paidN+r.unpaidN)}</td>
+        <td class="num" style="color:var(--success)">${rp(r.paidDPP)}</td><td class="num" style="color:var(--success);font-weight:700">${rp(r.paidPPN)}</td>
+        <td class="num" style="color:var(--warning)">${rp(r.unpaidDPP)}</td><td class="num" style="color:var(--warning);font-weight:700">${rp(r.unpaidPPN)}</td>
+        <td class="num"><span class="badge ${p>=100?'b-success':p>0?'b-primary':'b-warning'}">${p.toFixed(0)}%</span></td></tr>`; }).join('')
+        || `<tr><td colspan="7"><div class="empty" style="padding:20px">Belum ada data pajak masukan tahun ${y}.</div></td></tr>`}</tbody>
+      ${cnt?`<tfoot><tr><td>Total</td><td class="num">${fmt(pN+uN)}</td><td class="num">${rp(pD)}</td><td class="num">${rp(pP)}</td><td class="num">${rp(uD)}</td><td class="num">${rp(uP)}</td><td class="num">${pct.toFixed(0)}%</td></tr></tfoot>`:''}
+    </table></div>
+  </div>
+
+  <div class="grid two mb">
     <div class="card">
-      <div class="card-h"><div><h3>Grafik PPN per Bulan</h3><p>PPN Masukan vs Keluaran tahun ${y}</p></div>
+      <div class="card-h"><div><h3>Grafik PPN per Bulan</h3><p>PPN Masukan, PPN Keluaran, dan PPN yang sudah dibayar · ${y}</p></div>
         <button class="btn btn-primary btn-sm" onclick="openImport('PM')">${icon('upload')} Import Pajak Masukan</button></div>
       <div class="card-b"><div class="chart-box"><canvas id="chartPPN"></canvas></div></div>
     </div>
@@ -782,38 +1121,53 @@ function renderDashboard(){
       <div class="card-b">
         <div class="month-pills">${rec.map(r=>`<span class="${r.cPM?'ok':''}" title="${r.n}: ${r.cPM} faktur">${MONTHS_S[r.i]}</span>`).join('')}</div>
         <h3 style="font-size:14px;margin:22px 0 4px">Top Penjual (PPN Masukan)</h3>
-        ${top.length ? `<ul class="top-list">${top.map((t,i)=>`<li><span class="rank">${i+1}</span><div class="nm"><b title="${esc(t.nama)}">${esc(t.nama)}</b><small>${esc(t.npwp)} · ${t.n} faktur</small></div><span class="amt">${short(t.ppn)}</span></li>`).join('')}</ul>`
-          : `<div class="empty" style="padding:24px 0">Belum ada data penjual.</div>`}
+        ${top.length?`<ul class="top-list">${top.map((t,i)=>`<li><span class="rank">${i+1}</span><div class="nm"><b title="${esc(t.nama)}">${esc(t.nama)}</b><small>${esc(t.npwp)} · ${t.n} faktur</small></div><span class="amt">${short(t.ppn)}</span></li>`).join('')}</ul>`
+          :`<div class="empty" style="padding:24px 0">Belum ada data penjual.</div>`}
       </div>
     </div>
   </div>
 
+  <div class="grid three mb">
+    <div class="card sum-card" onclick="go('PPH21')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('users')}</span>PPh 21 · ${y}</div></div>
+      <div class="val">${rp(p21.total)}</div><div class="foot">${fmt(p21.n)} bukti potong · ${p21.lapor} dari ${p21.withData||0} bulan sudah dilaporkan</div>${mp(p21)}
+      <div class="legend-mini"><span><i style="background:var(--success)"></i>Sudah lapor</span><span><i style="background:#f59e0b"></i>Belum lapor</span></div></div>
+    <div class="card sum-card" onclick="go('PPHU')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('receipt')}</span>PPh Unifikasi · ${y}</div></div>
+      <div class="val">${rp(pu.total)}</div><div class="foot">${fmt(pu.n)} bukti potong · ${pu.lapor} dari ${pu.withData||0} bulan sudah dilaporkan</div>${mp(pu)}
+      <div class="legend-mini"><span><i style="background:var(--success)"></i>Sudah lapor</span><span><i style="background:#f59e0b"></i>Belum lapor</span></div></div>
+    <div class="card sum-card" onclick="go('spt')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico ${sp.tot&&sp.up===sp.tot?'g':'o'}">${icon('shield')}</span>SPT PPN Rekanan · ${y}</div></div>
+      <div class="val">${fmt(sp.up)} / ${fmt(sp.tot)}</div><div class="foot">bukti SPT terkumpul · ${fmt(sp.tot-sp.up)} belum diupload</div>
+      <div class="progress" style="margin-top:14px"><span style="width:${sp.tot?sp.up/sp.tot*100:0}%;background:var(--success)"></span></div>
+      <div class="legend-mini"><span>${sp.tot?(sp.up/sp.tot*100).toFixed(0):0}% lengkap</span></div></div>
+  </div>
+
   <div class="card">
-      <div class="card-h"><div><h3>Rekap PPN per Masa Pajak ${y}</h3><p>Klik baris untuk membuka detail Pajak Masukan bulan tersebut${kso?' · Status sesuai fasilitas KSO':''}</p></div>
-        <button class="btn btn-outline btn-sm" onclick="openExport('rekap')">${icon('download')} Export</button></div>
+    <div class="card-h"><div><h3>Rekap PPN per Masa Pajak ${y}</h3><p>Klik baris untuk membuka detail Pajak Masukan · PPN Masukan diajukan restitusi (fasilitas KSO)</p></div>
+      <button class="btn btn-outline btn-sm" onclick="openExport('rekap')">${icon('download')} Export</button></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Masa Pajak</th><th class="num">Faktur PM</th><th class="num">PPN Masukan</th><th class="num">Faktur PK</th><th class="num">PPN Keluaran</th><th class="num">Selisih (PK − PM)</th><th>Status</th></tr></thead>
+      <thead><tr><th>Masa Pajak</th><th class="num">Faktur PM</th><th class="num">PPN Masukan</th><th class="num">PPN Dibayar</th><th class="num">Faktur PK</th><th class="num">PPN Keluaran</th><th class="num">Restitusi</th><th>Status</th></tr></thead>
       <tbody>${rec.map(r=>`<tr class="clickable" onclick="state.month=${r.i};go('PM')">
-        <td><b>${r.n}</b></td><td class="num">${fmt(r.cPM)}</td><td class="num">${rp(r.vPM)}</td><td class="num">${fmt(r.cPK)}</td><td class="num">${rp(r.vPK)}</td>
-        <td class="num" style="font-weight:700;color:${diffColor(r.diff)}">${rp(r.diff)}</td><td>${statusBadge(r)}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><td>Total</td><td class="num">${fmt(cnt)}</td><td class="num">${rp(tPM)}</td><td class="num">${fmt(rec.reduce((a,r)=>a+r.cPK,0))}</td><td class="num">${rp(tPK)}</td><td class="num">${rp(diff)}</td><td></td></tr></tfoot>
+        <td><b>${r.n}</b></td><td class="num">${fmt(r.cPM)}</td><td class="num">${rp(r.vPM)}</td><td class="num" style="color:var(--success)">${rp(r.paidPPN)}</td>
+        <td class="num">${fmt(r.cPK)}</td><td class="num">${rp(r.vPK)}</td>
+        <td class="num" style="font-weight:800;color:${r.restitusi?'var(--primary)':'inherit'}">${rp(r.restitusi)}</td>
+        <td><span class="badge ${r.has?'b-success':'b-muted'}">${statusText(r)}</span></td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>Total</td><td class="num">${fmt(cnt)}</td><td class="num">${rp(tPM)}</td><td class="num">${rp(pP)}</td><td class="num">${fmt(T('cPK'))}</td><td class="num">${rp(tPK)}</td><td class="num">${rp(tPM)}</td><td></td></tr></tfoot>
     </table></div>
   </div>`;
   drawChart(rec);
 }
 function drawChart(rec){
   const el=$('#chartPPN'); if(!el) return;
-  if(!window.Chart){ el.parentElement.innerHTML='<div class="empty">Grafik tidak dapat dimuat — periksa koneksi internet.</div>'; return; }
+  if(!window.Chart){ el.parentElement.innerHTML='<div class="empty">Grafik sedang dimuat… periksa koneksi internet bila tidak muncul.</div>'; return; }
   if(chart) chart.destroy();
   const cs=getComputedStyle(document.documentElement);
   const prim=cs.getPropertyValue('--primary').trim(), rgb=cs.getPropertyValue('--primary-rgb').trim();
   const muted=cs.getPropertyValue('--muted').trim(), border=cs.getPropertyValue('--border').trim();
-  chart = new Chart(el,{
+  chart=new Chart(el,{
     type:'bar',
     data:{labels:MONTHS_S,datasets:[
       {label:'PPN Masukan',data:rec.map(r=>r.vPM),backgroundColor:prim,borderRadius:6,maxBarThickness:26,order:2},
       {label:'PPN Keluaran',data:rec.map(r=>r.vPK),backgroundColor:`rgba(${rgb},.3)`,borderRadius:6,maxBarThickness:26,order:2},
-      {type:'line',label:'Selisih PK − PM',data:rec.map(r=>r.diff),borderColor:'#f59e0b',backgroundColor:'#f59e0b',tension:.35,pointRadius:3,borderWidth:2,order:1}
+      {type:'line',label:'PPN Masukan Dibayar',data:rec.map(r=>r.paidPPN),borderColor:'#16a34a',backgroundColor:'#16a34a',tension:.35,pointRadius:3,borderWidth:2,order:1}
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{position:'bottom',labels:{color:muted,usePointStyle:true,boxWidth:8,font:{family:'Plus Jakarta Sans'}}},
@@ -823,118 +1177,338 @@ function drawChart(rec){
 }
 
 /* =========================================================
-   HALAMAN PAJAK MASUKAN / KELUARAN
+   HALAMAN DATA (Pajak Masukan, Pajak Keluaran, PPh 21, PPh Unifikasi)
 ========================================================= */
-function setMonth(i){ state.month=i; state.page=1; state.status='all'; render(); }
+function setMonth(i){ state.month=i; resetFilters(); render(); }
 function setSearch(v){ state.search=v; state.page=1; renderTableOnly(); }
-function setStatus(v){ state.status=v; state.page=1; renderTableOnly(); }
+function setFilter(k,v){ state.f[k]=v; state.page=1; renderTableOnly(); }
 function setPage(p){ state.page=p; renderTableOnly(); }
-
-function filteredRows(){
-  const q=state.search.trim().toLowerCase();
-  return getRows(state.view,state.year,state.month).filter(r=>{
-    if(state.status!=='all' && (r.status||'(kosong)')!==state.status) return false;
+function filteredRows(t){
+  const q=state.search.trim().toLowerCase(), f=state.f;
+  return getRows(t,state.year,state.month).filter(r=>{
+    if(f.status!=='all' && (r.status||'(kosong)')!==f.status) return false;
+    if(t==='PM' && f.bayar!=='all' && (!!r.bayar)!==(f.bayar==='sudah')) return false;
+    if(t==='PPHU' && f.jenis!=='all' && (r.jenis||'(kosong)')!==f.jenis) return false;
     if(!q) return true;
-    return [r.nofaktur,r.npwp,r.nama,r.ket].some(v=>String(v||'').toLowerCase().includes(q));
+    return [r[TYPES[t].id],r.npwp,r.nama,r.ket,r.kode,r.jenis].some(v=>String(v||'').toLowerCase().includes(q));
   });
 }
-
-function renderPajak(t){
-  const y=state.year, m=state.month, info=TYPE_INFO[t];
-  const rows=getRows(t,y,m);
-  const statuses=[...new Set(rows.map(r=>r.status||'(kosong)'))];
+function monthTabs(t,y,m,extra){
+  return `<div class="mtabs">${MONTHS.map((n,i)=>{ const c=getRows(t,y,i).length, x=extra?extra(i):'';
+    return `<button class="mtab ${i===m?'active':''}" onclick="setMonth(${i})" title="${n} ${y}">${x}<span>${MONTHS_S[i]}</span>${c?`<b class="cnt">${fmt(c)}</b>`:'<i class="dot"></i>'}</button>`; }).join('')}</div>`;
+}
+function renderData(t){
+  const T=TYPES[t], y=state.year, m=state.month, rows=getRows(t,y,m);
   const nBatal=rows.filter(isCanceled).length;
-  $('#view').innerHTML = `
-  <div class="mtabs">${MONTHS.map((n,i)=>{ const c=getRows(t,y,i).length;
-    return `<button class="mtab ${i===m?'active':''}" onclick="setMonth(${i})" title="${n} ${y}"><span>${MONTHS_S[i]}</span>${c?`<b class="cnt">${fmt(c)}</b>`:'<i class="dot"></i>'}</button>`; }).join('')}</div>
-
-  <div class="grid minis">
+  const statuses=[...new Set(rows.map(r=>r.status||'(kosong)'))];
+  const flag = T.report ? i=>{ const r=repOf(t,y,i), has=getRows(t,y,i).length; return r&&r.lapor==='Sudah'?'<i class="flag ok" title="Sudah dilaporkan"></i>':has?'<i class="flag wait" title="Belum dilaporkan"></i>':''; } : null;
+  let minis;
+  if(T.group==='PPN'){
+    const ok=rows.filter(r=>!isCanceled(r)), paid=ok.filter(r=>r.bayar);
+    minis=`
     <div class="card mini"><small>Jumlah Faktur</small><b>${fmt(rows.length)}${nBatal?` <span class="badge b-warning" style="font-size:10.5px">${nBatal} batal</span>`:''}</b></div>
     <div class="card mini"><small>Total DPP</small><b>${rp(sumF(rows,'dpp'))}</b></div>
     <div class="card mini"><small>Total ${t==='PM'?'PPN Masukan':'PPN Keluaran'}</small><b style="color:var(--primary)">${rp(sumF(rows,'ppn'))}</b></div>
-    <div class="card mini"><small>Total PPnBM</small><b>${rp(sumF(rows,'ppnbm'))}</b></div>
-  </div>
-
+    ${t==='PM'?`<div class="card mini"><small>PPN Sudah Dibayar</small><b style="color:var(--success)">${rp(paid.reduce((a,r)=>a+(+r.ppn||0),0))}</b><span class="sub">${paid.length} dari ${ok.length} faktur · belum: ${rp(ok.filter(r=>!r.bayar).reduce((a,r)=>a+(+r.ppn||0),0))}</span></div>`
+      :`<div class="card mini"><small>Total PPnBM</small><b>${rp(sumF(rows,'ppnbm'))}</b></div>`}`;
+  } else {
+    const rep=repOf(t,y,m);
+    minis=`
+    <div class="card mini"><small>Jumlah Bukti Potong</small><b>${fmt(rows.length)}${nBatal?` <span class="badge b-warning" style="font-size:10.5px">${nBatal} batal</span>`:''}</b></div>
+    <div class="card mini"><small>Total ${T.baseLabel}</small><b>${rp(sumF(rows,T.base))}</b></div>
+    <div class="card mini"><small>Total ${T.label} Dipotong</small><b style="color:var(--primary)">${rp(sumF(rows,'pph'))}</b></div>
+    <div class="card mini"><small>Status Laporan Bulan Ini</small><b><span class="badge ${rep&&rep.lapor==='Sudah'?'b-success':'b-warning'}">${rep&&rep.lapor==='Sudah'?'Sudah dilaporkan':'Belum dilaporkan'}</span></b></div>`;
+  }
+  $('#view').innerHTML=`
+  ${monthTabs(t,y,m,flag)}
+  <div class="grid minis">${minis}</div>
+  ${T.report?reportCard(t,y,m,rows):''}
   <div class="card">
     <div class="card-h">
-      <div><h3>${info.label} — ${MONTHS[m]} ${y}</h3><p>${rows.length?`${rows.length} faktur tersimpan`:'Belum ada data untuk masa pajak ini'}</p></div>
+      <div><h3>${T.label} — ${MONTHS[m]} ${y}</h3><p>${rows.length?`${fmt(rows.length)} ${T.unit} tersimpan`:'Belum ada data untuk masa pajak ini'}</p></div>
       <div class="toolbar">
-        <button class="btn btn-primary" onclick="openImport()">${icon('upload')} Import Excel</button>
-        <button class="btn btn-outline" onclick="downloadTemplate()">${icon('file')}<span class="hide-sm">Template</span></button>
+        <button class="btn btn-primary" onclick="openImport('${t}')">${icon('upload')} Import Excel</button>
+        <button class="btn btn-outline" onclick="openRowForm('${t}')">${icon('plus')}<span class="hide-sm">Tambah</span></button>
+        <button class="btn btn-outline" onclick="downloadTemplate('${t}')">${icon('file')}<span class="hide-sm">Template</span></button>
         <button class="btn btn-outline" onclick="openExport('${t}')">${icon('download')}<span class="hide-sm">Export</span></button>
-        ${rows.length?`<button class="btn btn-danger" onclick="clearMonth()" title="Hapus data bulan ini">${icon('trash')}</button>`:''}
+        ${rows.length?`<button class="btn btn-danger" onclick="clearMonth('${t}')" title="Hapus data bulan ini">${icon('trash')}</button>`:''}
       </div>
     </div>
     ${rows.length?`
     <div class="card-b" style="padding-bottom:0">
-      <div class="toolbar">
-        <div class="search">${icon('search')}<input class="input" placeholder="Cari nomor faktur, NPWP, nama ${info.party.toLowerCase()}…" value="${esc(state.search)}" oninput="setSearch(this.value)"></div>
-        <select class="select" style="width:auto;min-width:160px" onchange="setStatus(this.value)">
-          <option value="all">Semua status</option>${statuses.map(s=>`<option ${s===state.status?'selected':''} value="${esc(s)}">${esc(s)}</option>`).join('')}
-        </select>
+      <div class="toolbar filters">
+        <div class="search">${icon('search')}<input class="input" placeholder="Cari nomor, NPWP, nama ${T.party.toLowerCase()}…" value="${esc(state.search)}" oninput="setSearch(this.value)"></div>
+        ${t==='PM'?`<select class="select" onchange="setFilter('bayar',this.value)"><option value="all">Semua pembayaran</option><option value="sudah" ${state.f.bayar==='sudah'?'selected':''}>Sudah dibayar</option><option value="belum" ${state.f.bayar==='belum'?'selected':''}>Belum dibayar</option></select>`:''}
+        ${t==='PPHU'?`<select class="select" onchange="setFilter('jenis',this.value)"><option value="all">Semua jenis PPh</option>${[...new Set(rows.map(r=>r.jenis||'(kosong)'))].map(s=>`<option ${s===state.f.jenis?'selected':''} value="${esc(s)}">${esc(s)}</option>`).join('')}</select>`:''}
+        <select class="select" onchange="setFilter('status',this.value)"><option value="all">Semua status</option>${statuses.map(s=>`<option ${s===state.f.status?'selected':''} value="${esc(s)}">${esc(s)}</option>`).join('')}</select>
       </div>
     </div>
     <div id="tableArea"></div>`
-    : `<div class="empty">${icon('file')}<b>Belum ada data ${info.label} ${MONTHS[m]} ${y}</b>Klik <b style="display:inline">Import Excel</b> untuk mengunggah data faktur.<br><br>
-       <button class="btn btn-primary" onclick="openImport()">${icon('upload')} Import Excel</button></div>`}
+    :`<div class="empty">${icon('file')}<b>Belum ada data ${T.label} ${MONTHS[m]} ${y}</b>Import dari Excel atau tambahkan data secara manual.<br><br>
+       <div class="toolbar" style="justify-content:center"><button class="btn btn-primary" onclick="openImport('${t}')">${icon('upload')} Import Excel</button><button class="btn btn-outline" onclick="openRowForm('${t}')">${icon('plus')} Tambah Manual</button></div></div>`}
   </div>`;
   if(rows.length) renderTableOnly();
 }
-
+function cellHTML(c,r){
+  const v=r[c.k];
+  switch(c.f){
+    case 'date': return `<td>${esc(fmtDate(v))}</td>`;
+    case 'strong': return `<td class="strike"><b>${esc(v||'-')}</b></td>`;
+    case 'num': return `<td class="num">${fmt(v)}</td>`;
+    case 'wide': return `<td class="wide" title="${esc(v)}">${esc(v||'-')}</td>`;
+    case 'status': return `<td>${v?`<span class="badge ${isCanceled(r)?'b-danger':/approv|setuju|normal|valid/i.test(v)?'b-success':'b-muted'}">${esc(v)}</span>`:'-'}</td>`;
+    case 'jenis': return `<td>${v?`<span class="badge b-primary">${esc(v)}</span>`:'-'}</td>`;
+    case 'bayar': return `<td><button class="badge ${r.bayar?'b-success':'b-warning'}" title="${r.bayar&&r.tglBayar?'Dibayar '+fmtDate(r.tglBayar)+' · ':''}Klik untuk mengubah" onclick="toggleBayar('${r.id}')">${r.bayar?'✓ Sudah dibayar':'Belum dibayar'}</button></td>`;
+    default: return `<td>${esc(v||'-')}</td>`;
+  }
+}
 function renderTableOnly(){
   const area=$('#tableArea'); if(!area) return;
-  const info=TYPE_INFO[state.view];
-  const list=filteredRows();
-  const pages=Math.max(1,Math.ceil(list.length/PER_PAGE));
-  if(state.page>pages) state.page=pages;
+  const t=state.view, T=TYPES[t], list=filteredRows(t), selMode=t==='PM';
+  const pages=Math.max(1,Math.ceil(list.length/PER_PAGE)); if(state.page>pages) state.page=pages;
   const start=(state.page-1)*PER_PAGE, slice=list.slice(start,start+PER_PAGE);
-  area.innerHTML = list.length ? `
-    <div class="table-wrap" style="margin-top:16px"><table>
-      <thead><tr><th>No</th><th>Tanggal</th><th>Nomor Faktur</th><th>NPWP ${info.party}</th><th>Nama ${info.party}</th><th class="num">DPP</th><th class="num">PPN</th><th class="num">PPnBM</th><th>Status</th><th></th></tr></thead>
-      <tbody>${slice.map((r,i)=>`<tr class="${isCanceled(r)?'canceled':''}">
-        <td>${start+i+1}</td><td>${fmtDate(r.tanggal)}</td><td><b>${esc(r.nofaktur||'-')}</b></td><td>${esc(r.npwp||'-')}</td>
-        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.nama)}">${esc(r.nama||'-')}</td>
-        <td class="num">${fmt(r.dpp)}</td><td class="num"><b>${fmt(r.ppn)}</b></td><td class="num">${fmt(r.ppnbm)}</td>
-        <td>${r.status?`<span class="badge ${isCanceled(r)?'b-danger':/approv|setuju|normal|valid/i.test(r.status)?'b-success':'b-muted'}">${esc(r.status)}</span>`:'-'}</td>
-        <td><button class="icon-btn" style="width:30px;height:30px" title="Hapus" onclick="deleteRow('${r.id}')">${icon('trash')}</button></td></tr>`).join('')}</tbody>
-      <tfoot><tr><td colspan="5">Total (hasil filter, tanpa faktur batal)</td><td class="num">${fmt(sumF(list,'dpp'))}</td><td class="num">${fmt(sumF(list,'ppn'))}</td><td class="num">${fmt(sumF(list,'ppnbm'))}</td><td colspan="2"></td></tr></tfoot>
+  const allSel=slice.length&&slice.every(r=>state.sel.has(r.id));
+  const ok=list.filter(r=>!isCanceled(r)), sum=k=>ok.reduce((a,r)=>a+(+r[k]||0),0);
+  const nameIdx=T.cols.findIndex(c=>c.k==='nama');
+  area.innerHTML=(selMode&&state.sel.size?`
+    <div class="bulk">${state.sel.size} faktur dipilih<span class="sp"></span>
+      <button class="btn btn-success btn-sm" onclick="bulkBayar(true)">${icon('check')} Tandai Sudah Dibayar</button>
+      <button class="btn btn-outline btn-sm" onclick="bulkBayar(false)">Tandai Belum Dibayar</button>
+      <button class="btn btn-ghost btn-sm" onclick="state.sel=new Set();renderTableOnly()">Batal pilih</button></div>`:'')
+  +(list.length?`
+    <div class="table-wrap" style="margin-top:${selMode&&state.sel.size?0:16}px"><table>
+      <thead><tr>${selMode?`<th style="width:34px"><input type="checkbox" class="chk" ${allSel?'checked':''} onchange="selPage(this.checked)" title="Pilih semua di halaman ini"></th>`:''}<th>No</th>${T.cols.map(c=>`<th class="${c.f==='num'?'num':''}">${c.l}</th>`).join('')}<th></th></tr></thead>
+      <tbody>${slice.map((r,i)=>`<tr class="${isCanceled(r)?'canceled':''} ${state.sel.has(r.id)?'sel':''}">
+        ${selMode?`<td><input type="checkbox" class="chk" ${state.sel.has(r.id)?'checked':''} onchange="selRow('${r.id}',this.checked)"></td>`:''}
+        <td>${start+i+1}</td>${T.cols.map(c=>cellHTML(c,r)).join('')}
+        <td><div class="row-act"><button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button><button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button></div></td></tr>`).join('')}</tbody>
+      <tfoot><tr>${selMode?'<td></td>':''}<td></td>${T.cols.map((c,i)=>c.f==='num'?`<td class="num">${fmt(sum(c.k))}</td>`:i===nameIdx?`<td>Total (tanpa ${T.unit} batal)</td>`:'<td></td>').join('')}<td></td></tr></tfoot>
     </table></div>
-    <div class="pager"><span>Menampilkan ${start+1}–${Math.min(start+PER_PAGE,list.length)} dari ${fmt(list.length)} faktur</span>
+    <div class="pager"><span>Menampilkan ${start+1}–${Math.min(start+PER_PAGE,list.length)} dari ${fmt(list.length)} ${T.unit}</span>
       <div class="btns"><button class="btn btn-outline btn-sm" ${state.page<=1?'disabled':''} onclick="setPage(${state.page-1})">‹ Sebelumnya</button>
       <span class="btn btn-sm" style="cursor:default">${state.page} / ${pages}</span>
       <button class="btn btn-outline btn-sm" ${state.page>=pages?'disabled':''} onclick="setPage(${state.page+1})">Berikutnya ›</button></div></div>`
-  : `<div class="empty">Tidak ada faktur yang cocok dengan pencarian.</div>`;
+  :`<div class="empty">Tidak ada data yang cocok dengan pencarian/filter.</div>`);
 }
-
-function deleteRow(id){
-  const k=key(state.year,state.month), arr=DB.data[state.view][k]||[];
-  const r=arr.find(x=>x.id===id); if(!r) return;
-  confirmBox('Hapus faktur?',`Faktur <b>${esc(r.nofaktur||'-')}</b> dari ${esc(r.nama||'-')} akan dihapus.`,'Hapus',()=>{
-    DB.data[state.view][k]=arr.filter(x=>x.id!==id); if(!DB.data[state.view][k].length) delete DB.data[state.view][k];
-    save(); toast('Faktur dihapus','success'); render();
+function selRow(id,on){ on?state.sel.add(id):state.sel.delete(id); renderTableOnly(); }
+function selPage(on){ const list=filteredRows(state.view), start=(state.page-1)*PER_PAGE; list.slice(start,start+PER_PAGE).forEach(r=>on?state.sel.add(r.id):state.sel.delete(r.id)); renderTableOnly(); }
+async function toggleBayar(id){
+  const r=getRows('PM',state.year,state.month).find(x=>x.id===id); if(!r) return;
+  r.bayar=!r.bayar; r.tglBayar=r.bayar?(r.tglBayar||todayISO()):'';
+  await save(); refreshDataView();
+}
+async function bulkBayar(on){
+  let n=0; getRows('PM',state.year,state.month).forEach(r=>{ if(state.sel.has(r.id)){ r.bayar=on; r.tglBayar=on?(r.tglBayar||todayISO()):''; n++; } });
+  state.sel=new Set(); await save(); refreshDataView(); toast(`${n} faktur ditandai ${on?'sudah':'belum'} dibayar`,'success');
+}
+function refreshDataView(){ const y=window.scrollY; render(); window.scrollTo(0,y); }
+function deleteRow(t,id){
+  const k=key(state.year,state.month), arr=DB.data[t][k]||[], r=arr.find(x=>x.id===id); if(!r) return;
+  confirmBox('Hapus data?',`Data <b>${esc(r[TYPES[t].id]||'-')}</b> (${esc(r.nama||'-')}) akan dihapus.`,'Hapus',async()=>{
+    DB.data[t][k]=arr.filter(x=>x.id!==id); if(!DB.data[t][k].length) delete DB.data[t][k];
+    state.sel.delete(id); await save(); toast('Data dihapus','success'); refreshDataView();
   });
 }
-function clearMonth(){
-  const t=state.view, k=key(state.year,state.month);
-  confirmBox('Hapus data bulan ini?',`Semua data ${TYPE_INFO[t].label} masa <b>${MONTHS[state.month]} ${state.year}</b> (${getRows(t,state.year,state.month).length} faktur) akan dihapus permanen.`,'Hapus Semua',()=>{
-    delete DB.data[t][k]; save(); toast('Data bulan dihapus','success'); render();
+function clearMonth(t){
+  const k=key(state.year,state.month);
+  confirmBox('Hapus data bulan ini?',`Semua data ${TYPES[t].label} masa <b>${MONTHS[state.month]} ${state.year}</b> (${getRows(t,state.year,state.month).length} ${TYPES[t].unit}) akan dihapus permanen.`,'Hapus Semua',async()=>{
+    delete DB.data[t][k]; state.sel=new Set(); await save(); toast('Data bulan dihapus','success'); render();
+  });
+}
+/* ---------- Form tambah / ubah data ---------- */
+function openRowForm(t,id){
+  const T=TYPES[t], r=id?getRows(t,state.year,state.month).find(x=>x.id===id):null, v=k=>r?r[k]:'';
+  const fieldHTML=f=>{
+    const lab=`<label>${f.l}${f.req?' <span class="req">*</span>':''}</label>`, val=v(f.k);
+    let inp;
+    if(f.type==='date') inp=`<input class="input" type="date" name="${f.k}" value="${esc(/^\d{4}-\d{2}-\d{2}$/.test(val||'')?val:'')}">`;
+    else if(f.type==='num') inp=`<input class="input" name="${f.k}" inputmode="decimal" value="${val?fmt(val):''}" placeholder="0">`;
+    else if(f.type==='select') inp=`<select class="select" name="${f.k}"><option value="">— pilih —</option>${f.opts.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    else if(f.type==='bayar') inp=`<select class="select" name="${f.k}"><option value="0" ${!val?'selected':''}>Belum dibayar</option><option value="1" ${val?'selected':''}>Sudah dibayar</option></select>`;
+    else inp=`<input class="input" name="${f.k}" value="${esc(val||'')}" ${f.list?`list="dl-${f.k}"`:''}>${f.list?`<datalist id="dl-${f.k}">${f.list.map(o=>`<option value="${o}">`).join('')}</datalist>`:''}`;
+    return `<div class="field ${f.full?'full':''}">${lab}${inp}</div>`;
+  };
+  openModal(`
+    <div class="modal-h"><div><h3>${r?'Ubah':'Tambah'} Data ${T.label}</h3><p>Masa pajak ${MONTHS[state.month]} ${state.year}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form id="rowForm" onsubmit="saveRowForm(event,'${t}','${id||''}')"><div class="modal-b"><div class="form-grid">${T.form.map(fieldHTML).join('')}</div></div>
+    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`,'lg');
+}
+async function saveRowForm(e,t,id){
+  e.preventDefault();
+  const T=TYPES[t], fd=new FormData($('#rowForm')), rec={};
+  for(const f of T.form){
+    let val=(fd.get(f.k)||'').toString().trim();
+    if(f.req && !val){ toast(`${f.l} wajib diisi`,'error'); return; }
+    if(f.type==='num') val=toNum(val); else if(f.type==='bayar') val=val==='1';
+    rec[f.k]=val;
+  }
+  if(T.pay){ if(rec.bayar && !rec.tglBayar) rec.tglBayar=todayISO(); if(!rec.bayar) rec.tglBayar=''; }
+  const k=key(state.year,state.month), arr=DB.data[t][k]||(DB.data[t][k]=[]);
+  if(id){ const r=arr.find(x=>x.id===id); if(r) Object.assign(r,rec); }
+  else {
+    const fk=fakturKey(rec[T.id]); if(fk && arr.some(x=>fakturKey(x[T.id])===fk)){ toast(`Nomor ${rec[T.id]} sudah ada di bulan ini`,'error'); return; }
+    arr.push({id:uid(),masa:state.month,tahun:state.year,...rec});
+  }
+  if(await save()){ closeModal(); toast(id?'Data diperbarui':'Data ditambahkan','success'); refreshDataView(); }
+}
+
+/* ---------- Status laporan bulanan PPh ---------- */
+function reportCard(t,y,m,rows){
+  const r=repOf(t,y,m)||{}, total=sumF(rows,'pph');
+  const b=(v,ok,no)=>`<span class="badge ${v==='Sudah'?'b-success':'b-warning'}">${v==='Sudah'?ok:no}</span>`;
+  return `<div class="card rep-card">
+    <div class="card-h"><div><h3>Laporan SPT Masa ${TYPES[t].label} — ${MONTHS[m]} ${y}</h3><p>Rekam status penyetoran dan pelaporan setiap bulan</p></div>
+      <button class="btn btn-primary btn-sm" onclick="openReport('${t}')">${icon('edit')} ${r.setor||r.lapor?'Ubah':'Isi'} Status Laporan</button></div>
+    <div class="card-b"><div class="rep-grid">
+      <div class="rep-item"><small>Status Setor</small>${b(r.setor,'Sudah disetor','Belum disetor')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglSetor?fmtDate(r.tglSetor):'—'}${r.ntpn?' · NTPN '+esc(r.ntpn):''}</div></div>
+      <div class="rep-item"><small>Jumlah Disetor</small><b>${rp(r.jmlSetor!=null&&r.jmlSetor!==''?r.jmlSetor:(r.setor==='Sudah'?total:0))}</b><div style="font-size:12px;color:var(--muted);margin-top:2px">PPh dipotong: ${rp(total)}</div></div>
+      <div class="rep-item"><small>Status Lapor SPT</small>${b(r.lapor,'Sudah dilaporkan','Belum dilaporkan')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglLapor?fmtDate(r.tglLapor):'—'}${r.bpe?' · BPE '+esc(r.bpe):''}</div></div>
+      <div class="rep-item"><small>Bukti Lapor (PDF)</small>${r.file?`<span class="file-pill" onclick="openStoredFile('${r.file.id}','${esc(r.file.name)}')">${icon('file')}<span>${esc(r.file.name)}</span></span>`:'<b style="color:var(--muted);font-size:13px">Belum diupload</b>'}</div>
+    </div>${r.ket?`<div class="note">${esc(r.ket)}</div>`:''}</div></div>`;
+}
+function pdfField(cur){
+  return `<label class="drop ${cur?'has':''}" id="pdfDrop">${icon(cur?'file':'upload')}<b id="pdfName">${cur?esc(cur.name):'Pilih file PDF'}</b><small id="pdfSub">${cur?fmtSize(cur.size)+' · klik untuk mengganti':'Format PDF — tanpa batas ukuran'}</small>
+    <input type="file" id="pdfIn" accept="application/pdf,.pdf" hidden onchange="pickPdf(this.files[0])"></label>
+    ${cur?`<div class="toolbar" style="margin-top:8px"><button type="button" class="btn btn-outline btn-sm" onclick="openStoredFile('${cur.id}','${esc(cur.name)}')">${icon('eye')} Lihat file saat ini</button><button type="button" class="btn btn-danger btn-sm" onclick="FORMFILE.remove=true;FORMFILE.file=null;$('#pdfName').textContent='File akan dihapus saat disimpan';$('#pdfSub').textContent='';">Hapus file</button></div>`:''}`;
+}
+let FORMFILE={file:null,remove:false};
+function pickPdf(f){
+  if(!f) return;
+  if(!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)){ toast('File harus berformat PDF','error'); return; }
+  FORMFILE={file:f,remove:false};
+  $('#pdfDrop').classList.add('has'); $('#pdfName').textContent=f.name; $('#pdfSub').textContent=fmtSize(f.size)+' · siap disimpan';
+}
+async function storePdf(cur){
+  if(FORMFILE.file){ const id=uid(); await putFile(id,FORMFILE.file); if(cur) await delFile(cur.id);
+    if(STORAGE_MODE!=='idb') toast('Penyimpanan browser terbatas: file PDF hanya tersimpan sementara','error');
+    return {id,name:FORMFILE.file.name,size:FORMFILE.file.size,at:new Date().toISOString()}; }
+  if(FORMFILE.remove && cur){ await delFile(cur.id); return null; }
+  return cur||null;
+}
+function openReport(t){
+  const y=state.year,m=state.month, r=repOf(t,y,m)||{}, total=sumF(getRows(t,y,m),'pph'); FORMFILE={file:null,remove:false};
+  const sel=(n,v)=>`<select class="select" name="${n}"><option ${v!=='Sudah'?'selected':''}>Belum</option><option ${v==='Sudah'?'selected':''}>Sudah</option></select>`;
+  openModal(`
+    <div class="modal-h"><div><h3>Status Laporan ${TYPES[t].label}</h3><p>Masa pajak ${MONTHS[m]} ${y} · PPh dipotong ${rp(total)}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form id="repForm" onsubmit="saveReport(event,'${t}')"><div class="modal-b"><div class="form-grid">
+      <div class="field"><label>Status Setor</label>${sel('setor',r.setor)}</div>
+      <div class="field"><label>Tanggal Setor</label><input class="input" type="date" name="tglSetor" value="${esc(r.tglSetor||'')}"></div>
+      <div class="field"><label>NTPN</label><input class="input" name="ntpn" value="${esc(r.ntpn||'')}"></div>
+      <div class="field"><label>Jumlah Disetor</label><input class="input" name="jmlSetor" inputmode="decimal" value="${r.jmlSetor!=null&&r.jmlSetor!==''?fmt(r.jmlSetor):''}" placeholder="${fmt(total)}"></div>
+      <div class="field"><label>Status Lapor SPT</label>${sel('lapor',r.lapor)}</div>
+      <div class="field"><label>Tanggal Lapor</label><input class="input" type="date" name="tglLapor" value="${esc(r.tglLapor||'')}"></div>
+      <div class="field full"><label>Nomor BPE / Bukti Penerimaan Elektronik</label><input class="input" name="bpe" value="${esc(r.bpe||'')}"></div>
+      <div class="field full"><label>Bukti Lapor / BPE (PDF, opsional)</label>${pdfField(r.file)}</div>
+      <div class="field full"><label>Keterangan</label><textarea class="textarea" name="ket">${esc(r.ket||'')}</textarea></div>
+    </div></div>
+    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit" id="repSave">${icon('check')} Simpan</button></div></form>`,'lg');
+}
+async function saveReport(e,t){
+  e.preventDefault(); const btn=$('#repSave'); btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…';
+  try{
+    const fd=new FormData($('#repForm')), k=key(state.year,state.month), cur=repOf(t,state.year,state.month)||{};
+    const js=(fd.get('jmlSetor')||'').toString().trim();
+    const rec={setor:fd.get('setor'),tglSetor:fd.get('tglSetor'),ntpn:(fd.get('ntpn')||'').trim(),jmlSetor:js?toNum(js):'',
+      lapor:fd.get('lapor'),tglLapor:fd.get('tglLapor'),bpe:(fd.get('bpe')||'').trim(),ket:(fd.get('ket')||'').trim()};
+    rec.file=await storePdf(cur.file);
+    (DB.reports[t]=DB.reports[t]||{})[k]=rec;
+    if(await save()){ closeModal(); toast('Status laporan disimpan','success'); render(); }
+  }catch(err){ console.error(err); toast('Gagal menyimpan: '+err.message,'error'); btn.disabled=false; btn.innerHTML=icon('check')+' Simpan'; }
+}
+
+/* =========================================================
+   STATUS SPT REKANAN
+========================================================= */
+function renderSpt(){
+  const y=state.year, m=state.month, list=sptList(y,m), up=list.filter(x=>x.spt).length;
+  const tabs=`<div class="mtabs">${MONTHS.map((n,i)=>{ const l=sptList(y,i), u=l.filter(x=>x.spt).length;
+    return `<button class="mtab ${i===m?'active':''}" onclick="setMonth(${i})" title="${n} ${y}">${l.length?`<i class="flag ${u===l.length?'ok':'wait'}"></i>`:''}<span>${MONTHS_S[i]}</span>${l.length?`<b class="cnt">${u}/${l.length}</b>`:'<i class="dot"></i>'}</button>`; }).join('')}</div>`;
+  $('#view').innerHTML=`
+  ${tabs}
+  <div class="grid minis">
+    <div class="card mini"><small>Rekanan (Pajak Masukan)</small><b>${fmt(list.length)}</b><span class="sub">${MONTHS[m]} ${y}</span></div>
+    <div class="card mini"><small>SPT Sudah Diupload</small><b style="color:var(--success)">${fmt(up)}</b></div>
+    <div class="card mini"><small>SPT Belum Diupload</small><b style="color:var(--warning)">${fmt(list.length-up)}</b></div>
+    <div class="card mini"><small>Kelengkapan Bukti SPT</small><b>${list.length?(up/list.length*100).toFixed(0):0}%</b><div class="progress" style="margin-top:6px"><span style="width:${list.length?up/list.length*100:0}%;background:var(--success)"></span></div></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><div><h3>Status SPT PPN Rekanan — ${MONTHS[m]} ${y}</h3><p>Daftar rekanan diambil otomatis dari data Pajak Masukan. Upload bukti SPT PPN (PDF) sebagai laporan bahwa setiap pajak masukan sudah dilaporkan rekanan.</p></div>
+      <div class="toolbar"><button class="btn btn-outline" onclick="openExport('spt')">${icon('download')}<span class="hide-sm">Export</span></button></div></div>
+    ${list.length?`
+    <div class="card-b" style="padding-bottom:0"><div class="toolbar filters">
+      <div class="search">${icon('search')}<input class="input" placeholder="Cari nama rekanan atau NPWP…" value="${esc(state.search)}" oninput="state.search=this.value;renderSptTable()"></div>
+      <select class="select" onchange="state.f.spt=this.value;renderSptTable()"><option value="all">Semua status</option><option value="sudah" ${state.f.spt==='sudah'?'selected':''}>Sudah upload SPT</option><option value="belum" ${state.f.spt==='belum'?'selected':''}>Belum upload SPT</option></select>
+    </div></div><div id="sptArea"></div>`
+    :`<div class="empty">${icon('shield')}<b>Belum ada rekanan pada ${MONTHS[m]} ${y}</b>Rekanan muncul otomatis setelah data Pajak Masukan bulan ini diimport.<br><br><button class="btn btn-primary" onclick="openImport('PM')">${icon('upload')} Import Pajak Masukan</button></div>`}
+  </div>`;
+  if(list.length) renderSptTable();
+}
+function renderSptTable(){
+  const area=$('#sptArea'); if(!area) return;
+  const q=state.search.trim().toLowerCase();
+  const list=sptList(state.year,state.month).filter(x=>(state.f.spt==='all'||(state.f.spt==='sudah')===!!x.spt) && (!q||(x.nama+' '+x.npwp).toLowerCase().includes(q)));
+  area.innerHTML=list.length?`<div class="table-wrap" style="margin-top:16px"><table>
+    <thead><tr><th>No</th><th>Nama Rekanan</th><th>NPWP</th><th class="num">Faktur</th><th class="num">DPP</th><th class="num">PPN Masukan</th><th>Status SPT</th><th>Tgl Lapor</th><th>Bukti SPT</th><th></th></tr></thead>
+    <tbody>${list.map((x,i)=>`<tr>
+      <td>${i+1}</td><td class="wide" title="${esc(x.nama)}"><b>${esc(x.nama)}</b></td><td>${esc(x.npwp||'-')}</td>
+      <td class="num">${fmt(x.n)}</td><td class="num">${fmt(x.dpp)}</td><td class="num"><b>${fmt(x.ppn)}</b></td>
+      <td><span class="badge ${x.spt?'b-success':'b-warning'}">${x.spt?'✓ Sudah upload':'Belum upload'}</span></td>
+      <td>${x.spt&&x.spt.tglLapor?fmtDate(x.spt.tglLapor):'—'}</td>
+      <td>${x.spt&&x.spt.file?`<span class="file-pill" onclick="openStoredFile('${x.spt.file.id}','${esc(x.spt.file.name)}')" title="Buka ${esc(x.spt.file.name)}">${icon('file')}<span>${esc(x.spt.file.name)}</span></span>`:'—'}</td>
+      <td><div class="row-act">${x.spt&&x.spt.file?`<button class="icon-btn xs" title="Unduh" onclick="openStoredFile('${x.spt.file.id}','${esc(x.spt.file.name)}',true)">${icon('download')}</button>`:''}
+        <button class="btn ${x.spt?'btn-outline':'btn-primary'} btn-sm" onclick="openSptForm('${esc(x.rk)}')">${icon(x.spt?'edit':'upload')} ${x.spt?'Ubah':'Upload SPT'}</button>
+        ${x.spt?`<button class="icon-btn xs" title="Hapus SPT" onclick="deleteSpt('${esc(x.rk)}')">${icon('trash')}</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`
+    :`<div class="empty">Tidak ada rekanan yang cocok dengan pencarian/filter.</div>`;
+}
+function openSptForm(rk){
+  const y=state.year,m=state.month, x=sptList(y,m).find(o=>o.rk===rk); if(!x) return;
+  const s=x.spt||{}; FORMFILE={file:null,remove:false};
+  openModal(`
+    <div class="modal-h"><div><h3>${x.spt?'Ubah':'Upload'} Bukti SPT PPN Rekanan</h3><p>${esc(x.nama)} · ${MONTHS[m]} ${y}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form id="sptForm" onsubmit="saveSpt(event,'${esc(rk)}')"><div class="modal-b">
+      <div class="note" style="margin:0 0 16px">NPWP ${esc(x.npwp||'-')} · ${x.n} faktur · DPP ${rp(x.dpp)} · PPN Masukan <b>${rp(x.ppn)}</b></div>
+      <div class="field"><label>File SPT PPN (PDF) <span class="req">*</span></label>${pdfField(s.file)}</div>
+      <div class="form-grid">
+        <div class="field"><label>Tanggal Lapor SPT</label><input class="input" type="date" name="tglLapor" value="${esc(s.tglLapor||'')}"></div>
+        <div class="field"><label>Nomor BPE / NTTE</label><input class="input" name="bpe" value="${esc(s.bpe||'')}"></div>
+        <div class="field full"><label>Keterangan</label><textarea class="textarea" name="ket">${esc(s.ket||'')}</textarea></div>
+      </div></div>
+    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit" id="sptSave">${icon('check')} Simpan</button></div></form>`);
+}
+async function saveSpt(e,rk){
+  e.preventDefault();
+  const k=`${key(state.year,state.month)}|${rk}`, cur=DB.spt[k]||{};
+  if(!FORMFILE.file && (!cur.file || FORMFILE.remove)){ toast('Pilih file SPT PPN dalam format PDF','error'); return; }
+  const btn=$('#sptSave'); btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…';
+  try{
+    const fd=new FormData($('#sptForm')), x=sptList(state.year,state.month).find(o=>o.rk===rk)||{};
+    const file=await storePdf(cur.file);
+    DB.spt[k]={file,nama:x.nama,npwp:x.npwp,tglLapor:fd.get('tglLapor'),bpe:(fd.get('bpe')||'').trim(),ket:(fd.get('ket')||'').trim(),at:new Date().toISOString()};
+    if(await save()){ closeModal(); toast('Bukti SPT disimpan','success'); render(); }
+  }catch(err){ console.error(err); toast('Gagal menyimpan: '+err.message,'error'); btn.disabled=false; btn.innerHTML=icon('check')+' Simpan'; }
+}
+function deleteSpt(rk){
+  const k=`${key(state.year,state.month)}|${rk}`, s=DB.spt[k]; if(!s) return;
+  confirmBox('Hapus bukti SPT?',`Bukti SPT <b>${esc(s.nama||'')}</b> masa ${MONTHS[state.month]} ${state.year} akan dihapus.`,'Hapus',async()=>{
+    if(s.file) await delFile(s.file.id); delete DB.spt[k]; await save(); toast('Bukti SPT dihapus','success'); render();
   });
 }
 
 /* =========================================================
-   IMPORT EXCEL
+   IMPORT EXCEL (semua modul)
 ========================================================= */
 let IMPORT=null;
-function openImport(type){
-  const t = type || (state.view==='PK'?'PK':'PM');
-  IMPORT={type:t,records:null,fileName:''};
+function schemaOf(t){ const T=TYPES[t]; return {fields:T.fields,need:T.need,key:T.key,id:T.id,needLabel:T.needLabel}; }
+function openImport(t){
+  t=t||(TYPES[state.view]?state.view:'PM'); const T=TYPES[t];
+  IMPORT={type:t,records:null};
   openModal(`
-    <div class="modal-h"><h3>Import ${TYPE_INFO[t].label} dari Excel</h3><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-h"><h3>Import ${T.label} dari Excel</h3><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b">
       <label class="drop" id="drop"><div id="dropIco">${icon('upload')}</div><b id="dropTitle">Pilih atau seret file Excel ke sini</b><small id="dropSub">Format .xlsx, .xls, atau .csv — tanpa batas ukuran file</small>
         <input type="file" id="fileIn" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" hidden></label>
       <label class="check" style="margin-top:14px"><input type="checkbox" id="autoSplit" onchange="updatePlan()">
-        <span><b>Pisahkan otomatis per bulan</b><small>Gunakan kolom Masa Pajak/Tahun (atau Tanggal Faktur) di file. Cocok untuk 1 file berisi beberapa bulan.</small></span></label>
+        <span><b>Pisahkan otomatis per bulan</b><small>Gunakan kolom Masa Pajak/Tahun (atau tanggal) di file. Cocok untuk 1 file berisi beberapa bulan.</small></span></label>
       <div class="row2" id="targetBox">
         <div class="field"><label>Masa Pajak (Bulan)</label><select class="select" id="tMonth" onchange="updatePlan()">${MONTHS.map((n,i)=>`<option value="${i}" ${i===state.month?'selected':''}>${n}</option>`).join('')}</select></div>
         <div class="field"><label>Tahun</label><select class="select" id="tYear" onchange="updatePlan()">${years().map(y=>`<option ${y===state.year?'selected':''}>${y}</option>`).join('')}</select></div>
@@ -944,7 +1518,7 @@ function openImport(type){
         <label><input type="radio" name="imode" value="replace" onchange="updatePlan()">Ganti data bulan tsb.</label>
       </div>
       <div id="planBox"></div>
-      <div class="note">Kolom yang dikenali: <b>NPWP Penjual/Pembeli, Nama, Nomor Faktur Pajak, Tanggal Faktur, Masa Pajak, Tahun, Status Faktur, DPP, DPP Nilai Lain, PPN, PPnBM</b>. Belum punya format? <a href="#" onclick="downloadTemplate();return false" style="color:var(--primary);font-weight:700">Unduh template</a>.</div>
+      <div class="note">Kolom wajib minimal: <b>"${T.needLabel}"</b>. ${t==='PM'?'Kolom <b>Status Pembayaran</b> (Sudah/Belum) dan <b>Tanggal Pembayaran</b> juga dikenali. ':''}Belum punya format? <a class="link" onclick="downloadTemplate('${t}')">Unduh template</a>.</div>
     </div>
     <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="btnSave" disabled onclick="commitImport()">${icon('check')} Simpan Data</button></div>`);
   const drop=$('#drop'), fi=$('#fileIn');
@@ -953,22 +1527,19 @@ function openImport(type){
   ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
   drop.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) readFile(f); });
 }
-
-function mapHeaders(hdr){
+function mapHeaders(hdr,fields){
   const norm=Array.from(hdr,h=>String(h??'').toLowerCase().replace(/[^a-z0-9]/g,''));
-  const map={}, used=new Set();
-  for(const [f,al] of Object.entries(ALIASES)) for(const a of al){ const i=norm.indexOf(a); if(i>=0&&!used.has(i)){ map[f]=i; used.add(i); break; } }
-  for(const [f,al] of Object.entries(ALIASES)){ if(f in map) continue;
-    for(const a of al){ if(a.length<6) continue; const i=norm.findIndex((h,j)=>!used.has(j)&&h.includes(a)); if(i>=0){ map[f]=i; used.add(i); break; } } }
+  const map={}, used=new Set(), ent=Object.entries(fields);
+  for(const [f,d] of ent) for(const a of d.a){ const i=norm.indexOf(a); if(i>=0&&!used.has(i)){ map[f]=i; used.add(i); break; } }
+  for(const [f,d] of ent){ if(f in map) continue;
+    for(const a of d.a){ if(a.length<6) continue; const i=norm.findIndex((h,j)=>!used.has(j)&&h.includes(a)); if(i>=0){ map[f]=i; used.add(i); break; } } }
   return map;
 }
-
-/* Parser workbook — dipakai di Web Worker (agar halaman tidak macet) dan sebagai cadangan di halaman utama */
-/* Memotong area sel "terpakai" yang membengkak (mis. A1:XFD1048576) menjadi area yang benar-benar berisi data */
+/* Memotong area sel "terpakai" yang membengkak (mis. A1:XFD1048576) */
 function trimRange(ws){
   let r0=Infinity,c0=Infinity,r1=-1,c1=-1;
   for(const k in ws){
-    if(k.charCodeAt(0)===33) continue; // kunci "!ref", "!merges", dll
+    if(k.charCodeAt(0)===33) continue;
     const cell=ws[k]; if(!cell || cell.v==null || cell.v==='') continue;
     const a=XLSX.utils.decode_cell(k);
     if(a.r<r0)r0=a.r; if(a.r>r1)r1=a.r; if(a.c<c0)c0=a.c; if(a.c>c1)c1=a.c;
@@ -977,91 +1548,93 @@ function trimRange(ws){
   ws['!ref']=XLSX.utils.encode_range({s:{r:r0,c:c0},e:{r:r1,c:c1}});
   return true;
 }
-function parseWorkbook(input,isCsv,progress){
+function parseWorkbook(input,isCsv,schema,progress){
   progress=progress||function(){};
   progress('Membuka file Excel…');
   const opts={cellFormula:false,cellHTML:false,cellText:false,cellStyles:false,cellNF:false,bookVBA:false};
-  const wb = isCsv ? XLSX.read(input,Object.assign({type:'string',raw:true},opts)) : XLSX.read(input,Object.assign({type:'array'},opts));
-  let best=null;
+  const wb=isCsv?XLSX.read(input,Object.assign({type:'string',raw:true},opts)):XLSX.read(input,Object.assign({type:'array'},opts));
+  const fields=schema.fields; let best=null;
   for(const sn of wb.SheetNames){
     const ws=wb.Sheets[sn]; if(!ws || !trimRange(ws)) continue;
     progress('Membaca sheet "'+sn+'"…');
     const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:'',blankrows:false});
     for(let r=0;r<Math.min(25,aoa.length);r++){
-      const map=mapHeaders(aoa[r]||[]); const score=Object.keys(map).length;
-      if(('ppn' in map || 'nofaktur' in map) && score>=2 && (!best || score>best.score)) best={aoa,hr:r,map,score,sheet:sn};
+      const map=mapHeaders(aoa[r]||[],fields), score=Object.keys(map).length;
+      if(schema.need.some(k=>k in map) && score>=2 && (!best||score>best.score)) best={aoa,hr:r,map,score,sheet:sn};
     }
     if(best && best.score>=5) break;
   }
-  if(!best) return {error:'Header kolom tidak dikenali. Pastikan file memiliki kolom seperti "Nomor Faktur Pajak" dan "PPN", atau gunakan template.'};
+  if(!best) return {error:'Header kolom tidak dikenali. Pastikan file memiliki kolom seperti "'+schema.needLabel+'", atau gunakan template.'};
   const aoa=best.aoa, map=best.map, recs=[]; let empty=0;
-  const g=(row,f)=> (f in map && row[map[f]]!=null) ? row[map[f]] : '';
-  const str=v=> typeof v==='number' ? (Number.isInteger(v)?v.toFixed(0):String(v)) : String(v).trim();
+  const conv={s:v=>typeof v==='number'?(Number.isInteger(v)?v.toFixed(0):String(v)):String(v).trim(), n:toNum, d:toDate, m:toMonth, i:v=>parseInt(v,10)||null, b:toBool};
+  const keys=Object.keys(fields);
   for(let r=best.hr+1;r<aoa.length;r++){
     if(r%10000===0) progress('Memproses baris '+r.toLocaleString('id-ID')+' dari '+aoa.length.toLocaleString('id-ID')+'…');
     const row=aoa[r]; if(!row || !row.length) continue;
-    const rec={ npwp:str(g(row,'npwp')), nama:str(g(row,'nama')), nofaktur:str(g(row,'nofaktur')),
-      tanggal:toDate(g(row,'tanggal')), masa:toMonth(g(row,'masa')), tahun:parseInt(g(row,'tahun'),10)||null,
-      status:str(g(row,'status')), dpp:toNum(g(row,'dpp')), dppLain:toNum(g(row,'dppLain')),
-      ppn:toNum(g(row,'ppn')), ppnbm:toNum(g(row,'ppnbm')), ket:str(g(row,'ket')) };
-    if(!rec.nofaktur && !rec.ppn && !rec.dpp){ empty++; continue; }
-    if(/^(total|jumlah|grand)/i.test(rec.npwp+rec.nama) && !rec.nofaktur){ empty++; continue; }
+    const rec={};
+    for(const k of keys){ const v=(k in map && row[map[k]]!=null)?row[map[k]]:''; rec[k]=conv[fields[k].t](v); }
+    if(schema.key.every(k=>!rec[k])){ empty++; continue; }
+    if(/^(total|jumlah|grand)/i.test(String(rec.npwp||'')+String(rec.nama||'')) && !rec[schema.id]){ empty++; continue; }
     recs.push(rec);
   }
   const masas=new Set(recs.map(r=>r.masa));
-  return {records:recs, empty, sheet:best.sheet, multiMasa:('masa' in map) && masas.size>1};
+  return {records:recs,empty,sheet:best.sheet,multiMasa:('masa' in map)&&masas.size>1};
 }
-
 let parserWorker=null, workerReady=false;
 function getParserWorker(){
   if(parserWorker) return parserWorker;
-  const src = `importScripts(${JSON.stringify(LIB_SRC.xlsx)});
+  const src=`importScripts(${JSON.stringify(LIB_SRC.xlsx)});
 postMessage({type:'ready'});
-const ALIASES=${JSON.stringify(ALIASES)};
 const MONTH_PREFIX=${JSON.stringify(MONTH_PREFIX)};
 const pad=n=>String(n).padStart(2,'0');
 ${mapHeaders.toString()}
 ${toNum.toString()}
 ${toDate.toString()}
 ${toMonth.toString()}
+${toBool.toString()}
 ${trimRange.toString()}
 ${parseWorkbook.toString()}
-onmessage=e=>{ try{ const r=parseWorkbook(e.data.input,e.data.isCsv,t=>postMessage({type:'stage',text:t})); postMessage({type:'done',ok:true,result:r}); }
+onmessage=e=>{ try{ const r=parseWorkbook(e.data.input,e.data.isCsv,e.data.schema,t=>postMessage({type:'stage',text:t})); postMessage({type:'done',ok:true,result:r}); }
   catch(err){ postMessage({type:'done',ok:false,error:String((err&&err.message)||err)}); } };`;
   workerReady=false;
-  parserWorker = new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+  parserWorker=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
   return parserWorker;
 }
 function killWorker(){ try{ parserWorker&&parserWorker.terminate(); }catch(_){} parserWorker=null; workerReady=false; }
-function parseInWorker(input,isCsv,onStage){
+function parseInWorker(input,isCsv,schema,onStage){
   return new Promise((res,rej)=>{
     let w; try{ if(!LIB_SRC.xlsx) throw new Error('no-src'); w=getParserWorker(); }catch(e){ return rej(e); }
-    // Pengaman: jika proses latar belakang tidak siap dalam 8 detik, langsung pakai cara cadangan
-    const dog = workerReady ? null : setTimeout(()=>{ killWorker(); rej(new Error('worker-timeout')); },8000);
+    const dog=workerReady?null:setTimeout(()=>{ killWorker(); rej(new Error('worker-timeout')); },8000);
     w.onmessage=e=>{ const d=e.data;
       if(d.type==='ready'){ workerReady=true; clearTimeout(dog); return; }
       if(d.type==='stage'){ onStage&&onStage(d.text); return; }
       clearTimeout(dog);
       if(d.ok) res(d.result); else { const er=new Error(d.error); er.fromParser=true; rej(er); } };
     w.onerror=e=>{ if(e&&e.preventDefault) e.preventDefault(); clearTimeout(dog); killWorker(); rej(new Error('worker-failed')); };
-    w.postMessage({input,isCsv}); // dikirim sebagai salinan, agar cadangan di halaman utama tetap bisa jalan
+    w.postMessage({input,isCsv,schema});
   });
 }
 function setDropBusy(busy,title,sub){
   const d=$('#drop'); if(!d) return;
   d.classList.toggle('busy',busy);
-  $('#dropIco').innerHTML = busy ? '<div class="spinner"></div>' : icon(title?'file':'upload');
-  $('#dropTitle').textContent = title || 'Pilih atau seret file Excel ke sini';
-  $('#dropSub').textContent = sub || 'Format .xlsx, .xls, atau .csv — tanpa batas ukuran file';
+  $('#dropIco').innerHTML=busy?'<div class="spinner"></div>':icon(title?'file':'upload');
+  $('#dropTitle').textContent=title||'Pilih atau seret file Excel ke sini';
+  $('#dropSub').textContent=sub||'Format .xlsx, .xls, atau .csv — tanpa batas ukuran file';
 }
 function readAs(file,asText){
   if(asText && file.text) return file.text();
   if(!asText && file.arrayBuffer) return file.arrayBuffer();
   return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(fr.error); asText?fr.readAsText(file):fr.readAsArrayBuffer(file); });
 }
+const PPH_KODE={'22':'PPh 22','24':'PPh 23','28':'PPh 4(2)'};
+function normalizeRec(t,r){
+  if(TYPES[t].pay){ r.bayar = r.bayar==null ? !!r.tglBayar : !!r.bayar; if(!r.bayar) r.tglBayar=r.tglBayar||''; }
+  if(t==='PPHU' && !r.jenis && r.kode){ const p=String(r.kode).slice(0,2); if(PPH_KODE[p]) r.jenis=PPH_KODE[p]; }
+  return r;
+}
 async function readFile(file){
   if(!IMPORT) return;
-  const token=IMPORT, isCsv=/\.csv$/i.test(file.name);
+  const token=IMPORT, isCsv=/\.csv$/i.test(file.name), schema=schemaOf(token.type);
   token.records=null; token.plan=null; $('#planBox').innerHTML=''; $('#btnSave').disabled=true;
   const title=`Membaca ${file.name} (${fmtSize(file.size)})…`;
   const stage=t=>{ if(IMPORT===token) setDropBusy(true,title,t); };
@@ -1069,22 +1642,19 @@ async function readFile(file){
   try{
     if(!window.XLSX){ stage('Memuat library Excel…'); await LIBS_READY; }
     if(!window.XLSX) throw new Error('Library Excel tidak dapat dimuat. Periksa koneksi internet lalu muat ulang halaman.');
-    const t0=performance.now();
     const input=await readAs(file,isCsv);
     let res;
-    try{ res=await parseInWorker(input,isCsv,stage); }
+    try{ res=await parseInWorker(input,isCsv,schema,stage); }
     catch(e){
       if(e.fromParser) throw e;
       console.warn('Proses latar belakang tidak tersedia, pakai halaman utama:',e.message);
-      stage('Memproses file…');
-      await new Promise(r=>setTimeout(r,60)); // beri waktu spinner tampil
-      res=parseWorkbook(input,isCsv);
+      stage('Memproses file…'); await new Promise(r=>setTimeout(r,60));
+      res=parseWorkbook(input,isCsv,schema);
     }
-    console.info('Import selesai dibaca dalam',Math.round(performance.now()-t0),'ms');
-    if(IMPORT!==token) return; // modal sudah ditutup
+    if(IMPORT!==token) return;
     if(res.error){ setDropBusy(false); toast(res.error,'error'); return; }
-    if(!res.records.length){ setDropBusy(false); toast('Tidak ada baris faktur yang terbaca di file ini.','error'); return; }
-    token.records=res.records; token.fileName=file.name; token.empty=res.empty;
+    if(!res.records.length){ setDropBusy(false); toast('Tidak ada baris data yang terbaca di file ini.','error'); return; }
+    token.records=res.records.map(r=>normalizeRec(token.type,r));
     setDropBusy(false,`📄 ${file.name}`,`${fmt(res.records.length)} baris terbaca · sheet "${res.sheet}" · ${fmtSize(file.size)} — klik untuk ganti file`);
     if(res.multiMasa) $('#autoSplit').checked=true;
     updatePlan();
@@ -1093,24 +1663,20 @@ async function readFile(file){
     if(IMPORT===token){ setDropBusy(false); toast('Gagal membaca file: '+(err.message||err),'error'); }
   }
 }
-
 function buildPlan(){
   const auto=$('#autoSplit').checked, mode=document.querySelector('input[name=imode]:checked').value;
-  const tm=+$('#tMonth').value, ty=+$('#tYear').value, t=IMPORT.type;
-  const groups={}; let outRange=0, dup=0;
-  const seen={};
+  const tm=+$('#tMonth').value, ty=+$('#tYear').value, t=IMPORT.type, idf=TYPES[t].id;
+  const groups={}, seen={}; let outRange=0, dup=0;
   for(const r of IMPORT.records){
     let m=tm, y=ty;
     if(auto){
-      m=r.masa; y=r.tahun;
-      const d=/^(\d{4})-(\d{2})/.exec(r.tanggal||'');
-      if(m==null && d) m=+d[2]-1;
-      if(!y && d) y=+d[1];
+      m=r.masa; y=r.tahun; const d=/^(\d{4})-(\d{2})/.exec(r.tanggal||'');
+      if(m==null && d) m=+d[2]-1; if(!y && d) y=+d[1];
       if(m==null || !y || y<START_YEAR){ outRange++; continue; }
     }
     const k=key(y,m);
-    if(!seen[k]) seen[k]=new Set(mode==='append' ? (DB.data[t][k]||[]).map(x=>fakturKey(x.nofaktur)).filter(Boolean) : []);
-    const fk=fakturKey(r.nofaktur);
+    if(!seen[k]) seen[k]=new Set(mode==='append'?(DB.data[t][k]||[]).map(x=>fakturKey(x[idf])).filter(Boolean):[]);
+    const fk=fakturKey(r[idf]);
     if(fk && seen[k].has(fk)){ dup++; continue; }
     if(fk) seen[k].add(fk);
     (groups[k]=groups[k]||[]).push({...r,id:uid()});
@@ -1119,68 +1685,55 @@ function buildPlan(){
 }
 function updatePlan(){
   if(!IMPORT) return;
-  $('#targetBox').style.display = $('#autoSplit').checked ? 'none' : '';
-  if(!IMPORT.records){ return; }
-  const p=buildPlan(); IMPORT.plan=p;
-  const all=Object.values(p.groups).flat();
-  const keys=Object.keys(p.groups).sort();
-  const replWarn = p.mode==='replace' && keys.some(k=>(DB.data[IMPORT.type][k]||[]).length);
-  $('#planBox').innerHTML = `
+  $('#targetBox').style.display=$('#autoSplit').checked?'none':'';
+  if(!IMPORT.records) return;
+  const T=TYPES[IMPORT.type], p=buildPlan(); IMPORT.plan=p;
+  const all=Object.values(p.groups).flat(), keys=Object.keys(p.groups).sort();
+  const replWarn=p.mode==='replace' && keys.some(k=>(DB.data[IMPORT.type][k]||[]).length);
+  $('#planBox').innerHTML=`
     <div class="preview">
       <div class="preview-sum">
         <div><small>Baris terbaca</small><b>${fmt(IMPORT.records.length)}</b></div>
         <div><small>Siap disimpan</small><b style="color:var(--success)">${fmt(all.length)}</b></div>
         <div><small>Duplikat dilewati</small><b style="color:var(--warning)">${fmt(p.dup)}</b></div>
-        <div><small>Total PPN</small><b>${short(sumF(all,'ppn'))}</b></div>
+        <div><small>Total ${T.amountLabel}</small><b>${short(sumF(all,T.amount))}</b></div>
       </div>
-      ${keys.length?`<div class="preview-groups">${keys.map(k=>{const [y,m]=k.split('-');return `<span class="badge b-primary">${MONTHS[+m-1]} ${y}: ${p.groups[k].length} faktur</span>`}).join('')}</div>`:''}
-      ${all.length?`<div class="table-wrap" style="border-top:1px solid var(--border)"><table><thead><tr><th>No. Faktur</th><th>Nama</th><th>Tanggal</th><th class="num">DPP</th><th class="num">PPN</th></tr></thead>
-        <tbody>${all.slice(0,5).map(r=>`<tr><td>${esc(r.nofaktur||'-')}</td><td>${esc((r.nama||'-').slice(0,30))}</td><td>${fmtDate(r.tanggal)}</td><td class="num">${fmt(r.dpp)}</td><td class="num">${fmt(r.ppn)}</td></tr>`).join('')}</tbody></table></div>`:''}
+      ${keys.length?`<div class="preview-groups">${keys.map(k=>{const [y,m]=k.split('-');return `<span class="badge b-primary">${MONTHS[+m-1]} ${y}: ${p.groups[k].length} ${T.unit}</span>`}).join('')}</div>`:''}
+      ${all.length?`<div class="table-wrap" style="border-top:1px solid var(--border)"><table><thead><tr><th>Nomor</th><th>Nama</th><th>Tanggal</th><th class="num">${T.baseLabel}</th><th class="num">${T.amountLabel}</th></tr></thead>
+        <tbody>${all.slice(0,5).map(r=>`<tr><td>${esc(r[T.id]||'-')}</td><td>${esc((r.nama||'-').slice(0,30))}</td><td>${esc(fmtDate(r.tanggal))}</td><td class="num">${fmt(r[T.base])}</td><td class="num">${fmt(r[T.amount])}</td></tr>`).join('')}</tbody></table></div>`:''}
     </div>
     ${p.outRange?`<div class="note warn">${p.outRange} baris dilewati karena masa/tahun pajak tidak terbaca atau sebelum tahun ${START_YEAR}.</div>`:''}
     ${replWarn?`<div class="note warn">Mode <b>Ganti</b>: data lama pada bulan di atas akan dihapus dan diganti dengan data dari file ini.</div>`:''}`;
-  $('#btnSave').disabled = !all.length;
+  $('#btnSave').disabled=!all.length;
 }
 async function commitImport(){
   if(!IMPORT || !IMPORT.plan) return;
   const p=IMPORT.plan, t=IMPORT.type, btn=$('#btnSave');
   btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…';
-  const backup={...DB.data[t]};
-  let n=0, firstKey=null;
+  const backup={...DB.data[t]}; let n=0, firstKey=null;
   Object.keys(p.groups).sort().forEach(k=>{
-    DB.data[t][k] = p.mode==='replace' ? p.groups[k] : (DB.data[t][k]||[]).concat(p.groups[k]);
+    DB.data[t][k]=p.mode==='replace'?p.groups[k]:(DB.data[t][k]||[]).concat(p.groups[k]);
     n+=p.groups[k].length; if(!firstKey) firstKey=k;
   });
   const ok=await save();
   if(!ok){ DB.data[t]=backup; btn.disabled=false; btn.innerHTML=icon('check')+' Simpan Data'; return; }
   if(firstKey){ state.year=+firstKey.slice(0,4); state.month=+firstKey.slice(5)-1; }
-  state.view=t; closeModal(); state.page=1; state.search=''; state.status='all'; render();
-  toast(`${fmt(n)} faktur berhasil diimport`,'success');
+  state.view=t; closeModal(); resetFilters(); render();
+  toast(`${fmt(n)} ${TYPES[t].unit} berhasil diimport`,'success');
 }
 
 /* =========================================================
-   TEMPLATE & EXPORT
+   TEMPLATE & EXPORT (PDF / Excel)
 ========================================================= */
-function headersFor(t){ const p=TYPE_INFO[t].party;
-  return [`NPWP ${p}`,`Nama ${p}`,'Nomor Faktur Pajak','Tanggal Faktur Pajak','Masa Pajak','Tahun','Status Faktur','Harga Jual/Penggantian/DPP','DPP Nilai Lain','PPN','PPnBM','Keterangan']; }
-function rowFor(r){ return [r.npwp,r.nama,r.nofaktur,fmtDate(r.tanggal),r.masa!=null?pad(r.masa+1):'',r.tahun||'',r.status,r.dpp,r.dppLain,r.ppn,r.ppnbm,r.ket]; }
-function writeXlsx(aoa,name,sheet){
-  const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=aoa[0].map((h,i)=>({wch:[18,32,22,14,10,8,14,18,16,14,10,20][i]||14}));
-  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,sheet); XLSX.writeFile(wb,name);
-}
-function downloadTemplate(){
+function downloadTemplate(t){
   if(!window.XLSX){ toast('Library Excel belum siap — tunggu sebentar atau periksa koneksi internet.','error'); return; }
-  const t=(state.view==='PK')?'PK':'PM';
-  writeXlsx([headersFor(t),
-    ['0123456789012345','PT Contoh Sukses Makmur','04002600000000001','15/01/2026','01','2026','APPROVED',10000000,9166667,1100000,0,''],
-    ['0987654321098765','CV Sumber Berkah','04002600000000002','20/01/2026','01','2026','APPROVED',5000000,4583333,550000,0,'']
-  ], `Template_${TYPE_INFO[t].label.replace(' ','_')}.xlsx`,'Template');
+  t=t||'PM'; const aoa=TYPES[t].tpl, ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=aoa[0].map(h=>({wch:Math.max(12,String(h).length+4)}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Template'); XLSX.writeFile(wb,`Template_${TYPES[t].label.replace(/\s+/g,'_')}.xlsx`);
 }
-/* ---------- Dialog export: pilih cakupan & format ---------- */
 function openExport(kind){
   const y=state.year, isRekap=kind==='rekap';
-  const title=isRekap?'Rekap PPN per Masa Pajak':TYPE_INFO[kind].label;
+  const title=isRekap?'Rekap PPN per Masa Pajak':kind==='spt'?'Status SPT Rekanan':TYPES[kind].label;
   openModal(`
     <div class="modal-h"><h3>Export ${title}</h3><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b">
@@ -1201,55 +1754,68 @@ function openExport(kind){
       <button class="btn btn-primary" id="xGo" onclick="doExport('${kind}')">${icon('download')} Unduh</button></div>`,'sm');
   exportInfo(kind);
 }
-function exportOpts(){
-  const sc=document.querySelector('input[name=xscope]:checked'), f=document.querySelector('input[name=xfmt]:checked');
-  return {scope:sc?sc.value:'year', fmt:f?f.value:'pdf'};
-}
+function exportOpts(){ const sc=document.querySelector('input[name=xscope]:checked'), f=document.querySelector('input[name=xfmt]:checked'); return {scope:sc?sc.value:'year', fmt:f?f.value:'pdf'}; }
 function exportInfo(kind){
-  const el=$('#xInfo'); if(!el) return; const o=exportOpts(); let n=0;
-  if(kind==='rekap') n=rekapData(state.year).filter(r=>r.has).length;
-  else (o.scope==='month'?[state.month]:MONTHS.map((_,i)=>i)).forEach(m=>n+=getRows(kind,state.year,m).length);
-  const unit=kind==='rekap'?'bulan berisi data':'faktur';
-  el.innerHTML = !n ? `<div class="note warn">Tidak ada data untuk diexport pada pilihan ini.</div>`
-    : `<div class="note">${fmt(n)} ${unit} akan diexport.${o.fmt==='pdf'&&n>3000?' File PDF besar membutuhkan waktu beberapa saat.':''}</div>`;
+  const el=$('#xInfo'); if(!el) return; const o=exportOpts(), ms=o.scope==='month'?[state.month]:MONTHS.map((_,i)=>i); let n=0, unit;
+  if(kind==='rekap'){ n=rekapData(state.year).filter(r=>r.has).length; unit='bulan berisi data'; }
+  else if(kind==='spt'){ ms.forEach(m=>n+=sptList(state.year,m).length); unit='baris rekanan'; }
+  else { ms.forEach(m=>n+=getRows(kind,state.year,m).length); unit=TYPES[kind].unit; }
+  el.innerHTML=!n?`<div class="note warn">Tidak ada data untuk diexport pada pilihan ini.</div>`
+    :`<div class="note">${fmt(n)} ${unit} akan diexport.${o.fmt==='pdf'&&n>3000?' File PDF besar membutuhkan waktu beberapa saat.':''}</div>`;
   $('#xGo').disabled=!n;
 }
-const PDF_SAFE = s => String(s??'').replace(/[−–—]/g,'-').replace(/[“”]/g,'"').replace(/[‘’]/g,"'");
+const PDF_SAFE=s=>String(s??'').replace(/[−–—]/g,'-').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[✓✔]\s?/g,'');
+const xVal=(c,r)=>c.f==='date'?fmtDate(r[c.k]):c.f==='bayar'?(r.bayar?'Sudah dibayar':'Belum dibayar'):c.f==='num'?(+r[c.k]||0):(r[c.k]??'');
 function buildExport(kind,scope){
   const y=state.year, printed=new Date().toLocaleString('id-ID',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const yearly=scope!=='month', months=yearly?MONTHS.map((_,i)=>i):[state.month], period=yearly?`Tahun ${y}`:`${MONTHS[state.month]} ${y}`;
   if(kind==='rekap'){
-    const rec=rekapData(y), T=f=>rec.reduce((a,r)=>a+r[f],0);
-    return { title:`Rekap PPN per Masa Pajak Tahun ${y}`,
-      subtitle:`Tahun pajak ${y}${isKSO()?' | Status sesuai fasilitas KSO (Lebih Bayar)':''} | Dicetak ${printed}`,
-      head:['Masa Pajak','Faktur PM','DPP Masukan','PPN Masukan','Faktur PK','DPP Keluaran','PPN Keluaran','Selisih (PK - PM)','Status'],
-      rows:rec.map(r=>[`${r.n} ${y}`,r.cPM,r.dPM,r.vPM,r.cPK,r.dPK,r.vPK,r.diff,statusText(r)]),
-      total:['TOTAL',T('cPM'),T('dPM'),T('vPM'),T('cPK'),T('dPK'),T('vPK'),T('vPK')-T('vPM'),''],
-      num:[1,2,3,4,5,6,7], money:[2,3,5,6,7], status:8, canceled:new Set(),
-      widths:[22,10,20,20,10,20,20,20,16], file:`Rekap_PPN_${y}`, sheet:`Rekap ${y}` };
+    const rec=rekapData(y);
+    return {title:`Rekap PPN per Masa Pajak Tahun ${y}`,
+      subtitle:`Tahun pajak ${y} | PPN Masukan diajukan restitusi - Lebih Bayar (fasilitas KSO) | Dicetak ${printed}`,
+      head:['Masa Pajak','Faktur PM','DPP Masukan','PPN Masukan','PPN Dibayar','PPN Belum Dibayar','Faktur PK','PPN Keluaran','Restitusi','Status'],
+      rows:rec.map(r=>[`${r.n} ${y}`,r.cPM,r.dPM,r.vPM,r.paidPPN,r.unpaidPPN,r.cPK,r.vPK,r.restitusi,statusText(r)]),
+      num:[1,2,3,4,5,6,7,8], statusCols:[9], labelCol:0, canceled:new Set(), widths:[18,10,18,18,18,18,10,18,18,14], file:`Rekap_PPN_${y}`, sheet:`Rekap ${y}`};
   }
-  const info=TYPE_INFO[kind], months=scope==='month'?[state.month]:MONTHS.map((_,i)=>i), yearly=scope!=='month';
-  const list=[]; months.forEach(m=>getRows(kind,y,m).forEach(r=>list.push({m,r})));
-  const ok=list.filter(x=>!isCanceled(x.r)), S=f=>ok.reduce((a,x)=>a+(+x.r[f]||0),0);
-  const canceled=new Set(); list.forEach((x,i)=>{ if(isCanceled(x.r)) canceled.add(i); });
-  const head=['No',...(yearly?['Masa Pajak']:[]),'Tanggal Faktur','Nomor Faktur',`NPWP ${info.party}`,`Nama ${info.party}`,'Status Faktur','DPP','DPP Nilai Lain','PPN','PPnBM'];
-  const off=yearly?1:0;
-  const period=yearly?`Tahun ${y}`:`${MONTHS[state.month]} ${y}`;
-  return { title:`Daftar ${info.label} - ${period}`,
-    subtitle:`Masa pajak ${period} | ${fmt(list.length)} faktur${canceled.size?` (${canceled.size} batal, tidak dihitung)`:''} | Total PPN Rp ${fmt(S('ppn'))} | Dicetak ${printed}`,
-    head,
-    rows:list.map((x,i)=>[i+1,...(yearly?[`${MONTHS[x.m]} ${y}`]:[]),fmtDate(x.r.tanggal),x.r.nofaktur,x.r.npwp,x.r.nama,x.r.status,+x.r.dpp||0,+x.r.dppLain||0,+x.r.ppn||0,+x.r.ppnbm||0]),
-    total:['',...(yearly?['']:[]),'','','',`TOTAL (${fmt(ok.length)} faktur, tanpa faktur batal)`,'',S('dpp'),S('dppLain'),S('ppn'),S('ppnbm')],
-    num:[6+off,7+off,8+off,9+off], money:[6+off,7+off,8+off,9+off], status:-1, canceled,
-    widths:[6,...(yearly?[16]:[]),12,22,20,40,14,18,18,16,12],
-    file:`${info.label.replace(' ','_')}_${yearly?y:MONTHS[state.month]+'_'+y}`, sheet:yearly?`${y}`:`${MONTHS[state.month]} ${y}` };
+  if(kind==='spt'){
+    const rows=[]; let up=0, tot=0;
+    months.forEach(m=>sptList(y,m).forEach(x=>{ tot++; if(x.spt) up++;
+      rows.push([rows.length+1,...(yearly?[`${MONTHS[m]} ${y}`]:[]),x.nama,x.npwp,x.n,x.dpp,x.ppn,x.spt?'Sudah upload':'Belum upload',x.spt&&x.spt.tglLapor?fmtDate(x.spt.tglLapor):'',x.spt?x.spt.bpe||'':'',x.spt&&x.spt.file?x.spt.file.name:'']); }));
+    const o=yearly?1:0;
+    return {title:`Status SPT PPN Rekanan - ${period}`, subtitle:`Masa pajak ${period} | ${up} dari ${tot} rekanan sudah upload bukti SPT | Dicetak ${printed}`,
+      head:['No',...(yearly?['Masa Pajak']:[]),'Nama Rekanan','NPWP','Jumlah Faktur','DPP','PPN Masukan','Status SPT','Tgl Lapor','No. BPE','File SPT'],
+      rows, num:[3+o,4+o,5+o], statusCols:[6+o], labelCol:1+o, canceled:new Set(), widths:[6,...(yearly?[16]:[]),36,20,12,18,18,16,14,20,28],
+      file:`Status_SPT_Rekanan_${yearly?y:MONTHS[state.month]+'_'+y}`, sheet:yearly?`${y}`:`${MONTHS[state.month]} ${y}`};
+  }
+  const T=TYPES[kind], cols=T.xcols||T.cols, list=[]; months.forEach(m=>getRows(kind,y,m).forEach(r=>list.push({m,r})));
+  const ok=list.filter(x=>!isCanceled(x.r)).length, canceled=new Set(); list.forEach((x,i)=>{ if(isCanceled(x.r)) canceled.add(i); });
+  const o=1+(yearly?1:0), amt=list.reduce((a,x)=>a+(isCanceled(x.r)?0:(+x.r[T.amount]||0)),0);
+  let extra='';
+  if(T.report && !yearly){ const rr=repOf(kind,y,state.month)||{}; extra=` | Setor: ${rr.setor==='Sudah'?'Sudah'+(rr.ntpn?' (NTPN '+rr.ntpn+')':''):'Belum'} | Lapor: ${rr.lapor==='Sudah'?'Sudah'+(rr.bpe?' (BPE '+rr.bpe+')':''):'Belum'}`; }
+  if(T.pay){ const paid=list.filter(x=>!isCanceled(x.r)&&x.r.bayar).reduce((a,x)=>a+(+x.r.ppn||0),0); extra=` | PPN dibayar Rp ${fmt(paid)} | Belum Rp ${fmt(amt-paid)}`; }
+  return {title:`Daftar ${T.label} - ${period}`,
+    subtitle:`Masa pajak ${period} | ${fmt(list.length)} ${T.unit}${canceled.size?` (${canceled.size} batal, tidak dihitung)`:''} | Total ${T.amountLabel} Rp ${fmt(amt)}${extra} | Dicetak ${printed}`,
+    head:['No',...(yearly?['Masa Pajak']:[]),...cols.map(c=>c.l)],
+    rows:list.map((x,i)=>[i+1,...(yearly?[`${MONTHS[x.m]} ${y}`]:[]),...cols.map(c=>xVal(c,x.r))]),
+    num:cols.map((c,i)=>c.f==='num'?i+o:-1).filter(i=>i>=0),
+    statusCols:cols.map((c,i)=>c.f==='bayar'?i+o:-1).filter(i=>i>=0),
+    labelCol:cols.findIndex(c=>c.k==='nama')+o, canceled,
+    widths:[6,...(yearly?[16]:[]),...cols.map(c=>c.w||(c.f==='num'?16:14))],
+    file:`${T.label.replace(/\s+/g,'_')}_${yearly?y:MONTHS[state.month]+'_'+y}`, sheet:yearly?`${y}`:`${MONTHS[state.month]} ${y}`, okCount:ok, unit:T.unit};
+}
+function totalRow(d){
+  const row=d.head.map(()=> '');
+  d.num.forEach(c=>{ row[c]=d.rows.reduce((a,r,i)=>a+(d.canceled.has(i)?0:(+r[c]||0)),0); });
+  row[d.labelCol]=d.okCount!=null?`TOTAL (${fmt(d.okCount)} ${d.unit}, tanpa yang batal)`:'TOTAL';
+  return row;
 }
 async function doExport(kind){
   const o=exportOpts(), btn=$('#xGo');
   btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyiapkan…';
   await new Promise(r=>setTimeout(r,60));
   try{
-    const data=buildExport(kind,o.scope);
-    if(o.fmt==='pdf') await exportPdf(data); else exportXlsx(data);
+    const d=buildExport(kind,o.scope); d.total=totalRow(d);
+    if(o.fmt==='pdf') await exportPdf(d); else exportXlsx(d);
     closeModal(); toast(`File ${o.fmt==='pdf'?'PDF':'Excel'} berhasil diunduh`,'success');
   }catch(e){
     console.error(e); toast('Export gagal: '+(e.message||e),'error');
@@ -1258,28 +1824,24 @@ async function doExport(kind){
 }
 function exportXlsx(d){
   if(!window.XLSX) throw new Error('Library Excel belum siap, periksa koneksi internet');
-  const n=d.head.length;
-  const aoa=[['MONITORING PPN REKANAN'],[d.title],[d.subtitle],[],d.head,...d.rows,d.total];
+  const n=d.head.length, aoa=[[APP_KICKER],[d.title],[d.subtitle],[],d.head,...d.rows,d.total];
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   ws['!merges']=[0,1,2].map(r=>({s:{r,c:0},e:{r,c:n-1}}));
   ws['!cols']=d.widths.map(w=>({wch:w}));
-  const r0=5, r1=5+d.rows.length;
-  for(let r=r0;r<=r1;r++) d.money.forEach(c=>{ const a=XLSX.utils.encode_cell({r,c}); if(ws[a]&&typeof ws[a].v==='number') ws[a].z='#,##0'; });
+  for(let r=5;r<=5+d.rows.length;r++) d.num.forEach(c=>{ const a=XLSX.utils.encode_cell({r,c}); if(ws[a]&&typeof ws[a].v==='number') ws[a].z='#,##0'; });
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,d.sheet.slice(0,31)); XLSX.writeFile(wb,d.file+'.xlsx');
 }
-/* Logo untuk PDF: logo yang diunggah, atau file logo di folder yang sama */
 async function logoImagesForPdf(){
   const out=[];
   for(const k of LOGO_KEYS){
-    const src=(DB.settings.logos||{})[k]||LOGO_DEF[k].file;
-    const img=await loadImg(src); if(!img||!img.naturalWidth) continue;
+    const src=(DB.settings.logos||{})[k]||LOGO_DEF[k].file, img=await loadImg(src); if(!img||!img.naturalWidth) continue;
     try{ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight; c.getContext('2d').drawImage(img,0,0);
-      out.push({data:c.toDataURL('image/png'),w:c.width,h:c.height}); }catch(e){ /* file lokal tidak bisa dibaca browser — lewati */ }
+      out.push({data:c.toDataURL('image/png'),w:c.width,h:c.height,boxed:!!(DB.settings.logoBox||{})[k]}); }catch(e){}
   }
   return out;
 }
 async function exportPdf(d){
-  if(!(window.jspdf&&window.jspdf.jsPDF)){ await LIBS_READY; }
+  if(!(window.jspdf&&window.jspdf.jsPDF)) await LIBS_READY;
   if(!(window.jspdf&&window.jspdf.jsPDF&&window.jspdf.jsPDF.API.autoTable)) throw new Error('Library PDF belum siap, periksa koneksi internet');
   const {jsPDF}=window.jspdf, doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
   const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=12, LH=14;
@@ -1287,28 +1849,31 @@ async function exportPdf(d){
   const title=PDF_SAFE(d.title), sub=PDF_SAFE(d.subtitle), TOTAL='{total_pages}';
   const header=()=>{
     let x=M;
-    logos.forEach((l,i)=>{ const w=Math.min(42,LH*l.w/l.h); doc.addImage(l.data,'PNG',x,M,w,LH,'logo'+i,'FAST'); x+=w+5; });
+    logos.forEach((l,i)=>{ const w=Math.min(42,LH*l.w/l.h);
+      if(l.boxed){ doc.setDrawColor(226,232,240); doc.setFillColor(255,255,255); doc.setLineWidth(.3); doc.roundedRect(x-1.5,M-1.5,w+3,LH+3,2,2,'FD'); }
+      doc.addImage(l.data,'PNG',x,M,w,LH,'logo'+i,'FAST'); x+=w+(l.boxed?7:5); });
     const tx=logos.length?x+3:M, maxW=W-M-tx;
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...brand); doc.text('MONITORING PPN REKANAN',tx,M+3.5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...brand); doc.text(APP_KICKER,tx,M+3.5);
     doc.setFontSize(14); doc.setTextColor(15,23,42); doc.text(doc.splitTextToSize(title,maxW)[0],tx,M+9.5);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,116,139); doc.text(doc.splitTextToSize(sub,maxW)[0],tx,M+14);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.6); doc.setTextColor(100,116,139); doc.text(doc.splitTextToSize(sub,maxW)[0],tx,M+14);
     doc.setDrawColor(...brand); doc.setLineWidth(.6); doc.line(M,M+LH+3,W-M,M+LH+3);
   };
   const footer=()=>{
     doc.setDrawColor(226,232,240); doc.setLineWidth(.2); doc.line(M,H-10,W-M,H-10);
     doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(100,116,139);
-    doc.text('Monitoring PPN Rekanan | '+title,M,H-6);
+    doc.text('Monitoring Data Pajak Proyek Dusem Segmen-1 | '+title,M,H-6);
     doc.text(`Halaman ${doc.internal.getNumberOfPages()} dari ${TOTAL}`,W-M,H-6,{align:'right'});
   };
-  const cell=(v,c)=> d.num.includes(c) ? fmt(v) : PDF_SAFE(v);
-  const colStyles={}; d.num.forEach(c=>colStyles[c]={halign:'right'}); colStyles[0]={halign:d.status>=0?'left':'center'};
+  const cell=(v,c)=>d.num.includes(c)?fmt(v):PDF_SAFE(v);
+  const colStyles={}; d.num.forEach(c=>colStyles[c]={halign:'right'}); if(d.head[0]==='No') colStyles[0]={halign:'center'};
+  const GOOD=/^(lebih bayar|sudah)/i;
   doc.autoTable({
     head:[d.head.map(PDF_SAFE)],
     body:d.rows.map(r=>r.map(cell)),
     foot:[d.total.map((v,c)=>({content:v===''?'':cell(v,c),styles:{halign:d.num.includes(c)?'right':'left'}}))],
     startY:M+LH+7, margin:{top:M+LH+7,left:M,right:M,bottom:14},
     theme:'grid', showHead:'everyPage', showFoot:'lastPage',
-    styles:{font:'helvetica',fontSize:d.head.length>10?7:7.8,cellPadding:1.6,textColor:[30,41,59],lineColor:[226,232,240],lineWidth:.15,overflow:'linebreak',valign:'middle'},
+    styles:{font:'helvetica',fontSize:d.head.length>11?6.8:7.6,cellPadding:1.6,textColor:[30,41,59],lineColor:[226,232,240],lineWidth:.15,overflow:'linebreak',valign:'middle'},
     headStyles:{fillColor:brand,textColor:255,fontStyle:'bold',halign:'center'},
     footStyles:{fillColor:[241,245,249],textColor:[15,23,42],fontStyle:'bold'},
     alternateRowStyles:{fillColor:[248,250,252]},
@@ -1316,8 +1881,8 @@ async function exportPdf(d){
     didParseCell:h=>{
       if(h.section!=='body') return;
       if(d.canceled.has(h.row.index)){ h.cell.styles.textColor=[160,170,185]; h.cell.styles.fontStyle='italic'; }
-      if(h.column.index===d.status){ const t=h.cell.raw;
-        h.cell.styles.fontStyle='bold'; h.cell.styles.textColor=t==='Lebih Bayar'?[22,163,74]:t==='Kurang Bayar'?[220,38,38]:[148,163,184]; }
+      if(d.statusCols.includes(h.column.index)){ const t=String(h.cell.raw||''); h.cell.styles.fontStyle='bold';
+        h.cell.styles.textColor=GOOD.test(t)?[22,163,74]:/^belum ada/i.test(t)?[148,163,184]:[217,119,6]; }
     },
     didDrawPage:()=>{ header(); footer(); }
   });
@@ -1329,35 +1894,44 @@ async function exportPdf(d){
    PENGATURAN
 ========================================================= */
 function renderSettings(){
-  const u=currentUser();
-  const lg=DB.settings.logos||{};
-  $('#view').innerHTML = `
-  <div class="card" style="margin-bottom:18px">
-    <div class="card-h"><div><h3>Logo</h3><p>Unggah file logo (PNG/JPG/SVG). Logo tampil di halaman login, menu samping, dan hasil export PDF.</p></div></div>
+  const u=currentUser(), lg=DB.settings.logos||{}, lb=DB.settings.logoBox||{}, cur=DB.settings.color;
+  $('#view').innerHTML=`
+  <div class="card mb">
+    <div class="card-h"><div><h3>Logo</h3><p>Logo tampil di halaman login, menu samping, dan hasil export PDF. Pilih tampilan dengan atau tanpa kotak putih.</p></div></div>
     <div class="card-b">
       <div class="grid logo-grid">${LOGO_KEYS.map(k=>`
-      <div class="logo-slot">${logoBox(k,'',true)}
-        <div style="flex:1;min-width:0"><b>${LOGO_DEF[k].label}</b><small style="display:block;color:var(--muted)">${lg[k]?'Sudah diunggah':'Belum diunggah'}</small>
+      <div class="logo-slot"><div class="prev">${logoBox(k,'',true)}</div>
+        <div style="flex:1;min-width:170px"><b>${LOGO_DEF[k].label}</b><small style="display:block;color:var(--muted)">${lg[k]?'Sudah diunggah':'Belum diunggah'}</small>
+          <div style="margin-top:8px"><div class="seg sm">
+            <label><input type="radio" name="lb-${k}" ${!lb[k]?'checked':''} onchange="setLogoBox('${k}',false)">Tanpa kotak</label>
+            <label><input type="radio" name="lb-${k}" ${lb[k]?'checked':''} onchange="setLogoBox('${k}',true)">Kotak putih</label></div></div>
           <div class="toolbar" style="margin-top:8px;gap:6px"><label class="btn btn-outline btn-sm">${icon('upload')} Unggah<input type="file" accept="image/*" hidden onchange="uploadLogo('${k}',this.files[0]);this.value=''"></label>
-          ${lg[k]?`<button class="btn btn-outline btn-sm" onclick="cleanExistingLogo('${k}')" title="Hapus latar putih / kotak putih di sekeliling logo">Hapus latar</button><button class="btn btn-danger btn-sm" onclick="setLogo('${k}',null)">Hapus</button>`:''}</div></div>
+          ${lg[k]?`<button class="btn btn-outline btn-sm" onclick="cleanExistingLogo('${k}')" title="Hapus latar putih yang ikut di dalam file gambar">Hapus latar</button><button class="btn btn-danger btn-sm" onclick="setLogo('${k}',null)">Hapus</button>`:''}</div></div>
       </div>`).join('')}</div>
-      <label class="switch-row" style="margin-top:16px"><input type="checkbox" ${DB.settings.cleanLogo!==false?'checked':''} onchange="setSetting('cleanLogo',this.checked)">
-        <span><b>Hapus latar putih otomatis saat unggah</b><br><small style="color:var(--muted)">Kotak / latar putih di sekeliling logo dibuat transparan, sehingga hanya logonya yang tampil.</small></span></label>
+      <label class="check" style="margin:16px 0 0"><input type="checkbox" ${DB.settings.cleanLogo!==false?'checked':''} onchange="setSetting('cleanLogo',this.checked)">
+        <span><b>Bersihkan latar putih bawaan gambar saat unggah</b><small>Untuk file logo (mis. JPG) yang sudah berlatar putih. Kotak putih tampilan diatur dengan pilihan di atas.</small></span></label>
     </div>
   </div>
-  <div class="card" style="margin-bottom:18px">
-    <div class="card-h"><div><h3>Ketentuan Status PPN</h3><p>Mengatur status pada Dashboard dan hasil export</p></div></div>
-    <div class="card-b"><label class="switch-row"><input type="checkbox" ${isKSO()?'checked':''} onchange="setSetting('kso',this.checked)">
-      <span><b>Proyek KSO dengan fasilitas — status selalu Lebih Bayar</b><br><small style="color:var(--muted)">Jika aktif, setiap masa pajak yang berisi data berstatus Lebih Bayar walaupun PPN Keluaran lebih besar dari PPN Masukan. Tidak ada status Kurang Bayar.</small></span></label></div>
-  </div>
-  <div class="card" style="margin-bottom:18px">
-    <div class="card-h"><div><h3>Tema Warna</h3><p>Pilih warna referensi atau tentukan warna sendiri</p></div>
+
+  <div class="card mb">
+    <div class="card-h"><div><h3>Tema Warna</h3><p>${THEMES.length} pilihan warna siap pakai, atau tentukan warna sendiri · Aktif: <b>${esc(themeName(cur))}</b></p></div>
       <div class="mode-toggle" style="width:220px"><button class="${DB.settings.mode==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button><button class="${DB.settings.mode==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button></div></div>
-    <div class="card-b">
-      <div class="swatches">${THEMES.map(t=>`<button class="swatch ${t.color===DB.settings.color?'active':''}" onclick="setColor('${t.color}')"><i style="background:${t.color}"></i>${t.name}</button>`).join('')}</div>
-      <div class="custom-color" style="margin-top:16px"><input type="color" value="${DB.settings.color}" onchange="setColor(this.value)"><div><b>Warna kustom</b><br><small style="color:var(--muted)">Kode saat ini: ${DB.settings.color.toUpperCase()}</small></div></div>
+    <div class="card-b theme-side">
+      <div>${THEME_GROUPS.map(g=>`<div class="pal-group"><h4>${g.g}</h4><div class="swatches">${g.c.map(([n,c])=>`
+        <button class="swatch ${c===cur?'active':''}" onclick="setColor('${c}')"><i style="background:${c}">${c===cur?icon('check'):''}</i><span>${n}<small>${c.toUpperCase()}</small></span></button>`).join('')}</div></div>`).join('')}</div>
+      <div>
+        <div class="pal-group"><h4>Warna Kustom</h4>
+          <div class="custom-color"><input type="color" value="${cur}" oninput="$('#hexIn').value=this.value.toUpperCase()" onchange="setColor(this.value)">
+            <input class="input" id="hexIn" value="${cur.toUpperCase()}" maxlength="7"><button class="btn btn-primary btn-sm" onclick="setColor($('#hexIn').value.trim())">Terapkan</button></div></div>
+        <div class="pal-group"><h4>Pratinjau</h4>
+          <div class="preview-box"><div class="pv-top">MONITORING DATA PAJAK</div>
+            <div class="pv-b"><div class="toolbar"><button class="btn btn-primary btn-sm">Tombol Utama</button><button class="btn btn-outline btn-sm">Sekunder</button></div>
+              <div class="toolbar"><span class="badge b-primary">Label</span><span class="badge b-success">Lebih Bayar</span><span class="badge b-warning">Belum dibayar</span></div>
+              <div class="progress"><span style="width:65%"></span></div><a class="link" style="font-size:13px">Contoh tautan</a></div></div></div>
+      </div>
     </div>
   </div>
+
   <div class="grid settings-grid">
     <div class="card">
       <div class="card-h"><div><h3>Akun Admin</h3><p>Ubah nama, username dan password login</p></div></div>
@@ -1369,6 +1943,11 @@ function renderSettings(){
           <div class="field"><label>Password baru (opsional)</label><input class="input" id="sNew" type="password" minlength="6" placeholder="min. 6 karakter"></div>
         </div>
         <button class="btn btn-primary" type="submit">${icon('check')} Simpan Akun</button>
+        <div class="field" style="margin:22px 0 0"><label>Kode Pemulihan (untuk "Lupa password")</label>
+          <div class="toolbar"><span class="recovery" id="recCode">${esc(u.recovery||'')}</span>
+            <button type="button" class="btn btn-outline btn-sm" onclick="copyRecovery()">Salin</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="newRecovery()">Buat kode baru</button></div>
+          <small style="color:var(--muted);font-size:12px">Simpan kode ini di tempat aman. Kode diganti otomatis setelah dipakai untuk mengatur ulang password.</small></div>
       </form>
     </div>
     <div class="card">
@@ -1379,7 +1958,7 @@ function renderSettings(){
           <label class="btn btn-outline">${icon('upload')} Restore<input type="file" accept=".json" hidden onchange="restoreData(this.files[0])"></label>
           <button class="btn btn-danger" onclick="resetData()">${icon('trash')} Hapus Semua Data</button>
         </div>
-        <div class="note">Data hanya tersimpan di browser perangkat ini. Lakukan <b>backup</b> secara berkala, dan gunakan restore untuk memindahkan data ke komputer lain.</div>
+        <div class="note">Data tersimpan di browser perangkat ini. Backup berisi seluruh data &amp; pengaturan, tetapi <b>file PDF (SPT rekanan, bukti lapor) tidak ikut</b> karena ukurannya — simpan juga salinan PDF-nya.</div>
       </div>
     </div>
   </div>`;
@@ -1388,19 +1967,23 @@ function renderSettings(){
     try{ if(navigator.storage&&navigator.storage.estimate){ const e=await navigator.storage.estimate(); txt+=` · terpakai ${fmtSize(e.usage||0)} dari kapasitas ${fmtSize(e.quota||0)}`; } }catch(_){}
     el.textContent=txt; })();
 }
-function saveAccount(e){
+function copyRecovery(){ const c=currentUser().recovery; (navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('Kode pemulihan disalin','success'),()=>toast('Salin manual: '+c)); }
+async function newRecovery(){ const u=currentUser(); u.recovery=genCode(); await save(); render(); toast('Kode pemulihan baru dibuat','success'); }
+async function saveAccount(e){
   e.preventDefault();
   const u=currentUser();
   if($('#sOld').value!==u.password){ toast('Password lama salah','error'); return; }
   const nu=$('#sUser').value.trim(); if(!nu){ toast('Username wajib diisi','error'); return; }
+  if($('#sNew').value && $('#sNew').value.length<6){ toast('Password baru minimal 6 karakter','error'); return; }
+  const remember=(()=>{ try{ return !!localStorage.getItem('ppn_user_r'); }catch(_){ return false; } })();
   u.name=$('#sName').value.trim()||nu; u.username=nu;
   if($('#sNew').value) u.password=$('#sNew').value;
-  save(); session.set(nu); showApp(); toast('Akun berhasil diperbarui','success');
+  await save(); session.clear(); session.set(nu,remember); showApp(); toast('Akun berhasil diperbarui','success');
 }
 function backupData(){
-  const blob=new Blob([JSON.stringify({app:'monitoring-ppn',version:1,exported:new Date().toISOString(),data:DB.data,settings:DB.settings},null,1)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({app:'monitoring-data-pajak',version:2,exported:new Date().toISOString(),data:DB.data,reports:DB.reports,spt:DB.spt,settings:DB.settings},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`backup-monitoring-ppn-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  a.download=`backup-monitoring-pajak-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 function restoreData(file){
   if(!file) return;
@@ -1408,16 +1991,20 @@ function restoreData(file){
   fr.onload=e=>{ try{
       const d=JSON.parse(e.target.result);
       if(!d.data || !d.data.PM) throw new Error('format tidak valid');
-      confirmBox('Restore data?','Data saat ini akan diganti dengan isi file backup.','Restore',()=>{
-        DB.data={PM:d.data.PM||{},PK:d.data.PK||{}}; if(d.settings) DB.settings={...DB.settings,...d.settings};
-        save(); applyTheme(); applyLogos(); render(); toast('Data berhasil direstore','success');
+      confirmBox('Restore data?','Data saat ini akan diganti dengan isi file backup.','Restore',async()=>{
+        const n=normalizeDB({users:DB.users,settings:{...DB.settings,...(d.settings||{})},data:d.data,reports:d.reports,spt:d.spt});
+        DB.data=n.data; DB.reports=n.reports; DB.spt=n.spt; DB.settings=n.settings;
+        await save(); applyTheme(); applyLogos(); render(); toast('Data berhasil direstore','success');
       });
     }catch(err){ toast('File backup tidak valid','error'); } };
   fr.readAsText(file);
 }
 function resetData(){
-  confirmBox('Hapus semua data?','Seluruh data Pajak Masukan dan Pajak Keluaran di semua tahun akan dihapus permanen. Disarankan backup terlebih dahulu.','Hapus Semua',()=>{
-    DB.data={PM:{},PK:{}}; save(); render(); toast('Semua data dihapus','success');
+  confirmBox('Hapus semua data?','Seluruh data PPN, PPh, status laporan, dan bukti SPT di semua tahun akan dihapus permanen. Disarankan backup terlebih dahulu.','Hapus Semua',async()=>{
+    const ids=[]; Object.values(DB.spt).forEach(s=>s.file&&ids.push(s.file.id)); Object.values(DB.reports).forEach(g=>Object.values(g).forEach(r=>r.file&&ids.push(r.file.id)));
+    for(const id of ids) await delFile(id);
+    const def=defaultDB(); DB.data=def.data; DB.reports=def.reports; DB.spt={};
+    await save(); render(); toast('Semua data dihapus','success');
   });
 }
 
@@ -1428,10 +2015,11 @@ applyTheme();
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#modalRoot').innerHTML) closeModal(); closeSidebar(); } });
 window.addEventListener('resize',()=>{ if(window.innerWidth>960) closeSidebar(); });
 (async function init(){
-  DB = await loadDB();
+  DB=await loadDB();
+  save();
   LIBS_READY.then(()=>{ if(!$('#app').hidden && state.view==='dashboard') render(); });
-  applyTheme(); applyLogos(); renderLoginSwatches();
-  if(currentUser()) showApp(); else $('#login').hidden=false;
+  applyTheme(); applyLogos();
+  if(currentUser()) showApp(); else { $('#login').hidden=false; tickClock(); }
   if(STORAGE_MODE==='memory') toast('Penyimpanan browser diblokir — data hanya sementara. Buka file langsung di Chrome/Edge.','error');
 })();
 </script>
