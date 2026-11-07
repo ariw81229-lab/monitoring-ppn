@@ -7,8 +7,24 @@
 <title>Monitoring PPN Rekanan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* Memuat library dengan CDN cadangan: jika satu server lambat/diblokir, otomatis coba server lain */
+window.LIB_SRC={};
+function loadLib(name,urls,test){
+  return new Promise(res=>{ let i=0;
+    const next=()=>{ if(i>=urls.length) return res(false);
+      const u=urls[i++], sc=document.createElement('script'); let done=false;
+      const finish=ok=>{ if(done) return; done=true; clearTimeout(to); if(ok&&test()){ LIB_SRC[name]=u; res(true);} else next(); };
+      const to=setTimeout(()=>finish(false),10000);
+      sc.src=u; sc.async=true; sc.onload=()=>finish(true); sc.onerror=()=>finish(false);
+      document.head.appendChild(sc); };
+    next(); });
+}
+window.LIBS_READY=Promise.all([
+  loadLib('xlsx',['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'],()=>!!window.XLSX),
+  loadLib('chart',['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js','https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js','https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js'],()=>!!window.Chart)
+]);
+</script>
 <style>
 :root{
   --primary:#2563eb; --primary-rgb:37,99,235; --primary-dark:#1d4ed8;
@@ -69,14 +85,14 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .form-kicker{font-size:12.5px;font-weight:800;letter-spacing:.12em;color:var(--primary);margin-bottom:22px}
 /* ---------- Logo ---------- */
 .logos{display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:relative}
-.logo-box{display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:14px;padding:8px 14px;height:72px;min-width:72px;box-shadow:0 6px 18px rgba(0,0,0,.14)}
-.logo-box img{max-height:100%;max-width:170px;object-fit:contain;display:block}
-.logo-box .ph{font-weight:800;color:#0f172a;font-size:13px;letter-spacing:.04em;text-align:center;line-height:1.15}
-.logo-box.sm{height:42px;min-width:42px;padding:5px 9px;border-radius:10px;box-shadow:none;border:1px solid var(--border)}
-.logo-box.sm img{max-width:96px}
-.logo-box.sm .ph{font-size:10px}
+.logo-box{display:inline-flex;align-items:center;justify-content:center;background:transparent;height:72px;min-width:40px}
+.logo-box img{max-height:100%;max-width:180px;object-fit:contain;display:block}
+.logo-box .ph{font-weight:800;color:inherit;font-size:14px;letter-spacing:.06em;line-height:1.15;opacity:.9}
+.logo-box.sm{height:40px}
+.logo-box.sm img{max-width:100px}
+.logo-box.sm .ph{font-size:11px}
 .logo-slot{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--border);border-radius:12px}
-.logo-slot .logo-box{width:130px;height:60px;box-shadow:none;border:1px solid var(--border)}
+.logo-slot .logo-box{width:130px;height:60px}
 .side-brand{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
 .side-brand b{font-size:13.5px;font-weight:800;letter-spacing:.03em}
 .spinner{width:36px;height:36px;border:3px solid rgba(var(--primary-rgb),.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
@@ -389,7 +405,6 @@ const TYPE_INFO = {
    Cadangan: localStorage, lalu memori sementara.
 ========================================================= */
 const THEME_KEY = 'monitoring_ppn_theme';
-const XLSX_URL  = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 let STORAGE_MODE = 'idb';   // 'idb' | 'local' | 'memory'
 let idb = null;
 
@@ -847,7 +862,6 @@ function clearMonth(){
 ========================================================= */
 let IMPORT=null;
 function openImport(type){
-  if(!window.XLSX){ toast('Library Excel gagal dimuat — periksa koneksi internet lalu muat ulang halaman.','error'); return; }
   const t = type || (state.view==='PK'?'PK':'PM');
   IMPORT={type:t,records:null,fileName:''};
   openModal(`
@@ -877,7 +891,7 @@ function openImport(type){
 }
 
 function mapHeaders(hdr){
-  const norm=hdr.map(h=>String(h??'').toLowerCase().replace(/[^a-z0-9]/g,''));
+  const norm=Array.from(hdr,h=>String(h??'').toLowerCase().replace(/[^a-z0-9]/g,''));
   const map={}, used=new Set();
   for(const [f,al] of Object.entries(ALIASES)) for(const a of al){ const i=norm.indexOf(a); if(i>=0&&!used.has(i)){ map[f]=i; used.add(i); break; } }
   for(const [f,al] of Object.entries(ALIASES)){ if(f in map) continue;
@@ -886,12 +900,29 @@ function mapHeaders(hdr){
 }
 
 /* Parser workbook — dipakai di Web Worker (agar halaman tidak macet) dan sebagai cadangan di halaman utama */
-function parseWorkbook(input,isCsv){
+/* Memotong area sel "terpakai" yang membengkak (mis. A1:XFD1048576) menjadi area yang benar-benar berisi data */
+function trimRange(ws){
+  let r0=Infinity,c0=Infinity,r1=-1,c1=-1;
+  for(const k in ws){
+    if(k.charCodeAt(0)===33) continue; // kunci "!ref", "!merges", dll
+    const cell=ws[k]; if(!cell || cell.v==null || cell.v==='') continue;
+    const a=XLSX.utils.decode_cell(k);
+    if(a.r<r0)r0=a.r; if(a.r>r1)r1=a.r; if(a.c<c0)c0=a.c; if(a.c>c1)c1=a.c;
+  }
+  if(r1<0) return false;
+  ws['!ref']=XLSX.utils.encode_range({s:{r:r0,c:c0},e:{r:r1,c:c1}});
+  return true;
+}
+function parseWorkbook(input,isCsv,progress){
+  progress=progress||function(){};
+  progress('Membuka file Excel…');
   const opts={cellFormula:false,cellHTML:false,cellText:false,cellStyles:false,cellNF:false,bookVBA:false};
   const wb = isCsv ? XLSX.read(input,Object.assign({type:'string',raw:true},opts)) : XLSX.read(input,Object.assign({type:'array'},opts));
   let best=null;
   for(const sn of wb.SheetNames){
-    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:'',blankrows:false});
+    const ws=wb.Sheets[sn]; if(!ws || !trimRange(ws)) continue;
+    progress('Membaca sheet "'+sn+'"…');
+    const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:'',blankrows:false});
     for(let r=0;r<Math.min(25,aoa.length);r++){
       const map=mapHeaders(aoa[r]||[]); const score=Object.keys(map).length;
       if(('ppn' in map || 'nofaktur' in map) && score>=2 && (!best || score>best.score)) best={aoa,hr:r,map,score,sheet:sn};
@@ -903,6 +934,7 @@ function parseWorkbook(input,isCsv){
   const g=(row,f)=> (f in map && row[map[f]]!=null) ? row[map[f]] : '';
   const str=v=> typeof v==='number' ? (Number.isInteger(v)?v.toFixed(0):String(v)) : String(v).trim();
   for(let r=best.hr+1;r<aoa.length;r++){
+    if(r%10000===0) progress('Memproses baris '+r.toLocaleString('id-ID')+' dari '+aoa.length.toLocaleString('id-ID')+'…');
     const row=aoa[r]; if(!row || !row.length) continue;
     const rec={ npwp:str(g(row,'npwp')), nama:str(g(row,'nama')), nofaktur:str(g(row,'nofaktur')),
       tanggal:toDate(g(row,'tanggal')), masa:toMonth(g(row,'masa')), tahun:parseInt(g(row,'tahun'),10)||null,
@@ -916,10 +948,11 @@ function parseWorkbook(input,isCsv){
   return {records:recs, empty, sheet:best.sheet, multiMasa:('masa' in map) && masas.size>1};
 }
 
-let parserWorker=null;
+let parserWorker=null, workerReady=false;
 function getParserWorker(){
   if(parserWorker) return parserWorker;
-  const src = `importScripts(${JSON.stringify(XLSX_URL)});
+  const src = `importScripts(${JSON.stringify(LIB_SRC.xlsx)});
+postMessage({type:'ready'});
 const ALIASES=${JSON.stringify(ALIASES)};
 const MONTH_PREFIX=${JSON.stringify(MONTH_PREFIX)};
 const pad=n=>String(n).padStart(2,'0');
@@ -927,17 +960,26 @@ ${mapHeaders.toString()}
 ${toNum.toString()}
 ${toDate.toString()}
 ${toMonth.toString()}
+${trimRange.toString()}
 ${parseWorkbook.toString()}
-onmessage=e=>{ try{ postMessage({ok:true,result:parseWorkbook(e.data.input,e.data.isCsv)}); }
-  catch(err){ postMessage({ok:false,error:String((err&&err.message)||err)}); } };`;
+onmessage=e=>{ try{ const r=parseWorkbook(e.data.input,e.data.isCsv,t=>postMessage({type:'stage',text:t})); postMessage({type:'done',ok:true,result:r}); }
+  catch(err){ postMessage({type:'done',ok:false,error:String((err&&err.message)||err)}); } };`;
+  workerReady=false;
   parserWorker = new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
   return parserWorker;
 }
-function parseInWorker(input,isCsv){
+function killWorker(){ try{ parserWorker&&parserWorker.terminate(); }catch(_){} parserWorker=null; workerReady=false; }
+function parseInWorker(input,isCsv,onStage){
   return new Promise((res,rej)=>{
-    let w; try{ w=getParserWorker(); }catch(e){ return rej(e); }
-    w.onmessage=e=>{ if(e.data.ok) res(e.data.result); else { const er=new Error(e.data.error); er.fromParser=true; rej(er); } };
-    w.onerror=e=>{ if(e&&e.preventDefault) e.preventDefault(); try{w.terminate();}catch(_){} parserWorker=null; rej(new Error('worker-failed')); };
+    let w; try{ if(!LIB_SRC.xlsx) throw new Error('no-src'); w=getParserWorker(); }catch(e){ return rej(e); }
+    // Pengaman: jika proses latar belakang tidak siap dalam 8 detik, langsung pakai cara cadangan
+    const dog = workerReady ? null : setTimeout(()=>{ killWorker(); rej(new Error('worker-timeout')); },8000);
+    w.onmessage=e=>{ const d=e.data;
+      if(d.type==='ready'){ workerReady=true; clearTimeout(dog); return; }
+      if(d.type==='stage'){ onStage&&onStage(d.text); return; }
+      clearTimeout(dog);
+      if(d.ok) res(d.result); else { const er=new Error(d.error); er.fromParser=true; rej(er); } };
+    w.onerror=e=>{ if(e&&e.preventDefault) e.preventDefault(); clearTimeout(dog); killWorker(); rej(new Error('worker-failed')); };
     w.postMessage({input,isCsv}); // dikirim sebagai salinan, agar cadangan di halaman utama tetap bisa jalan
   });
 }
@@ -955,19 +997,26 @@ function readAs(file,asText){
 }
 async function readFile(file){
   if(!IMPORT) return;
-  if(!window.XLSX){ toast('Library Excel gagal dimuat — periksa koneksi internet lalu muat ulang halaman.','error'); return; }
   const token=IMPORT, isCsv=/\.csv$/i.test(file.name);
   token.records=null; token.plan=null; $('#planBox').innerHTML=''; $('#btnSave').disabled=true;
-  setDropBusy(true,`Membaca ${file.name} (${fmtSize(file.size)})…`,'Mohon tunggu, file besar membutuhkan beberapa detik');
+  const title=`Membaca ${file.name} (${fmtSize(file.size)})…`;
+  const stage=t=>{ if(IMPORT===token) setDropBusy(true,title,t); };
+  setDropBusy(true,title,'Menyiapkan…');
   try{
+    if(!window.XLSX){ stage('Memuat library Excel…'); await LIBS_READY; }
+    if(!window.XLSX) throw new Error('Library Excel tidak dapat dimuat. Periksa koneksi internet lalu muat ulang halaman.');
+    const t0=performance.now();
     const input=await readAs(file,isCsv);
     let res;
-    try{ res=await parseInWorker(input,isCsv); }
+    try{ res=await parseInWorker(input,isCsv,stage); }
     catch(e){
       if(e.fromParser) throw e;
-      await new Promise(r=>setTimeout(r,50)); // beri waktu spinner tampil, lalu proses di halaman utama
+      console.warn('Proses latar belakang tidak tersedia, pakai halaman utama:',e.message);
+      stage('Memproses file…');
+      await new Promise(r=>setTimeout(r,60)); // beri waktu spinner tampil
       res=parseWorkbook(input,isCsv);
     }
+    console.info('Import selesai dibaca dalam',Math.round(performance.now()-t0),'ms');
     if(IMPORT!==token) return; // modal sudah ditutup
     if(res.error){ setDropBusy(false); toast(res.error,'error'); return; }
     if(!res.records.length){ setDropBusy(false); toast('Tidak ada baris faktur yang terbaca di file ini.','error'); return; }
@@ -1057,7 +1106,7 @@ function writeXlsx(aoa,name,sheet){
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,sheet); XLSX.writeFile(wb,name);
 }
 function downloadTemplate(){
-  if(!window.XLSX){ toast('Library Excel gagal dimuat','error'); return; }
+  if(!window.XLSX){ toast('Library Excel belum siap — tunggu sebentar atau periksa koneksi internet.','error'); return; }
   const t=(state.view==='PK')?'PK':'PM';
   writeXlsx([headersFor(t),
     ['0123456789012345','PT Contoh Sukses Makmur','04002600000000001','15/01/2026','01','2026','APPROVED',10000000,9166667,1100000,0,''],
@@ -1165,6 +1214,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#modalRoot'
 window.addEventListener('resize',()=>{ if(window.innerWidth>960) closeSidebar(); });
 (async function init(){
   DB = await loadDB();
+  LIBS_READY.then(()=>{ if(!$('#app').hidden && state.view==='dashboard') render(); });
   applyTheme(); applyLogos(); renderLoginSwatches();
   if(currentUser()) showApp(); else $('#login').hidden=false;
   if(STORAGE_MODE==='memory') toast('Penyimpanan browser diblokir — data hanya sementara. Buka file langsung di Chrome/Edge.','error');
