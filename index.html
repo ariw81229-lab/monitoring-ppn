@@ -437,6 +437,14 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 @media (max-width:1200px){.pipe,.four{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:repeat(2,1fr)}.pipe-step:nth-child(2)::after{display:none}}
 @media (max-width:700px){.pipe,.four,.detail-grid{grid-template-columns:1fr}.pipe-step::after{display:none}.kor-grid{grid-template-columns:1fr}.kor-grid .w2{grid-column:auto}.spt-row,.spt-row.doc-row{grid-template-columns:1fr}}
 
+/* ---------- Akun pengunjung (lihat & unduh saja) ---------- */
+.ro [onclick^="openImport"],.ro [onclick^="openRowForm"],.ro [onclick^="deleteRow"],.ro [onclick^="clearMonth"],.ro [onclick^="downloadTemplate"],
+.ro [onclick^="openReport"],.ro [onclick^="openSptForm"],.ro [onclick^="deleteSpt"],.ro [onclick^="openRestNew"],.ro [onclick^="openRestCfg"],
+.ro [onclick^="resetRest"],.ro [onclick^="bulkBayar"],.ro .adm{display:none!important}
+.ro button.badge[onclick^="toggleBayar"]{pointer-events:none}
+.role-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(var(--primary-rgb),.12);color:var(--primary)}
+.ro .role-pill{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.cred{font-family:ui-monospace,Consolas,monospace;font-size:14px;line-height:1.7;padding:12px 14px;border-radius:10px;background:var(--surface-2);border:1px dashed var(--primary);white-space:pre-wrap;word-break:break-all}
 /* ---------- Toast ---------- */
 #toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:90}
 .toast{background:var(--text);color:var(--surface);padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;max-width:360px;animation:pop .2s}
@@ -510,7 +518,7 @@ tfoot td{font-weight:800;background:var(--surface-2)}
         <button class="icon-btn" title="Tema warna" onclick="togglePop(event,'loginPop')"><svg class="i"><use href="#i-palette"/></svg></button>
         <div class="popover" id="loginPop" hidden onclick="event.stopPropagation()"></div>
       </div>
-      <button class="icon-btn" title="Mode terang/gelap" onclick="setMode(DB.settings.mode==='dark'?'light':'dark')"><svg class="i"><use href="#i-moon"/></svg></button>
+      <button class="icon-btn" title="Mode terang/gelap" onclick="setMode(themeOf().mode==='dark'?'light':'dark')"><svg class="i"><use href="#i-moon"/></svg></button>
     </div>
     <form class="lg-box" id="loginForm" autocomplete="off" novalidate>
       <div class="logos" data-logos="sm"></div>
@@ -528,7 +536,8 @@ tfoot td{font-weight:800;background:var(--surface-2)}
         <a class="link" onclick="openForgot()">Lupa password?</a>
       </div>
       <button class="btn btn-primary btn-lg" type="submit" id="loginBtn">Masuk <svg class="i"><use href="#i-arrow"/></svg></button>
-      <div class="secure"><svg class="i"><use href="#i-shield"/></svg> Akses terbatas untuk administrator proyek</div>
+      <div class="secure"><svg class="i"><use href="#i-shield"/></svg> Akses terbatas untuk pengguna terdaftar proyek</div>
+      <div class="secure" style="margin-top:8px">Membuka di perangkat baru?&nbsp;<label class="link">Muat paket data dari admin<input type="file" accept=".json,application/json" hidden onchange="importPackage(this.files[0]);this.value=''"></label></div>
     </form>
     <div class="lg-foot">Monitoring Data Pajak · Proyek Dusem Segmen-1</div>
   </div>
@@ -540,7 +549,7 @@ tfoot td{font-weight:800;background:var(--surface-2)}
     <div class="side-brand"><div class="logos" data-logos="sm"></div><div><b>MONITORING DATA PAJAK</b><small>PROYEK DUSEM SEGMEN-1</small></div></div>
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
-      <div class="user-card"><div class="avatar" id="uAvatar">A</div><div style="flex:1;min-width:0"><b id="uName">Admin</b><small>Administrator</small></div>
+      <div class="user-card"><div class="avatar" id="uAvatar">A</div><div style="flex:1;min-width:0"><b id="uName">Admin</b><small id="uRole">Administrator</small></div>
         <button class="icon-btn" title="Keluar" onclick="logout()"><svg class="i"><use href="#i-logout"/></svg></button></div>
     </div>
   </aside>
@@ -784,13 +793,13 @@ function genCode(){
   let s=''; for(let i=0;i<12;i++){ s+=ch[a[i]%ch.length]; if(i===3||i===7) s+='-'; } return s;
 }
 function defaultDB(){
-  return { users:[{username:'admin',password:'admin123',name:'Administrator',recovery:genCode()}],
+  return { users:[{username:'admin',password:'admin123',name:'Administrator',role:'admin',active:true,recovery:genCode(),created:new Date().toISOString()}],
            settings:{color:THEMES[0].color, mode:'light', logos:{djp:null,nk:null,lain:null}, logoBox:{djp:false,nk:false,lain:false}, cleanLogo:true, restCfg:{periksaBulan:12,cairBulan:1}},
            data:Object.fromEntries(DATA_TYPES.map(t=>[t,{}])), reports:{PPH21:{},PPHU:{}}, spt:{}, restitusi:{} };
 }
 function normalizeDB(d){
   const def=defaultDB(); if(!d) return def;
-  const users=(d.users&&d.users.length)?d.users:def.users; users.forEach(u=>{ if(!u.recovery) u.recovery=genCode(); });
+  const users=(d.users&&d.users.length)?d.users:def.users; users.forEach(u=>{ if(!u.recovery) u.recovery=genCode(); if(!u.role) u.role='admin'; if(u.active===undefined) u.active=true; });
   const s=d.settings||{};
   const data={...def.data,...(d.data||{})};
   if(data.PPHU){ /* migrasi PPh Unifikasi lama ke sub menu PPh 23 / PPh 4(2) */
@@ -843,7 +852,7 @@ function save(){
   saveChain=saveChain.then(async()=>{
     if(STORAGE_MODE==='idb') await idbPut('db',DB);
     else if(STORAGE_MODE==='local') localStorage.setItem(STORE_KEY,JSON.stringify(DB));
-    return true;
+    notifySync(); return true;
   }).catch(e=>{ console.error(e); toast('Gagal menyimpan data: '+((e&&e.message)||'penyimpanan penuh'),'error'); return false; });
   return saveChain;
 }
@@ -938,19 +947,22 @@ function toBool(v){
 function hexToRgb(h){ h=h.replace('#',''); if(h.length===3)h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return [(n>>16)&255,(n>>8)&255,n&255]; }
 function shade(hex,p){ const f=v=>Math.max(0,Math.min(255,Math.round(v*(1+p)))); return '#'+hexToRgb(hex).map(f).map(v=>v.toString(16).padStart(2,'0')).join(''); }
 function applyTheme(){
-  const c=DB.settings.color, r=document.documentElement;
+  const th=themeOf(), c=th.color, r=document.documentElement;
   r.style.setProperty('--primary',c);
   r.style.setProperty('--primary-rgb',hexToRgb(c).join(','));
   r.style.setProperty('--primary-dark',shade(c,-.2));
   r.style.setProperty('--primary-deep',shade(c,-.55));
-  r.dataset.mode=DB.settings.mode;
+  r.dataset.mode=th.mode;
   document.querySelector('meta[name=theme-color]').content=c;
 }
 function setColor(c){
   if(!/^#[0-9a-f]{6}$/i.test(c)){ toast('Kode warna tidak valid (contoh: #2563EB)','error'); return; }
-  DB.settings.color=c.toLowerCase(); save(); applyTheme(); refreshThemeUI();
+  const u=$('#app').hidden?null:currentUser();
+  if(u&&u.role==='user') u.theme={...themeOf(),color:c.toLowerCase()}; else DB.settings.color=c.toLowerCase();
+  save(); applyTheme(); refreshThemeUI();
 }
-function setMode(m){ DB.settings.mode=m; save(); applyTheme(); refreshThemeUI(); }
+function setMode(m){ const u=$('#app').hidden?null:currentUser(); if(u&&u.role==='user') u.theme={...themeOf(),mode:m}; else DB.settings.mode=m; save(); applyTheme(); refreshThemeUI(); }
+function themeOf(){ const u=(typeof session!=='undefined'&&!$('#app').hidden)?currentUser():null, t=(u&&u.role==='user'&&u.theme)||{}; return {color:t.color||DB.settings.color, mode:t.mode||DB.settings.mode}; }
 function refreshThemeUI(){
   ['themePop','loginPop'].forEach(id=>{ const p=document.getElementById(id); if(p && !p.hidden) renderThemePop(id); });
   if(!$('#app').hidden) render();
@@ -958,14 +970,14 @@ function refreshThemeUI(){
 function themeName(c){ const t=THEMES.find(x=>x.color===c); return t?t.name:'Warna kustom'; }
 function renderThemePop(id){
   document.getElementById(id).innerHTML = `
-    <h4>Warna Tema · ${esc(themeName(DB.settings.color))}</h4>
-    <div class="pop-dots">${THEMES.map(t=>`<span class="dot-sw ${t.color===DB.settings.color?'active':''}" style="background:${t.color}" title="${t.name}" onclick="setColor('${t.color}')"></span>`).join('')}</div>
+    <h4>Warna Tema · ${esc(themeName(themeOf().color))}</h4>
+    <div class="pop-dots">${THEMES.map(t=>`<span class="dot-sw ${t.color===themeOf().color?'active':''}" style="background:${t.color}" title="${t.name}" onclick="setColor('${t.color}')"></span>`).join('')}</div>
     <h4>Mode</h4>
     <div class="mode-toggle">
-      <button class="${DB.settings.mode==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button>
-      <button class="${DB.settings.mode==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button>
+      <button class="${themeOf().mode==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button>
+      <button class="${themeOf().mode==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button>
     </div>
-    <div class="custom-color" style="margin-top:12px"><input type="color" value="${DB.settings.color}" onchange="setColor(this.value)"><small style="color:var(--muted)">Pilih warna sendiri</small></div>`;
+    <div class="custom-color" style="margin-top:12px"><input type="color" value="${themeOf().color}" onchange="setColor(this.value)"><small style="color:var(--muted)">Pilih warna sendiri</small></div>`;
 }
 function togglePop(e,id){ e.stopPropagation(); const p=document.getElementById(id); const open=p.hidden; document.querySelectorAll('.popover').forEach(x=>x.hidden=true); p.hidden=!open; if(open) renderThemePop(id); }
 document.addEventListener('click',()=>document.querySelectorAll('.popover').forEach(x=>x.hidden=true));
@@ -1039,7 +1051,7 @@ function toast(msg,type=''){
 function openModal(html,size=''){
   $('#modalRoot').innerHTML=`<div class="modal-bg" onmousedown="if(event.target===this)closeModal()"><div class="modal ${size}">${html}</div></div>`;
 }
-function closeModal(){ $('#modalRoot').innerHTML=''; IMPORT=null; }
+function closeModal(){ $('#modalRoot').innerHTML=''; IMPORT=null; if(syncPending){ syncPending=false; setTimeout(reloadFromStorage,50); } }
 function confirmBox(title,msg,okLabel,onOk){
   openModal(`<div class="modal-h"><h3>${esc(title)}</h3><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b"><p style="color:var(--muted)">${msg}</p></div>
@@ -1073,6 +1085,7 @@ $('#loginForm').addEventListener('submit',async e=>{
     else loginError(`Username atau password salah. Sisa percobaan: ${5-LOGIN.fails}.`);
     return;
   }
+  if(user.active===false){ loginError('Akun ini sedang dinonaktifkan. Hubungi admin.'); return; }
   LOGIN.fails=0; session.set(user.username,$('#remember').checked); $('#lp').value=''; $('#loginErr').hidden=true; showApp();
 });
 function openForgot(){
@@ -1104,12 +1117,16 @@ async function doReset(e){
   toast('Password berhasil diatur ulang. Silakan masuk dengan password baru.','success');
 }
 function currentUser(){ const u=session.get(); return DB.users.find(x=>x.username===u); }
-function logout(){ session.clear(); $('#app').hidden=true; $('#login').hidden=false; closeSidebar(); tickClock(); }
+function logout(){ session.clear(); $('#app').hidden=true; $('#login').hidden=false; document.body.classList.remove('ro'); closeSidebar(); applyTheme(); tickClock(); }
+function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 function showApp(){
   const u=currentUser(); if(!u){ logout(); return; }
   $('#login').hidden=true; $('#app').hidden=false;
   $('#uName').textContent=u.name||u.username; $('#uAvatar').textContent=(u.name||u.username)[0].toUpperCase();
-  render();
+  $('#uRole').innerHTML=`<span class="role-pill">${u.role==='user'?'Pengunjung · lihat & unduh':'Admin'}</span>`;
+  document.body.classList.toggle('ro',u.role==='user');
+  if(u.role==='user'&&state.view==='settings') state.view='tema';
+  applyTheme(); render();
 }
 function tickClock(){
   const el=$('#heroClock'); if(!el || $('#login').hidden) return; const d=new Date();
@@ -1135,7 +1152,7 @@ const NAV=[
   {sec:'Sistem'},{id:'settings',label:'Pengaturan & Tema',ic:'gear'},
 ];
 const TITLES={dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
-  rest:'Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',BPS:'Bukti Potong Saya',
+  rest:'Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Tema Tampilan',BPS:'Bukti Potong Saya',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
   PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)'};
 const COMB={dashboard:'dashComb',rest:'restComb',flow:'restComb'};
@@ -1150,7 +1167,8 @@ $('#yearSel').addEventListener('change',e=>{
   state.page=1; state.sel=new Set(); render();
 });
 function navHTML(){
-  return NAV.map(n=>{
+  const nav=isAdmin()?NAV:NAV.map(n=>n.id==='settings'?{id:'tema',label:'Tema',ic:'palette'}:n.sec==='Sistem'?{sec:'Tampilan'}:n);
+  return nav.map(n=>{
     if(n.sec) return `<div class="nav-label">${n.sec}</div>`;
     if(n.grp){ const on=n.items.includes(state.view);
       return `<div class="nav-grp ${on?'on':''}"><a class="gh" onclick="go('${n.items[0]}')">${icon(n.ic)}<span>${n.grp}</span></a>
@@ -1159,16 +1177,18 @@ function navHTML(){
   }).join('');
 }
 function render(){
+  if(!isAdmin()&&state.view==='settings') state.view='tema';
   $('#nav').innerHTML=navHTML();
   const ck=COMB[state.view], ys=ck==='restComb'?restYears():years(), cy=new Date().getFullYear();
   if(!ys.includes(state.year)) state.year=ys.includes(cy)?cy:ys[0];
   const comb=ck&&state[ck];
   $('#yearSel').innerHTML=(ck?`<option value="all" ${comb?'selected':''}>Semua Tahun (Gabungan)</option>`:'')
     +ys.map(y=>`<option value="${y}" ${!comb&&y===state.year?'selected':''}>Tahun ${y}</option>`).join('');
-  $('#yearSel').hidden=state.view==='settings';
+  $('#yearSel').hidden=state.view==='settings'||state.view==='tema';
   $('#pageTitle').textContent=TITLES[state.view]||'';
   if(state.view==='dashboard') renderDashboard();
   else if(state.view==='settings') renderSettings();
+  else if(state.view==='tema') renderTema();
   else if(state.view==='spt') renderSpt();
   else if(state.view==='rest') renderRest();
   else if(state.view==='flow') renderFlow();
@@ -1465,7 +1485,7 @@ function cellHTML(c,r){
 }
 function renderTableOnly(){
   const area=$('#tableArea'); if(!area) return;
-  const t=state.view, T=TYPES[t], list=filteredRows(t), selMode=t==='PM';
+  const t=state.view, T=TYPES[t], list=filteredRows(t), selMode=t==='PM'&&isAdmin();
   const pages=Math.max(1,Math.ceil(list.length/PER_PAGE)); if(state.page>pages) state.page=pages;
   const start=(state.page-1)*PER_PAGE, slice=list.slice(start,start+PER_PAGE);
   const allSel=slice.length&&slice.every(r=>state.sel.has(r.id));
@@ -1661,7 +1681,7 @@ function renderSptTable(){
       <td><span class="badge ${x.spt?'b-success':'b-warning'}">${x.spt?`✓ ${x.spt.files.length} SPT`:'Belum upload'}</span></td>
       <td style="white-space:normal;min-width:120px">${x.spt?esc(masaRangeText(x.spt.files.map(f=>f.masa).filter(Boolean))):'—'}</td>
       <td>${x.spt&&lastLapor(x.spt)?fmtDate(lastLapor(x.spt)):'—'}</td>
-      <td>${x.spt?`<div class="pills">${x.spt.files.slice(0,2).map(f=>`<span class="file-pill" onclick="openStoredFile('${f.id}','${esc(f.name)}')" title="${esc(f.name)}">${icon('file')}<span>${esc(f.name)}</span></span>`).join('')}${x.spt.files.length>2?`<span class="badge b-primary" style="cursor:pointer" onclick="openSptForm('${esc(x.rk)}')">+${x.spt.files.length-2}</span>`:''}</div>`:'—'}</td>
+      <td>${x.spt?`<div class="pills">${x.spt.files.slice(0,isAdmin()?2:SPT_MAX).map(f=>`<span class="file-pill" onclick="openStoredFile('${f.id}','${esc(f.name)}')" title="${esc(f.name)}">${icon('file')}<span>${esc(f.name)}</span></span>`).join('')}${isAdmin()&&x.spt.files.length>2?`<span class="badge b-primary" style="cursor:pointer" onclick="openSptForm('${esc(x.rk)}')">+${x.spt.files.length-2}</span>`:''}</div>`:'—'}</td>
       <td><div class="row-act">
         <button class="btn ${x.spt?'btn-outline':'btn-primary'} btn-sm" onclick="openSptForm('${esc(x.rk)}')">${icon(x.spt?'edit':'upload')} ${x.spt?'Kelola':'Upload SPT'}</button>
         ${x.spt?`<button class="icon-btn xs" title="Hapus semua SPT" onclick="deleteSpt('${esc(x.rk)}')">${icon('trash')}</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`
@@ -1863,7 +1883,7 @@ function renderRestTable(){
      <td>${x.status==='cair'?`<span class="badge b-success">Cair ${fmtDate(r.cairTgl)}</span>`:`<span class="badge ${x.overdue?'b-danger':'b-muted'}">${x.overdue?'Lewat est. ':'Est. '}${fmtDate(x.estCair)}</span>${x.status!=='selesai'?`<div class="sub-t">Est. SKPLB ${fmtDate(x.estPeriksa)}</div>`:''}`}</td>
      <td class="num" style="color:var(--success);font-weight:700">${x.cair?fmt(x.cair):'—'}</td>
      <td>${(r.docs||[]).length?`<span class="badge b-primary">${r.docs.length} file</span>`:'—'}</td>
-     <td><button class="btn btn-outline btn-sm" onclick="openRestForm('${x.k}')">${icon('edit')} Kelola</button></td></tr>`; }).join('')}</tbody>
+     <td><button class="btn btn-outline btn-sm" onclick="openRestForm('${x.k}')">${icon(isAdmin()?'edit':'eye')} ${isAdmin()?'Kelola':'Detail'}</button></td></tr>`; }).join('')}</tbody>
    <tfoot><tr><td>Total</td><td class="num">${fmt(T('pengajuan'))}</td><td colspan="3"></td><td class="num">${fmt(T('koreksi'))}</td><td class="num">${fmt(T('disetujui'))}</td><td></td><td class="num">${fmt(T('cair'))}</td><td colspan="2"></td></tr></tfoot></table></div>`
    :`<div class="empty">Tidak ada masa yang cocok dengan filter.</div>`;
 }
@@ -1911,6 +1931,14 @@ function openRestForm(k){
    <div class="modal-f">${DB.restitusi[k]?`<button type="button" class="btn btn-danger" style="margin-right:auto" onclick="resetRest('${k}')">${icon('trash')}<span class="hide-sm">Hapus data proses</span></button>`:''}
      <button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit" id="restSave">${icon('check')} Simpan</button></div></form>`,'xl');
   renderKor(); renderDocs();
+  if(!isAdmin()) restReadonly();
+}
+function restReadonly(){
+  const f=$('#restForm'); if(!f) return;
+  f.querySelectorAll('input,select,textarea').forEach(e=>e.disabled=true);
+  f.querySelectorAll('.modal-b button,.modal-b label.btn,#restSave,.modal-f .btn-danger').forEach(b=>b.style.display='none');
+  const h=document.querySelector('.modal-h h3'); if(h) h.textContent=h.textContent.replace('Kelola','Detail');
+  f.querySelector('.modal-b').insertAdjacentHTML('afterbegin',`<div class="note" style="margin:0 0 14px">${icon('eye')} Mode lihat saja — akun pengunjung tidak dapat mengubah data. Klik nama file untuk membuka dokumen.</div>`);
 }
 function korAdd(type){
   REST_ED.koreksi.push({id:uid(),nofaktur:'',rekanan:'',npwp:'',nilai:0,kat:type==='sanksi'?'sanksi':'tanpa',alasan:type==='sanksi'?'Sanksi administrasi (bunga / denda)':KOR_ALASAN[0],ket:''});
@@ -2533,7 +2561,7 @@ async function logoImagesForPdf(){
   return out;
 }
 function pdfTools(doc,logos){
-  const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=12, LH=14, brand=hexToRgb(DB.settings.color), T={title:'',sub:''}, TOTAL='{total_pages}', drawn=new Set();
+  const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=12, LH=14, brand=hexToRgb(themeOf().color), T={title:'',sub:''}, TOTAL='{total_pages}', drawn=new Set();
   const once=k=>{ const id=k+doc.internal.getCurrentPageInfo().pageNumber; if(drawn.has(id)) return false; drawn.add(id); return true; };
   const header=()=>{ if(!once('h')) return;
     let x=M;
@@ -2590,8 +2618,10 @@ async function exportPdf(d){
    PENGATURAN
 ========================================================= */
 function renderSettings(){
-  const u=currentUser(), lg=DB.settings.logos||{}, lb=DB.settings.logoBox||{}, cur=DB.settings.color;
+  if(!isAdmin()) return renderTema();
+  const u=currentUser(), lg=DB.settings.logos||{}, lb=DB.settings.logoBox||{};
   $('#view').innerHTML=`
+  ${usersCard()}
   <div class="card mb">
     <div class="card-h"><div><h3>Logo</h3><p>Logo tampil di halaman login, menu samping, dan hasil export PDF. Pilih tampilan dengan atau tanpa kotak putih.</p></div></div>
     <div class="card-b">
@@ -2609,24 +2639,7 @@ function renderSettings(){
     </div>
   </div>
 
-  <div class="card mb">
-    <div class="card-h"><div><h3>Tema Warna</h3><p>${THEMES.length} pilihan warna siap pakai, atau tentukan warna sendiri · Aktif: <b>${esc(themeName(cur))}</b></p></div>
-      <div class="mode-toggle" style="width:220px"><button class="${DB.settings.mode==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button><button class="${DB.settings.mode==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button></div></div>
-    <div class="card-b theme-side">
-      <div>${THEME_GROUPS.map(g=>`<div class="pal-group"><h4>${g.g}</h4><div class="swatches">${g.c.map(([n,c])=>`
-        <button class="swatch ${c===cur?'active':''}" onclick="setColor('${c}')"><i style="background:${c}">${c===cur?icon('check'):''}</i><span>${n}<small>${c.toUpperCase()}</small></span></button>`).join('')}</div></div>`).join('')}</div>
-      <div>
-        <div class="pal-group"><h4>Warna Kustom</h4>
-          <div class="custom-color"><input type="color" value="${cur}" oninput="$('#hexIn').value=this.value.toUpperCase()" onchange="setColor(this.value)">
-            <input class="input" id="hexIn" value="${cur.toUpperCase()}" maxlength="7"><button class="btn btn-primary btn-sm" onclick="setColor($('#hexIn').value.trim())">Terapkan</button></div></div>
-        <div class="pal-group"><h4>Pratinjau</h4>
-          <div class="preview-box"><div class="pv-top">MONITORING DATA PAJAK</div>
-            <div class="pv-b"><div class="toolbar"><button class="btn btn-primary btn-sm">Tombol Utama</button><button class="btn btn-outline btn-sm">Sekunder</button></div>
-              <div class="toolbar"><span class="badge b-primary">Label</span><span class="badge b-success">Lebih Bayar</span><span class="badge b-warning">Belum dibayar</span></div>
-              <div class="progress"><span style="width:65%"></span></div><a class="link" style="font-size:13px">Contoh tautan</a></div></div></div>
-      </div>
-    </div>
-  </div>
+  ${themeCard()}
 
   <div class="grid settings-grid">
     <div class="card">
@@ -2663,6 +2676,100 @@ function renderSettings(){
     try{ if(navigator.storage&&navigator.storage.estimate){ const e=await navigator.storage.estimate(); txt+=` · terpakai ${fmtSize(e.usage||0)} dari kapasitas ${fmtSize(e.quota||0)}`; } }catch(_){}
     el.textContent=txt; })();
 }
+function themeCard(){
+  const cur=themeOf().color, md=themeOf().mode;
+  return `<div class="card mb">
+    <div class="card-h"><div><h3>Tema Warna</h3><p>${THEMES.length} pilihan warna siap pakai, atau tentukan warna sendiri · Aktif: <b>${esc(themeName(cur))}</b>${isAdmin()?' · tema ini juga menjadi tampilan bawaan halaman login':''}</p></div>
+      <div class="mode-toggle" style="width:220px"><button class="${md==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button><button class="${md==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button></div></div>
+    <div class="card-b theme-side">
+      <div>${THEME_GROUPS.map(g=>`<div class="pal-group"><h4>${g.g}</h4><div class="swatches">${g.c.map(([n,c])=>`
+        <button class="swatch ${c===cur?'active':''}" onclick="setColor('${c}')"><i style="background:${c}">${c===cur?icon('check'):''}</i><span>${n}<small>${c.toUpperCase()}</small></span></button>`).join('')}</div></div>`).join('')}</div>
+      <div>
+        <div class="pal-group"><h4>Warna Kustom</h4>
+          <div class="custom-color"><input type="color" value="${cur}" oninput="$('#hexIn').value=this.value.toUpperCase()" onchange="setColor(this.value)">
+            <input class="input" id="hexIn" value="${cur.toUpperCase()}" maxlength="7"><button class="btn btn-primary btn-sm" onclick="setColor($('#hexIn').value.trim())">Terapkan</button></div></div>
+        <div class="pal-group"><h4>Pratinjau</h4>
+          <div class="preview-box"><div class="pv-top">MONITORING DATA PAJAK</div>
+            <div class="pv-b"><div class="toolbar"><button class="btn btn-primary btn-sm">Tombol Utama</button><button class="btn btn-outline btn-sm">Sekunder</button></div>
+              <div class="toolbar"><span class="badge b-primary">Label</span><span class="badge b-success">Lebih Bayar</span><span class="badge b-warning">Belum dibayar</span></div>
+              <div class="progress"><span style="width:65%"></span></div><a class="link" style="font-size:13px">Contoh tautan</a></div></div></div>
+      </div>
+    </div>
+  </div>`;
+}
+function renderTema(){
+  const u=currentUser();
+  $('#view').innerHTML=`
+  <div class="card mb"><div class="card-b" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+    <span class="ico" style="width:44px;height:44px">${icon('eye')}</span>
+    <div style="flex:1;min-width:220px"><b style="font-size:15px">Halo, ${esc(u.name||u.username)}</b>
+      <div style="color:var(--muted);font-size:13px">Anda masuk sebagai <b>Pengunjung</b>: dapat melihat seluruh data dan mengunduh laporan (PDF/Excel) serta dokumen, tetapi tidak dapat menambah, mengubah, atau menghapus data. Pilihan tema di bawah hanya berlaku untuk akun Anda.</div></div>
+  </div></div>
+  ${syncCard()}${themeCard()}`;
+}
+const adminCount=()=>DB.users.filter(u=>u.role!=='user'&&u.active!==false).length;
+function usersCard(){
+  const me=currentUser();
+  return `<div class="card mb"><div class="card-h"><div><h3>Manajemen Akun</h3><p><b>Admin</b>: melihat, menambah, mengubah data & mengelola akun · <b>Pengunjung (user)</b>: hanya melihat & mengunduh</p></div>
+    <div class="toolbar"><button class="btn btn-outline btn-sm" onclick="exportPackage()">${icon('download')} Unduh Paket Data</button><button class="btn btn-primary btn-sm" onclick="openUserForm()">${icon('plus')} Buat Akun</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Nama</th><th>Username</th><th>Hak Akses</th><th>Status</th><th>Dibuat</th><th></th></tr></thead><tbody>
+    ${DB.users.map((u,i)=>`<tr><td><b>${esc(u.name||u.username)}</b>${u===me?' <span class="badge b-muted">Anda</span>':''}</td><td>${esc(u.username)}</td>
+      <td><span class="badge ${u.role==='user'?'b-muted':'b-primary'}">${u.role==='user'?'Pengunjung · lihat & unduh':'Admin · akses penuh'}</span></td>
+      <td><span class="badge ${u.active===false?'b-danger':'b-success'}">${u.active===false?'Nonaktif':'Aktif'}</span></td>
+      <td>${u.created?fmtDate(u.created.slice(0,10)):'—'}</td>
+      <td><div class="row-act">${u===me?'<span class="sub-t">ubah di kartu Akun Admin</span>':`<button class="btn btn-outline btn-sm" onclick="openUserForm(${i})">${icon('edit')} Ubah</button>
+        <button class="icon-btn xs" title="${u.active===false?'Aktifkan':'Nonaktifkan'}" onclick="toggleUser(${i})">${icon(u.active===false?'check':'lock')}</button>
+        <button class="icon-btn xs" title="Hapus akun" onclick="deleteUser(${i})">${icon('trash')}</button>`}</div></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="card-b" style="padding-top:12px"><div class="note" style="margin:0">${icon('alert')} <b>Di browser ini</b>, akun pengunjung otomatis mengikuti data admin — tab yang sedang terbuka ikut diperbarui seketika setelah admin menyimpan. <b>Untuk komputer/HP lain</b>: klik <b>Unduh Paket Data</b> (berisi data, akun, dan semua file PDF), kirim ke pengguna, lalu pengguna memilih <b>“Muat paket data dari admin”</b> di halaman login atau di menu Tema. Ulangi setiap ada perubahan. Bagikan paket hanya kepada orang yang berwenang karena berisi akun login.</div></div></div>`;
+}
+function genPass(){ const ch='abcdefghjkmnpqrstuvwxyz23456789'; let a; try{ a=crypto.getRandomValues(new Uint32Array(10)); }catch(e){ a=Array.from({length:10},()=>Math.floor(Math.random()*1e9)); } return Array.from(a,v=>ch[v%ch.length]).join(''); }
+function openUserForm(i){
+  const u=i!=null?DB.users[i]:null;
+  openModal(`<div class="modal-h"><div><h3>${u?'Ubah Akun':'Buat Akun Baru'}</h3><p>${u?esc(u.username):'Akun untuk dibagikan kepada pengguna lain'}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+   <form id="userForm" onsubmit="saveUser(event,${u?i:'null'})"><div class="modal-b">
+    <div class="field"><label>Hak Akses</label><div class="fmt-opts">
+      <label class="fmt"><input type="radio" name="role" value="user" ${!u||u.role==='user'?'checked':''}><span>${icon('eye')}<b>Pengunjung (User)</b><small>Hanya melihat &amp; mengunduh. Menu Pengaturan diganti menu Tema.</small></span></label>
+      <label class="fmt"><input type="radio" name="role" value="admin" ${u&&u.role!=='user'?'checked':''}><span>${icon('shield')}<b>Admin</b><small>Melihat, menambah, mengubah data &amp; mengelola akun</small></span></label></div></div>
+    <div class="form-grid">
+      <div class="field"><label>Nama Tampilan</label><input class="input" name="name" required value="${esc(u?u.name||'':'')}"></div>
+      <div class="field"><label>Username</label><input class="input" name="username" required value="${esc(u?u.username:'')}" autocomplete="off"></div>
+      <div class="field full"><label>${u?'Password Baru (kosongkan bila tidak diubah)':'Password'}</label>
+        <div style="display:flex;gap:8px"><input class="input" name="password" id="ufPass" ${u?'':'required'} minlength="6" autocomplete="new-password" placeholder="min. 6 karakter"><button type="button" class="btn btn-outline btn-sm" onclick="$('#ufPass').value=genPass()">Buat otomatis</button></div></div>
+    </div></div>
+   <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`);
+}
+async function saveUser(e,i){
+  e.preventDefault();
+  const fd=new FormData($('#userForm')), name=(fd.get('name')||'').trim(), un=(fd.get('username')||'').trim(), pw=(fd.get('password')||'').toString(), role=fd.get('role');
+  if(!/^[A-Za-z0-9._-]{3,}$/.test(un)){ toast('Username minimal 3 karakter (huruf, angka, titik, _ atau -)','error'); return; }
+  if(DB.users.some((x,j)=>j!==i&&x.username.toLowerCase()===un.toLowerCase())){ toast('Username sudah dipakai','error'); return; }
+  if(pw && pw.length<6){ toast('Password minimal 6 karakter','error'); return; }
+  if(i!=null){
+    const u=DB.users[i];
+    if(u.role!=='user'&&role==='user'&&u.active!==false&&adminCount()<=1){ toast('Minimal harus ada 1 admin aktif','error'); return; }
+    u.name=name||un; u.username=un; u.role=role; if(pw) u.password=pw;
+  } else DB.users.push({username:un,password:pw,name:name||un,role,active:true,recovery:genCode(),created:new Date().toISOString()});
+  await save(); render();
+  if(pw) showCred(un,pw,role); else { closeModal(); toast('Akun diperbarui','success'); }
+}
+function showCred(un,pw,role){
+  const txt=`Monitoring Data Pajak - Proyek Dusem Segmen-1\nUsername : ${un}\nPassword : ${pw}\nHak akses: ${role==='user'?'Pengunjung (lihat & unduh)':'Admin'}`;
+  window.__cred=txt;
+  openModal(`<div class="modal-h"><div><h3>Akun Siap Dibagikan</h3><p>Salin dan kirimkan informasi login berikut</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="cred">${esc(txt)}</div><div class="note">Password tidak ditampilkan lagi setelah jendela ini ditutup. Pengguna dapat mengganti password melalui fitur "Lupa password" dengan kode pemulihan dari admin.</div></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Tutup</button><button class="btn btn-primary" onclick="(navigator.clipboard?navigator.clipboard.writeText(window.__cred):Promise.reject()).then(()=>toast('Info login disalin','success'),()=>toast('Salin manual teks di atas'))">Salin Info Login</button></div>`,'sm');
+}
+async function toggleUser(i){
+  const u=DB.users[i]; if(!u||u===currentUser()) return;
+  if(u.active!==false&&u.role!=='user'&&adminCount()<=1){ toast('Minimal harus ada 1 admin aktif','error'); return; }
+  u.active=u.active===false; await save(); render(); toast(`Akun ${u.username} ${u.active?'diaktifkan':'dinonaktifkan'}`,'success');
+}
+function deleteUser(i){
+  const u=DB.users[i]; if(!u||u===currentUser()) return;
+  if(u.role!=='user'&&u.active!==false&&adminCount()<=1){ toast('Minimal harus ada 1 admin aktif','error'); return; }
+  confirmBox('Hapus akun?',`Akun <b>${esc(u.username)}</b> akan dihapus dan tidak bisa login lagi.`,'Hapus',async()=>{ DB.users.splice(i,1); await save(); render(); toast('Akun dihapus','success'); });
+}
 function copyRecovery(){ const c=currentUser().recovery; (navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('Kode pemulihan disalin','success'),()=>toast('Salin manual: '+c)); }
 async function newRecovery(){ const u=currentUser(); u.recovery=genCode(); await save(); render(); toast('Kode pemulihan baru dibuat','success'); }
 async function saveAccount(e){
@@ -2677,7 +2784,7 @@ async function saveAccount(e){
   await save(); session.clear(); session.set(nu,remember); showApp(); toast('Akun berhasil diperbarui','success');
 }
 function backupData(){
-  const blob=new Blob([JSON.stringify({app:'monitoring-data-pajak',version:2,exported:new Date().toISOString(),data:DB.data,reports:DB.reports,spt:DB.spt,restitusi:DB.restitusi,settings:DB.settings},null,1)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({app:'monitoring-data-pajak',version:2,exported:new Date().toISOString(),data:DB.data,reports:DB.reports,spt:DB.spt,restitusi:DB.restitusi,settings:DB.settings,users:DB.users},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`backup-monitoring-pajak-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
@@ -2690,6 +2797,7 @@ function restoreData(file){
       confirmBox('Restore data?','Data saat ini akan diganti dengan isi file backup.','Restore',async()=>{
         const n=normalizeDB({users:DB.users,settings:{...DB.settings,...(d.settings||{})},data:d.data,reports:d.reports,spt:d.spt,restitusi:d.restitusi});
         DB.data=n.data; DB.reports=n.reports; DB.spt=n.spt; DB.restitusi=n.restitusi; DB.settings=n.settings;
+        (d.users||[]).forEach(bu=>{ if(bu&&bu.username&&!DB.users.some(x=>x.username.toLowerCase()===bu.username.toLowerCase())) DB.users.push({role:'user',active:true,...bu,recovery:bu.recovery||genCode()}); });
         await save(); applyTheme(); applyLogos(); render(); toast('Data berhasil direstore','success');
       });
     }catch(err){ toast('File backup tidak valid','error'); } };
@@ -2707,6 +2815,92 @@ function resetData(){
     await save(); render(); toast('Semua data dihapus','success');
   });
 }
+
+/* =========================================================
+   SINKRONISASI DATA ADMIN → PENGGUNA
+   - Browser yang sama: semua tab otomatis diperbarui setelah admin menyimpan.
+   - Perangkat lain: lewat Paket Data (data + akun + file PDF) dari admin.
+========================================================= */
+let syncCh=null, syncPending=false;
+try{ syncCh=new BroadcastChannel('monitoring_ppn_sync'); syncCh.onmessage=e=>{ if(e.data&&e.data.t==='db') reloadFromStorage(); }; }catch(e){}
+function notifySync(){ try{ syncCh&&syncCh.postMessage({t:'db',at:Date.now()}); }catch(e){} }
+async function reloadFromStorage(){
+  let d=null;
+  try{ d=STORAGE_MODE==='idb'?await idbGet('db'):STORAGE_MODE==='local'?JSON.parse(localStorage.getItem(STORE_KEY)||'null'):null; }catch(e){ return; }
+  if(!d) return;
+  DB=normalizeDB(d); applyLogos();
+  if($('#app').hidden){ applyTheme(); return; }
+  const u=currentUser();
+  if(!u||u.active===false){ logout(); toast('Sesi berakhir karena akun diubah atau dinonaktifkan oleh admin','error'); return; }
+  if($('#modalRoot').innerHTML){ syncPending=true; return; }
+  const y=window.scrollY; applyTheme(); showApp(); window.scrollTo(0,y);
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && !$('#app').hidden && !isAdmin()) reloadFromStorage(); });
+const SYNC_KEY='monitoring_ppn_lastsync';
+function allFileIds(){
+  const ids=[];
+  Object.values(DB.spt||{}).forEach(s=>(s.files||[]).forEach(f=>ids.push(f.id)));
+  Object.values(DB.reports||{}).forEach(g=>Object.values(g).forEach(r=>r.file&&ids.push(r.file.id)));
+  Object.values(DB.restitusi||{}).forEach(r=>(r.docs||[]).forEach(d=>ids.push(d.id)));
+  Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id)));
+  return [...new Set(ids)];
+}
+const blobToDataURL=b=>new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(fr.error); fr.readAsDataURL(b); });
+function dataURLtoBlob(du){ const i=du.indexOf(','), mime=(du.slice(0,i).match(/:(.*?);/)||[])[1]||'application/pdf', bin=atob(du.slice(i+1)), u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return new Blob([u8],{type:mime}); }
+async function exportPackage(){
+  toast('Menyiapkan paket data…');
+  try{
+    const files={}; let miss=0;
+    for(const id of allFileIds()){ const b=await getFile(id); if(b) files[id]=await blobToDataURL(b); else miss++; }
+    const pkg={app:'monitoring-data-pajak',type:'package',version:3,exported:new Date().toISOString(),by:(currentUser()||{}).name||'admin',
+      db:{users:DB.users,settings:DB.settings,data:DB.data,reports:DB.reports,spt:DB.spt,restitusi:DB.restitusi},files};
+    const blob=new Blob([JSON.stringify(pkg)],{type:'application/json'}), a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=`paket-data-monitoring-pajak-${todayISO()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    toast(`Paket data diunduh (${fmtSize(blob.size)}, ${Object.keys(files).length} file PDF${miss?`, ${miss} file tidak ditemukan`:''})`,'success');
+  }catch(e){ console.error(e); toast('Gagal membuat paket: '+e.message,'error'); }
+}
+function importPackage(file){
+  if(!file) return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    let pkg; try{ pkg=JSON.parse(fr.result); }catch(e){ toast('File bukan paket data yang valid','error'); return; }
+    if(!pkg||pkg.type!=='package'||!pkg.db||!pkg.db.data||!pkg.db.users){ toast('File bukan Paket Data dari admin. Minta admin mengunduh “Paket Data” di menu Pengaturan.','error'); return; }
+    const nf=Object.keys(pkg.files||{}).length, when=pkg.exported?new Date(pkg.exported).toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'}):'-';
+    confirmBox('Muat paket data dari admin?',`Paket dibuat <b>${esc(when)}</b> oleh <b>${esc(pkg.by||'admin')}</b> · ${(pkg.db.users||[]).length} akun · ${nf} file PDF.<br><br>Seluruh data, akun, dan dokumen di browser ini akan <b>diganti</b> dengan isi paket.`,'Muat Paket',async()=>{
+      try{
+        toast('Memuat paket data…');
+        const keep=new Set(Object.keys(pkg.files||{}));
+        for(const id of allFileIds()) if(!keep.has(id)) await delFile(id);
+        for(const [id,du] of Object.entries(pkg.files||{})) await putFile(id,dataURLtoBlob(du));
+        DB=normalizeDB(pkg.db);
+        if(!await save()) return;
+        try{ localStorage.setItem(SYNC_KEY,JSON.stringify({exported:pkg.exported,by:pkg.by,imported:new Date().toISOString()})); }catch(e){}
+        applyTheme(); applyLogos();
+        if(!$('#app').hidden){ const u=currentUser(); if(!u||u.active===false){ logout(); } else showApp(); }
+        toast(`Paket data dimuat: ${(pkg.db.users||[]).length} akun, ${nf} file PDF. Silakan masuk dengan akun Anda.`,'success');
+      }catch(e){ console.error(e); toast('Gagal memuat paket: '+e.message,'error'); }
+    });
+  };
+  fr.readAsText(file);
+}
+function syncCard(){
+  let info=null; try{ info=JSON.parse(localStorage.getItem(SYNC_KEY)||'null'); }catch(e){}
+  return `<div class="card mb"><div class="card-h"><div><h3>Sinkronisasi Data dari Admin</h3>
+      <p>${info?`Terakhir diperbarui dari paket admin: <b>${new Date(info.exported).toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'})}</b> (dibuat oleh ${esc(info.by||'admin')})`:'Data di browser ini mengikuti data admin secara otomatis.'}</p></div>
+      <label class="btn btn-primary btn-sm">${icon('upload')} Perbarui dari Paket Admin<input type="file" accept=".json,application/json" hidden onchange="importPackage(this.files[0]);this.value=''"></label></div>
+    <div class="card-b"><div class="note" style="margin:0">${icon('alert')} Jika Anda membuka website ini di <b>browser yang sama</b> dengan admin, perubahan admin tampil otomatis. Jika di <b>komputer/HP lain</b>, minta file <b>Paket Data</b> terbaru dari admin lalu klik “Perbarui dari Paket Admin”.</div></div></div>`;
+}
+
+/* =========================================================
+   HAK AKSES — akun pengunjung hanya dapat melihat & mengunduh
+========================================================= */
+['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
+ 'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
+ 'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
+ 'downloadTemplate','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
+  const f=window[n]; if(typeof f!=='function') return;
+  window[n]=function(...a){ if(!isAdmin()){ toast('Akun pengunjung hanya dapat melihat dan mengunduh data','error'); return; } return f.apply(this,a); };
+});
 
 /* =========================================================
    INIT
