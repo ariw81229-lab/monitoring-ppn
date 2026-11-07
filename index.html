@@ -22,7 +22,9 @@ function loadLib(name,urls,test){
 }
 window.LIBS_READY=Promise.all([
   loadLib('xlsx',['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'],()=>!!window.XLSX),
-  loadLib('chart',['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js','https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js','https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js'],()=>!!window.Chart)
+  loadLib('chart',['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js','https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js','https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js'],()=>!!window.Chart),
+  loadLib('jspdf',['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js','https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'],()=>!!(window.jspdf&&window.jspdf.jsPDF))
+    .then(ok=>ok&&loadLib('autotable',['https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js','https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'],()=>!!(window.jspdf&&window.jspdf.jsPDF.API.autoTable)))
 ]);
 </script>
 <style>
@@ -92,9 +94,23 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .logo-box.sm img{max-width:100px}
 .logo-box.sm .ph{font-size:11px}
 .logo-slot{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--border);border-radius:12px}
-.logo-slot .logo-box{width:130px;height:60px}
+.logo-slot .logo-box{width:130px;height:60px;flex:none}
+.logo-slot .logo-box img{max-width:130px}
+.logo-grid{grid-template-columns:repeat(3,1fr)}
+.fmt-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fmt input{display:none}
+.fmt span{display:flex;flex-direction:column;gap:4px;padding:14px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:.15s;height:100%}
+.fmt span svg{width:24px;height:24px;color:var(--primary)}
+.fmt span small{color:var(--muted);font-size:12px}
+.fmt input:checked+span{border-color:var(--primary);background:rgba(var(--primary-rgb),.06)}
+.switch-row{display:flex;gap:12px;align-items:flex-start;cursor:pointer}
+.switch-row input{width:18px;height:18px;margin-top:2px;accent-color:var(--primary);flex:none}
+@media (max-width:960px){.logo-grid{grid-template-columns:1fr}}
 .side-brand{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
 .side-brand b{font-size:13.5px;font-weight:800;letter-spacing:.03em}
+.side-brand .logos{flex-wrap:nowrap;gap:10px}
+.side-brand .logo-box.sm{height:30px;min-width:0}
+.side-brand .logo-box.sm img{max-width:68px}
 .spinner{width:36px;height:36px;border:3px solid rgba(var(--primary-rgb),.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
 .spin-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -410,7 +426,7 @@ let idb = null;
 
 function defaultDB(){
   return { users:[{username:'admin',password:'admin123',name:'Administrator'}],
-           settings:{color:THEMES[0].color, mode:'light', logos:{djp:null,nk:null}},
+           settings:{color:THEMES[0].color, mode:'light', logos:{djp:null,nk:null,lain:null}, kso:true, cleanLogo:true},
            data:{PM:{},PK:{}} };
 }
 function normalizeDB(d){
@@ -467,35 +483,70 @@ const fmtSize = b => b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b
    Prioritas: logo yang diunggah di Pengaturan → file di folder yang sama
    (logo-djp.png / logo-nindya-karya.png) → teks pengganti.
 ========================================================= */
+const LOGO_KEYS = ['djp','nk','lain'];
 const LOGO_DEF = {
-  djp:{file:'logo-djp.png', ph:'DJP', title:'Direktorat Jenderal Pajak'},
-  nk: {file:'logo-nindya-karya.png', ph:'NINDYA<br>KARYA', title:'Nindya Karya'},
+  djp: {file:'logo-djp.png', ph:'DJP', title:'Direktorat Jenderal Pajak', label:'Logo DJP'},
+  nk:  {file:'logo-nindya-karya.png', ph:'NINDYA<br>KARYA', title:'Nindya Karya', label:'Logo Nindya Karya'},
+  lain:{file:'logo-lain.png', ph:'', title:'Logo Lain', label:'Logo Tambahan'},
 };
-function logoBox(k,size){
-  const L=LOGO_DEF[k], src=(DB.settings.logos||{})[k]||L.file;
-  return `<span class="logo-box ${size||''}" title="${L.title}"><img src="${src}" alt="${L.title}" onerror="logoFail(this,'${k}')"></span>`;
+function logoBox(k,size,preview){
+  const L=LOGO_DEF[k], up=(DB.settings.logos||{})[k];
+  if(!up && !L.ph && !preview) return `<span class="logo-box ${size||''}" data-opt="1"><img src="${L.file}" alt="" onerror="this.parentNode.remove()"></span>`;
+  if(!up && !L.ph) return `<span class="logo-box ${size||''}"><span class="ph" style="opacity:.45">Belum ada</span></span>`;
+  return `<span class="logo-box ${size||''}" title="${L.title}"><img src="${up||L.file}" alt="${L.title}" onerror="logoFail(this,'${k}')"></span>`;
 }
 function logoFail(img,k){ const s=document.createElement('span'); s.className='ph'; s.innerHTML=LOGO_DEF[k].ph; img.replaceWith(s); }
-function applyLogos(){ document.querySelectorAll('[data-logos]').forEach(el=>{ el.innerHTML=logoBox('djp',el.dataset.logos)+logoBox('nk',el.dataset.logos); }); }
+function applyLogos(){ document.querySelectorAll('[data-logos]').forEach(el=>{ el.innerHTML=LOGO_KEYS.map(k=>logoBox(k,el.dataset.logos)).join(''); }); }
+
+function loadImg(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
+/* Menghapus latar putih / kotak putih membulat di sekeliling logo:
+   area putih atau transparan yang tersambung ke tepi gambar dibuat transparan,
+   warna putih DI DALAM logo tetap dipertahankan. */
+function removeWhiteBg(ctx,w,h){
+  const id=ctx.getImageData(0,0,w,h), d=id.data, seen=new Uint8Array(w*h), cleared=new Uint8Array(w*h), st=[];
+  const isBg=i=>{ const p=i*4; return d[p+3]<24 || (d[p]>222 && d[p+1]>222 && d[p+2]>222); };
+  for(let x=0;x<w;x++){ st.push(x,(h-1)*w+x); } for(let y=0;y<h;y++){ st.push(y*w,y*w+w-1); }
+  while(st.length){ const i=st.pop(); if(seen[i]) continue; seen[i]=1; if(!isBg(i)) continue;
+    cleared[i]=1; d[i*4+3]=0; const x=i%w;
+    if(x>0) st.push(i-1); if(x<w-1) st.push(i+1); if(i>=w) st.push(i-w); if(i<w*(h-1)) st.push(i+w); }
+  // haluskan tepi (piksel terang yang bersebelahan dengan latar yang dihapus)
+  for(let i=0;i<w*h;i++){ if(cleared[i]) continue; const x=i%w;
+    const nb=(x>0&&cleared[i-1])||(x<w-1&&cleared[i+1])||(i>=w&&cleared[i-w])||(i<w*(h-1)&&cleared[i+w]); if(!nb) continue;
+    const p=i*4, mn=Math.min(d[p],d[p+1],d[p+2]); if(mn>180) d[p+3]=Math.min(d[p+3],Math.round(255*(255-mn)/75)); }
+  ctx.putImageData(id,0,0);
+}
+function trimCanvas(c){
+  const ctx=c.getContext('2d'), {width:w,height:h}=c, d=ctx.getImageData(0,0,w,h).data; let x0=w,y0=h,x1=-1,y1=-1;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(d[(y*w+x)*4+3]>12){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  if(x1<0) return c;
+  const pd=2; x0=Math.max(0,x0-pd); y0=Math.max(0,y0-pd); x1=Math.min(w-1,x1+pd); y1=Math.min(h-1,y1+pd);
+  const o=document.createElement('canvas'); o.width=x1-x0+1; o.height=y1-y0+1; o.getContext('2d').drawImage(c,x0,y0,o.width,o.height,0,0,o.width,o.height); return o;
+}
+async function processLogo(src,clean){
+  const img=await loadImg(src); if(!img||!img.naturalWidth) throw new Error('Gambar tidak dapat dibaca');
+  const s=Math.min(1,800/Math.max(img.naturalWidth,img.naturalHeight));
+  let c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.naturalWidth*s)); c.height=Math.max(1,Math.round(img.naturalHeight*s));
+  const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height);
+  if(clean) removeWhiteBg(ctx,c.width,c.height);
+  c=trimCanvas(c);
+  return c.toDataURL('image/png');
+}
 function uploadLogo(k,file){
   if(!file) return;
   if(!/^image\//.test(file.type)){ toast('File logo harus berupa gambar (PNG/JPG/SVG)','error'); return; }
   const fr=new FileReader();
-  fr.onload=()=>{
-    if(file.type==='image/svg+xml'){ setLogo(k,fr.result); return; }
-    const img=new Image();
-    img.onload=()=>{ const s=Math.min(1,600/Math.max(img.width,img.height)); const c=document.createElement('canvas');
-      c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      setLogo(k,c.toDataURL('image/png')); };
-    img.onerror=()=>toast('Gambar tidak dapat dibaca','error');
-    img.src=fr.result;
-  };
+  fr.onload=async()=>{ try{ setLogo(k, await processLogo(fr.result, DB.settings.cleanLogo!==false)); }catch(e){ toast(e.message,'error'); } };
   fr.readAsDataURL(file);
+}
+async function cleanExistingLogo(k){
+  const src=(DB.settings.logos||{})[k]; if(!src) return;
+  try{ setLogo(k, await processLogo(src,true)); }catch(e){ toast(e.message,'error'); }
 }
 async function setLogo(k,v){
   DB.settings.logos={...(DB.settings.logos||{}),[k]:v};
   if(await save()){ applyLogos(); render(); toast(v?'Logo diperbarui':'Logo dihapus','success'); }
 }
+async function setSetting(key,val){ DB.settings[key]=val; await save(); render(); }
 const session = {
   get(){ try{return sessionStorage.getItem('ppn_user')}catch(e){return window.__u||null} },
   set(v){ try{sessionStorage.setItem('ppn_user',v)}catch(e){window.__u=v} },
@@ -678,13 +729,23 @@ function render(){
    DASHBOARD
 ========================================================= */
 let chart=null;
-function renderDashboard(){
-  const y=state.year;
-  const rec = MONTHS.map((n,i)=>{
+const isKSO = () => DB.settings.kso!==false;
+function rekapData(y){
+  return MONTHS.map((n,i)=>{
     const pm=getRows('PM',y,i), pk=getRows('PK',y,i);
     const vPM=sumF(pm,'ppn'), vPK=sumF(pk,'ppn');
-    return {i,n,cPM:pm.length,cPK:pk.length,vPM,vPK,dPM:sumF(pm,'dpp'),dPK:sumF(pk,'dpp'),diff:vPK-vPM,has:pm.length||pk.length};
+    return {i,n,cPM:pm.length,cPK:pk.length,vPM,vPK,dPM:sumF(pm,'dpp'),dPK:sumF(pk,'dpp'),diff:vPK-vPM,has:!!(pm.length||pk.length)};
   });
+}
+/* Proyek KSO dengan fasilitas: status selalu Lebih Bayar (tidak ada Kurang Bayar) */
+function statusText(r){
+  if(!r.has) return 'Belum ada data';
+  if(isKSO()) return 'Lebih Bayar';
+  return r.diff>0?'Kurang Bayar':r.diff<0?'Lebih Bayar':'Nihil';
+}
+function renderDashboard(){
+  const y=state.year;
+  const rec = rekapData(y);
   const tPM=rec.reduce((a,r)=>a+r.vPM,0), tPK=rec.reduce((a,r)=>a+r.vPK,0), diff=tPK-tPM;
   const dPM=rec.reduce((a,r)=>a+r.dPM,0), dPK=rec.reduce((a,r)=>a+r.dPK,0);
   const cnt=rec.reduce((a,r)=>a+r.cPM,0), uploaded=rec.filter(r=>r.cPM).length;
@@ -694,16 +755,18 @@ function renderDashboard(){
   for(let i=0;i<12;i++) getRows('PM',y,i).forEach(r=>{ if(isCanceled(r))return; const k=r.npwp||r.nama||'-'; agg[k]=agg[k]||{nama:r.nama||'-',npwp:r.npwp||'',ppn:0,n:0}; agg[k].ppn+=+r.ppn||0; agg[k].n++; });
   const top=Object.values(agg).sort((a,b)=>b.ppn-a.ppn).slice(0,6);
 
-  const statusBadge = r => !r.has ? '<span class="badge b-muted">Belum ada data</span>'
-    : r.diff>0 ? '<span class="badge b-danger">Kurang Bayar</span>'
-    : r.diff<0 ? '<span class="badge b-success">Lebih Bayar</span>'
-    : '<span class="badge b-primary">Nihil</span>';
+  const statusBadge = r => { const t=statusText(r);
+    return `<span class="badge ${t==='Lebih Bayar'?'b-success':t==='Kurang Bayar'?'b-danger':t==='Nihil'?'b-primary':'b-muted'}">${t}</span>`; };
+  const kso=isKSO(), anyData=rec.some(r=>r.has);
+  const diffColor = v => kso ? 'inherit' : v>0?'var(--danger)':v<0?'var(--success)':'inherit';
 
   $('#view').innerHTML = `
   <div class="grid kpis" style="margin-bottom:18px">
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('in')}</span>PPN Masukan ${y}</div><div class="val">${rp(tPM)}</div><div class="foot">DPP ${rp(dPM)}</div></div>
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('out')}</span>PPN Keluaran ${y}</div><div class="val">${rp(tPK)}</div><div class="foot">DPP ${rp(dPK)}</div></div>
-    <div class="card kpi"><div class="lbl"><span class="ico">${icon('scale')}</span>PPN Kurang / (Lebih) Bayar</div><div class="val" style="color:${diff>0?'var(--danger)':diff<0?'var(--success)':'inherit'}">${rp(diff)}</div><div class="foot">${diff>0?'Kurang bayar (PK > PM)':diff<0?'Lebih bayar (PM > PK)':'Nihil'}</div></div>
+    <div class="card kpi"><div class="lbl"><span class="ico">${icon('scale')}</span>Status PPN ${y}</div>
+      <div class="val" style="color:${!anyData?'var(--muted)':kso||diff<0?'var(--success)':diff>0?'var(--danger)':'inherit'}">${!anyData?'Belum ada data':kso?'Lebih Bayar':diff>0?'Kurang Bayar':diff<0?'Lebih Bayar':'Nihil'}</div>
+      <div class="foot">Selisih PK − PM: ${rp(diff)}${kso?'<br>Fasilitas KSO':''}</div></div>
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('receipt')}</span>Faktur Pajak Masukan</div><div class="val">${fmt(cnt)} <span style="font-size:13px;color:var(--muted);font-weight:600">faktur</span></div>
       <div class="foot" style="margin-bottom:8px">${uploaded} dari 12 bulan sudah diupload</div><div class="progress"><span style="width:${uploaded/12*100}%"></span></div></div>
   </div>
@@ -726,12 +789,13 @@ function renderDashboard(){
   </div>
 
   <div class="card">
-    <div class="card-h"><div><h3>Rekap PPN per Masa Pajak ${y}</h3><p>Klik baris untuk membuka detail Pajak Masukan bulan tersebut</p></div></div>
+      <div class="card-h"><div><h3>Rekap PPN per Masa Pajak ${y}</h3><p>Klik baris untuk membuka detail Pajak Masukan bulan tersebut${kso?' · Status sesuai fasilitas KSO':''}</p></div>
+        <button class="btn btn-outline btn-sm" onclick="openExport('rekap')">${icon('download')} Export</button></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Masa Pajak</th><th class="num">Faktur PM</th><th class="num">PPN Masukan</th><th class="num">Faktur PK</th><th class="num">PPN Keluaran</th><th class="num">Kurang/(Lebih) Bayar</th><th>Status</th></tr></thead>
+      <thead><tr><th>Masa Pajak</th><th class="num">Faktur PM</th><th class="num">PPN Masukan</th><th class="num">Faktur PK</th><th class="num">PPN Keluaran</th><th class="num">Selisih (PK − PM)</th><th>Status</th></tr></thead>
       <tbody>${rec.map(r=>`<tr class="clickable" onclick="state.month=${r.i};go('PM')">
         <td><b>${r.n}</b></td><td class="num">${fmt(r.cPM)}</td><td class="num">${rp(r.vPM)}</td><td class="num">${fmt(r.cPK)}</td><td class="num">${rp(r.vPK)}</td>
-        <td class="num" style="font-weight:700;color:${r.diff>0?'var(--danger)':r.diff<0?'var(--success)':'inherit'}">${rp(r.diff)}</td><td>${statusBadge(r)}</td></tr>`).join('')}</tbody>
+        <td class="num" style="font-weight:700;color:${diffColor(r.diff)}">${rp(r.diff)}</td><td>${statusBadge(r)}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td>Total</td><td class="num">${fmt(cnt)}</td><td class="num">${rp(tPM)}</td><td class="num">${fmt(rec.reduce((a,r)=>a+r.cPK,0))}</td><td class="num">${rp(tPK)}</td><td class="num">${rp(diff)}</td><td></td></tr></tfoot>
     </table></div>
   </div>`;
@@ -749,7 +813,7 @@ function drawChart(rec){
     data:{labels:MONTHS_S,datasets:[
       {label:'PPN Masukan',data:rec.map(r=>r.vPM),backgroundColor:prim,borderRadius:6,maxBarThickness:26,order:2},
       {label:'PPN Keluaran',data:rec.map(r=>r.vPK),backgroundColor:`rgba(${rgb},.3)`,borderRadius:6,maxBarThickness:26,order:2},
-      {type:'line',label:'Kurang/(Lebih) Bayar',data:rec.map(r=>r.diff),borderColor:'#f59e0b',backgroundColor:'#f59e0b',tension:.35,pointRadius:3,borderWidth:2,order:1}
+      {type:'line',label:'Selisih PK − PM',data:rec.map(r=>r.diff),borderColor:'#f59e0b',backgroundColor:'#f59e0b',tension:.35,pointRadius:3,borderWidth:2,order:1}
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{position:'bottom',labels:{color:muted,usePointStyle:true,boxWidth:8,font:{family:'Plus Jakarta Sans'}}},
@@ -797,8 +861,8 @@ function renderPajak(t){
       <div class="toolbar">
         <button class="btn btn-primary" onclick="openImport()">${icon('upload')} Import Excel</button>
         <button class="btn btn-outline" onclick="downloadTemplate()">${icon('file')}<span class="hide-sm">Template</span></button>
-        ${rows.length?`<button class="btn btn-outline" onclick="exportMonth()">${icon('download')}<span class="hide-sm">Export</span></button>
-        <button class="btn btn-danger" onclick="clearMonth()" title="Hapus data bulan ini">${icon('trash')}</button>`:''}
+        <button class="btn btn-outline" onclick="openExport('${t}')">${icon('download')}<span class="hide-sm">Export</span></button>
+        ${rows.length?`<button class="btn btn-danger" onclick="clearMonth()" title="Hapus data bulan ini">${icon('trash')}</button>`:''}
       </div>
     </div>
     ${rows.length?`
@@ -1113,9 +1177,152 @@ function downloadTemplate(){
     ['0987654321098765','CV Sumber Berkah','04002600000000002','20/01/2026','01','2026','APPROVED',5000000,4583333,550000,0,'']
   ], `Template_${TYPE_INFO[t].label.replace(' ','_')}.xlsx`,'Template');
 }
-function exportMonth(){
-  const t=state.view, rows=getRows(t,state.year,state.month);
-  writeXlsx([headersFor(t),...rows.map(rowFor)], `${TYPE_INFO[t].label.replace(' ','_')}_${MONTHS[state.month]}_${state.year}.xlsx`, MONTHS[state.month]);
+/* ---------- Dialog export: pilih cakupan & format ---------- */
+function openExport(kind){
+  const y=state.year, isRekap=kind==='rekap';
+  const title=isRekap?'Rekap PPN per Masa Pajak':TYPE_INFO[kind].label;
+  openModal(`
+    <div class="modal-h"><h3>Export ${title}</h3><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      ${isRekap?`<p style="color:var(--muted);margin-bottom:14px">Rekap 12 masa pajak tahun <b>${y}</b>.</p>`:`
+      <div class="field"><label>Data yang diexport</label>
+        <div class="seg" style="margin-bottom:0">
+          <label><input type="radio" name="xscope" value="month" checked onchange="exportInfo('${kind}')">${MONTHS[state.month]} ${y}</label>
+          <label><input type="radio" name="xscope" value="year" onchange="exportInfo('${kind}')">Seluruh tahun ${y}</label>
+        </div></div>`}
+      <div class="field"><label>Format file</label>
+        <div class="fmt-opts">
+          <label class="fmt"><input type="radio" name="xfmt" value="pdf" checked onchange="exportInfo('${kind}')"><span>${icon('file')}<b>PDF</b><small>Rapi & siap cetak, dengan logo dan judul</small></span></label>
+          <label class="fmt"><input type="radio" name="xfmt" value="xlsx" onchange="exportInfo('${kind}')"><span>${icon('grid')}<b>Excel (.xlsx)</b><small>Dengan judul, bisa diolah lagi</small></span></label>
+        </div></div>
+      <div id="xInfo"></div>
+    </div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" id="xGo" onclick="doExport('${kind}')">${icon('download')} Unduh</button></div>`,'sm');
+  exportInfo(kind);
+}
+function exportOpts(){
+  const sc=document.querySelector('input[name=xscope]:checked'), f=document.querySelector('input[name=xfmt]:checked');
+  return {scope:sc?sc.value:'year', fmt:f?f.value:'pdf'};
+}
+function exportInfo(kind){
+  const el=$('#xInfo'); if(!el) return; const o=exportOpts(); let n=0;
+  if(kind==='rekap') n=rekapData(state.year).filter(r=>r.has).length;
+  else (o.scope==='month'?[state.month]:MONTHS.map((_,i)=>i)).forEach(m=>n+=getRows(kind,state.year,m).length);
+  const unit=kind==='rekap'?'bulan berisi data':'faktur';
+  el.innerHTML = !n ? `<div class="note warn">Tidak ada data untuk diexport pada pilihan ini.</div>`
+    : `<div class="note">${fmt(n)} ${unit} akan diexport.${o.fmt==='pdf'&&n>3000?' File PDF besar membutuhkan waktu beberapa saat.':''}</div>`;
+  $('#xGo').disabled=!n;
+}
+const PDF_SAFE = s => String(s??'').replace(/[−–—]/g,'-').replace(/[“”]/g,'"').replace(/[‘’]/g,"'");
+function buildExport(kind,scope){
+  const y=state.year, printed=new Date().toLocaleString('id-ID',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  if(kind==='rekap'){
+    const rec=rekapData(y), T=f=>rec.reduce((a,r)=>a+r[f],0);
+    return { title:`Rekap PPN per Masa Pajak Tahun ${y}`,
+      subtitle:`Tahun pajak ${y}${isKSO()?' | Status sesuai fasilitas KSO (Lebih Bayar)':''} | Dicetak ${printed}`,
+      head:['Masa Pajak','Faktur PM','DPP Masukan','PPN Masukan','Faktur PK','DPP Keluaran','PPN Keluaran','Selisih (PK - PM)','Status'],
+      rows:rec.map(r=>[`${r.n} ${y}`,r.cPM,r.dPM,r.vPM,r.cPK,r.dPK,r.vPK,r.diff,statusText(r)]),
+      total:['TOTAL',T('cPM'),T('dPM'),T('vPM'),T('cPK'),T('dPK'),T('vPK'),T('vPK')-T('vPM'),''],
+      num:[1,2,3,4,5,6,7], money:[2,3,5,6,7], status:8, canceled:new Set(),
+      widths:[22,10,20,20,10,20,20,20,16], file:`Rekap_PPN_${y}`, sheet:`Rekap ${y}` };
+  }
+  const info=TYPE_INFO[kind], months=scope==='month'?[state.month]:MONTHS.map((_,i)=>i), yearly=scope!=='month';
+  const list=[]; months.forEach(m=>getRows(kind,y,m).forEach(r=>list.push({m,r})));
+  const ok=list.filter(x=>!isCanceled(x.r)), S=f=>ok.reduce((a,x)=>a+(+x.r[f]||0),0);
+  const canceled=new Set(); list.forEach((x,i)=>{ if(isCanceled(x.r)) canceled.add(i); });
+  const head=['No',...(yearly?['Masa Pajak']:[]),'Tanggal Faktur','Nomor Faktur',`NPWP ${info.party}`,`Nama ${info.party}`,'Status Faktur','DPP','DPP Nilai Lain','PPN','PPnBM'];
+  const off=yearly?1:0;
+  const period=yearly?`Tahun ${y}`:`${MONTHS[state.month]} ${y}`;
+  return { title:`Daftar ${info.label} - ${period}`,
+    subtitle:`Masa pajak ${period} | ${fmt(list.length)} faktur${canceled.size?` (${canceled.size} batal, tidak dihitung)`:''} | Total PPN Rp ${fmt(S('ppn'))} | Dicetak ${printed}`,
+    head,
+    rows:list.map((x,i)=>[i+1,...(yearly?[`${MONTHS[x.m]} ${y}`]:[]),fmtDate(x.r.tanggal),x.r.nofaktur,x.r.npwp,x.r.nama,x.r.status,+x.r.dpp||0,+x.r.dppLain||0,+x.r.ppn||0,+x.r.ppnbm||0]),
+    total:['',...(yearly?['']:[]),'','','',`TOTAL (${fmt(ok.length)} faktur, tanpa faktur batal)`,'',S('dpp'),S('dppLain'),S('ppn'),S('ppnbm')],
+    num:[6+off,7+off,8+off,9+off], money:[6+off,7+off,8+off,9+off], status:-1, canceled,
+    widths:[6,...(yearly?[16]:[]),12,22,20,40,14,18,18,16,12],
+    file:`${info.label.replace(' ','_')}_${yearly?y:MONTHS[state.month]+'_'+y}`, sheet:yearly?`${y}`:`${MONTHS[state.month]} ${y}` };
+}
+async function doExport(kind){
+  const o=exportOpts(), btn=$('#xGo');
+  btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyiapkan…';
+  await new Promise(r=>setTimeout(r,60));
+  try{
+    const data=buildExport(kind,o.scope);
+    if(o.fmt==='pdf') await exportPdf(data); else exportXlsx(data);
+    closeModal(); toast(`File ${o.fmt==='pdf'?'PDF':'Excel'} berhasil diunduh`,'success');
+  }catch(e){
+    console.error(e); toast('Export gagal: '+(e.message||e),'error');
+    if($('#xGo')){ btn.disabled=false; btn.innerHTML=icon('download')+' Unduh'; }
+  }
+}
+function exportXlsx(d){
+  if(!window.XLSX) throw new Error('Library Excel belum siap, periksa koneksi internet');
+  const n=d.head.length;
+  const aoa=[['MONITORING PPN REKANAN'],[d.title],[d.subtitle],[],d.head,...d.rows,d.total];
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges']=[0,1,2].map(r=>({s:{r,c:0},e:{r,c:n-1}}));
+  ws['!cols']=d.widths.map(w=>({wch:w}));
+  const r0=5, r1=5+d.rows.length;
+  for(let r=r0;r<=r1;r++) d.money.forEach(c=>{ const a=XLSX.utils.encode_cell({r,c}); if(ws[a]&&typeof ws[a].v==='number') ws[a].z='#,##0'; });
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,d.sheet.slice(0,31)); XLSX.writeFile(wb,d.file+'.xlsx');
+}
+/* Logo untuk PDF: logo yang diunggah, atau file logo di folder yang sama */
+async function logoImagesForPdf(){
+  const out=[];
+  for(const k of LOGO_KEYS){
+    const src=(DB.settings.logos||{})[k]||LOGO_DEF[k].file;
+    const img=await loadImg(src); if(!img||!img.naturalWidth) continue;
+    try{ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight; c.getContext('2d').drawImage(img,0,0);
+      out.push({data:c.toDataURL('image/png'),w:c.width,h:c.height}); }catch(e){ /* file lokal tidak bisa dibaca browser — lewati */ }
+  }
+  return out;
+}
+async function exportPdf(d){
+  if(!(window.jspdf&&window.jspdf.jsPDF)){ await LIBS_READY; }
+  if(!(window.jspdf&&window.jspdf.jsPDF&&window.jspdf.jsPDF.API.autoTable)) throw new Error('Library PDF belum siap, periksa koneksi internet');
+  const {jsPDF}=window.jspdf, doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
+  const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=12, LH=14;
+  const brand=hexToRgb(DB.settings.color), logos=await logoImagesForPdf();
+  const title=PDF_SAFE(d.title), sub=PDF_SAFE(d.subtitle), TOTAL='{total_pages}';
+  const header=()=>{
+    let x=M;
+    logos.forEach((l,i)=>{ const w=Math.min(42,LH*l.w/l.h); doc.addImage(l.data,'PNG',x,M,w,LH,'logo'+i,'FAST'); x+=w+5; });
+    const tx=logos.length?x+3:M, maxW=W-M-tx;
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...brand); doc.text('MONITORING PPN REKANAN',tx,M+3.5);
+    doc.setFontSize(14); doc.setTextColor(15,23,42); doc.text(doc.splitTextToSize(title,maxW)[0],tx,M+9.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,116,139); doc.text(doc.splitTextToSize(sub,maxW)[0],tx,M+14);
+    doc.setDrawColor(...brand); doc.setLineWidth(.6); doc.line(M,M+LH+3,W-M,M+LH+3);
+  };
+  const footer=()=>{
+    doc.setDrawColor(226,232,240); doc.setLineWidth(.2); doc.line(M,H-10,W-M,H-10);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(100,116,139);
+    doc.text('Monitoring PPN Rekanan | '+title,M,H-6);
+    doc.text(`Halaman ${doc.internal.getNumberOfPages()} dari ${TOTAL}`,W-M,H-6,{align:'right'});
+  };
+  const cell=(v,c)=> d.num.includes(c) ? fmt(v) : PDF_SAFE(v);
+  const colStyles={}; d.num.forEach(c=>colStyles[c]={halign:'right'}); colStyles[0]={halign:d.status>=0?'left':'center'};
+  doc.autoTable({
+    head:[d.head.map(PDF_SAFE)],
+    body:d.rows.map(r=>r.map(cell)),
+    foot:[d.total.map((v,c)=>({content:v===''?'':cell(v,c),styles:{halign:d.num.includes(c)?'right':'left'}}))],
+    startY:M+LH+7, margin:{top:M+LH+7,left:M,right:M,bottom:14},
+    theme:'grid', showHead:'everyPage', showFoot:'lastPage',
+    styles:{font:'helvetica',fontSize:d.head.length>10?7:7.8,cellPadding:1.6,textColor:[30,41,59],lineColor:[226,232,240],lineWidth:.15,overflow:'linebreak',valign:'middle'},
+    headStyles:{fillColor:brand,textColor:255,fontStyle:'bold',halign:'center'},
+    footStyles:{fillColor:[241,245,249],textColor:[15,23,42],fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[248,250,252]},
+    columnStyles:colStyles,
+    didParseCell:h=>{
+      if(h.section!=='body') return;
+      if(d.canceled.has(h.row.index)){ h.cell.styles.textColor=[160,170,185]; h.cell.styles.fontStyle='italic'; }
+      if(h.column.index===d.status){ const t=h.cell.raw;
+        h.cell.styles.fontStyle='bold'; h.cell.styles.textColor=t==='Lebih Bayar'?[22,163,74]:t==='Kurang Bayar'?[220,38,38]:[148,163,184]; }
+    },
+    didDrawPage:()=>{ header(); footer(); }
+  });
+  if(typeof doc.putTotalPages==='function') doc.putTotalPages(TOTAL);
+  doc.save(d.file+'.pdf');
 }
 
 /* =========================================================
@@ -1126,14 +1333,22 @@ function renderSettings(){
   const lg=DB.settings.logos||{};
   $('#view').innerHTML = `
   <div class="card" style="margin-bottom:18px">
-    <div class="card-h"><div><h3>Logo</h3><p>Unggah file logo resmi (PNG/JPG/SVG). Logo tampil di halaman login dan menu samping.</p></div></div>
-    <div class="card-b grid settings-grid">${['djp','nk'].map(k=>`
-      <div class="logo-slot">${logoBox(k,'')}
-        <div style="flex:1;min-width:0"><b>Logo ${LOGO_DEF[k].title}</b><small style="display:block;color:var(--muted)">${lg[k]?'Logo sudah diunggah':'Belum diunggah'}</small>
-          <div class="toolbar" style="margin-top:8px"><label class="btn btn-outline btn-sm">${icon('upload')} Unggah<input type="file" accept="image/*" hidden onchange="uploadLogo('${k}',this.files[0]);this.value=''"></label>
-          ${lg[k]?`<button class="btn btn-danger btn-sm" onclick="setLogo('${k}',null)">Hapus</button>`:''}</div></div>
-      </div>`).join('')}
+    <div class="card-h"><div><h3>Logo</h3><p>Unggah file logo (PNG/JPG/SVG). Logo tampil di halaman login, menu samping, dan hasil export PDF.</p></div></div>
+    <div class="card-b">
+      <div class="grid logo-grid">${LOGO_KEYS.map(k=>`
+      <div class="logo-slot">${logoBox(k,'',true)}
+        <div style="flex:1;min-width:0"><b>${LOGO_DEF[k].label}</b><small style="display:block;color:var(--muted)">${lg[k]?'Sudah diunggah':'Belum diunggah'}</small>
+          <div class="toolbar" style="margin-top:8px;gap:6px"><label class="btn btn-outline btn-sm">${icon('upload')} Unggah<input type="file" accept="image/*" hidden onchange="uploadLogo('${k}',this.files[0]);this.value=''"></label>
+          ${lg[k]?`<button class="btn btn-outline btn-sm" onclick="cleanExistingLogo('${k}')" title="Hapus latar putih / kotak putih di sekeliling logo">Hapus latar</button><button class="btn btn-danger btn-sm" onclick="setLogo('${k}',null)">Hapus</button>`:''}</div></div>
+      </div>`).join('')}</div>
+      <label class="switch-row" style="margin-top:16px"><input type="checkbox" ${DB.settings.cleanLogo!==false?'checked':''} onchange="setSetting('cleanLogo',this.checked)">
+        <span><b>Hapus latar putih otomatis saat unggah</b><br><small style="color:var(--muted)">Kotak / latar putih di sekeliling logo dibuat transparan, sehingga hanya logonya yang tampil.</small></span></label>
     </div>
+  </div>
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-h"><div><h3>Ketentuan Status PPN</h3><p>Mengatur status pada Dashboard dan hasil export</p></div></div>
+    <div class="card-b"><label class="switch-row"><input type="checkbox" ${isKSO()?'checked':''} onchange="setSetting('kso',this.checked)">
+      <span><b>Proyek KSO dengan fasilitas — status selalu Lebih Bayar</b><br><small style="color:var(--muted)">Jika aktif, setiap masa pajak yang berisi data berstatus Lebih Bayar walaupun PPN Keluaran lebih besar dari PPN Masukan. Tidak ada status Kurang Bayar.</small></span></label></div>
   </div>
   <div class="card" style="margin-bottom:18px">
     <div class="card-h"><div><h3>Tema Warna</h3><p>Pilih warna referensi atau tentukan warna sendiri</p></div>
