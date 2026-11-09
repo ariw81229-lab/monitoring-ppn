@@ -247,6 +247,18 @@ td{padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
 tbody tr:hover{background:rgba(var(--primary-rgb),.04)}
 tr.clickable{cursor:pointer}
 tr.canceled td{opacity:.5}
+tr.pp-cancel td{background:rgba(220,38,38,.11)!important;color:#b91c1c}
+tr.pp-cancel td:first-child{box-shadow:inset 4px 0 0 var(--danger)}
+tr.pp-cancel td.strike{text-decoration:line-through}
+tr.pp-normal td{background:rgba(22,163,74,.08)!important}
+tr.pp-normal td:first-child{box-shadow:inset 4px 0 0 var(--success)}
+[data-mode="dark"] tr.pp-cancel td{color:#fca5a5}
+.pp-legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.pp-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.pay-box.pp{background:rgba(var(--primary-rgb),.06);border-color:rgba(var(--primary-rgb),.25)}
+.pay-box.pp .pay-h{color:var(--primary)}
+.pay-box.cx{background:rgba(220,38,38,.06);border-color:rgba(220,38,38,.25)}
+.pay-box.cx .pay-h{color:var(--danger)}
 tr.canceled td.strike{text-decoration:line-through}
 tr.sel{background:rgba(var(--primary-rgb),.07)}
 .num{text-align:right;font-variant-numeric:tabular-nums}
@@ -734,8 +746,13 @@ const PPH_BASE = {group:'PPh',unit:'bukti potong',id:'nobukti',amount:'pph',need
 const UNIF_TPL_H=['NPWP Penerima','Nama Penerima','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Kode Objek Pajak','DPP','Tarif','PPh Dipotong','Status','Keterangan'];
 const unifCols=[cT,cNo,{k:'npwp',l:'NPWP Penerima'},{k:'nama',l:'Nama Penerima',f:'wide'},{k:'kode',l:'Kode Objek'},{k:'dpp',l:'DPP',f:'num'},{k:'tarif',l:'Tarif'},{k:'pph',l:'PPh Dipotong',f:'num'},cSt];
 const unifForm=[fNo,fTgl,fKode,{k:'npwp',l:'NPWP Penerima'},{k:'nama',l:'Nama Penerima',req:1},fNum('dpp','DPP'),fTarif,fNum('pph','PPh Dipotong',1),fSt,fKet];
+const PP_ST=['APPROVED','CANCELED','CREDITED','AMENDED'];
+const PP_FIELDS={...PPN_FIELDS, masa:{t:'m',a:['masapajak','masa','bulan','masapajakfaktur']}, tahun:{t:'i',a:['tahunpajak','tahun','tahunpajakfaktur']},
+  kredit:{t:'m',a:['masapajakpengkreditan','masapengkreditan','masakredit','masadikreditkan','bulandikreditkan','bulanpengkreditan','dikreditkanpadamasa']},
+  kreditTahun:{t:'i',a:['tahunpajakpengkreditan','tahunpengkreditan','tahunkredit','tahundikreditkan']}};
+delete PP_FIELDS.bayar; delete PP_FIELDS.tglBayar;
 const TYPES = {
-  PM:{label:'Pajak Masukan',menu:'Pajak Masukan',group:'PPN',party:'Penjual',unit:'faktur',fields:PPN_FIELDS,id:'nofaktur',amount:'ppn',base:'dpp',amountLabel:'PPN',baseLabel:'DPP',
+  PM:{label:'Pajak Masukan',menu:'Pajak Masukan',sub:'Monitoring Pajak Masukan',group:'PPN',party:'Penjual',unit:'faktur',fields:PPN_FIELDS,id:'nofaktur',amount:'ppn',base:'dpp',amountLabel:'PPN',baseLabel:'DPP',
       need:['ppn','nofaktur'],key:['nofaktur','ppn','dpp'],needLabel:'Nomor Faktur Pajak" dan "PPN',pay:true,
       cols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nofaktur',l:'Nomor Faktur',f:'strong'},{k:'npwp',l:'NPWP Penjual'},{k:'nama',l:'Nama Penjual',f:'wide'},
             {k:'dpp',l:'DPP',f:'num'},{k:'ppn',l:'PPN',f:'num'},{k:'ppnbm',l:'PPnBM',f:'num'},{k:'status',l:'Status',f:'status'},{k:'bayar',l:'Pembayaran',f:'bayar'}],
@@ -745,6 +762,22 @@ const TYPES = {
       tpl:[['NPWP Penjual','Nama Penjual','Nomor Faktur Pajak','Tanggal Faktur Pajak','Masa Pajak','Tahun','Status Faktur','Harga Jual/Penggantian/DPP','DPP Nilai Lain','PPN','PPnBM','Status Pembayaran','Tanggal Pembayaran','Keterangan'],
            ['0123456789012345','PT Contoh Sukses Makmur','04002600000000001','15/01/2026','01','2026','APPROVED',10000000,9166667,1100000,0,'Sudah','25/01/2026',''],
            ['0987654321098765','CV Sumber Berkah','04002600000000002','20/01/2026','01','2026','APPROVED',5000000,4583333,550000,0,'Belum','','']]},
+  PP:{label:'Prepopulated Pajak Masukan',menu:'Prepopulated Pajak Masukan',group:'PPN',party:'Penjual',unit:'faktur',fields:PP_FIELDS,id:'nofaktur',amount:'ppn',base:'dpp',amountLabel:'PPN',baseLabel:'DPP',
+      need:['ppn','nofaktur'],key:['nofaktur','ppn','dpp'],needLabel:'Nomor Faktur Pajak" dan "PPN',
+      cols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nofaktur',l:'Nomor Faktur',f:'strong'},{k:'jenisFP',l:'Jenis FP',f:'jenisfp'},{k:'npwp',l:'NPWP Penjual'},{k:'nama',l:'Nama Penjual',f:'wide'},
+            {k:'dpp',l:'DPP',f:'num'},{k:'ppn',l:'PPN',f:'num'},{k:'status',l:'Status FP',f:'ppstatus'}],
+      xcols:[{k:'tanggal',l:'Tanggal Faktur',f:'date'},{k:'nofaktur',l:'Nomor Faktur'},{k:'jenisFP',l:'Jenis FP'},{k:'npwp',l:'NPWP Penjual'},{k:'nama',l:'Nama Penjual',w:36},{k:'status',l:'Status Faktur',f:'status'},
+            {k:'dpp',l:'DPP',f:'num'},{k:'dppLain',l:'DPP Nilai Lain',f:'num'},{k:'ppn',l:'PPN',f:'num'},{k:'ppnbm',l:'PPnBM',f:'num'},{k:'statusAsli',l:'Status di File Asal'},{k:'ket',l:'Keterangan'}],
+      form:[{k:'nofaktur',l:'Nomor Faktur Pajak (17 digit)',req:1},{k:'tanggal',l:'Tanggal Faktur',type:'date'},{k:'npwp',l:'NPWP'},{k:'nama',l:'Nama Penjual',req:1},
+            {k:'dpp',l:'DPP',type:'num'},{k:'dppLain',l:'DPP Nilai Lain',type:'num'},{k:'ppn',l:'PPN',type:'num',req:1},{k:'ppnbm',l:'PPnBM',type:'num'},
+            {k:'status',l:'Status Faktur',type:'select',opts:PP_ST},{k:'kredit',l:'Masa Dikreditkan (untuk status CREDITED)',type:'month'},{k:'ket',l:'Keterangan',full:1}],
+      tpl:[['NPWP Penjual','Nama Penjual','Nomor Faktur Pajak','Tanggal Faktur Pajak','Masa Pajak','Tahun','Status Faktur','Harga Jual/Penggantian/DPP','DPP Nilai Lain','PPN','PPnBM','Masa Pajak Pengkreditan','Tahun Pajak Pengkreditan','Keterangan'],
+           ['0123456789012345','PT Contoh Sukses Makmur','04002600000000011','10/01/2026','01','2026','APPROVED',10000000,9166667,1100000,0,'','','FP normal, belum dikreditkan'],
+           ['0123456789012345','PT Contoh Sukses Makmur','04102600000000012','12/01/2026','01','2026','APPROVED',8000000,7333333,880000,0,'','','FP pengganti (digit ke-3 = 1)'],
+           ['0987654321098765','CV Sumber Berkah','04002600000000013','15/01/2026','01','2026','CANCELED',5000000,4583333,550000,0,'','','Dibatalkan'],
+           ['0987654321098765','CV Sumber Berkah','04002600000000014','20/01/2026','01','2026','CREDITED',4000000,3666667,440000,0,'02','2026','Dikreditkan masa Februari']],
+      desc:`Faktur pajak masukan dari <b>prepopulated Coretax</b> yang <b>belum dikreditkan</b>. Status <b>CREDITED</b> dan faktur <b>pengganti</b> (status <b>AMENDED</b> — digit ke-3 nomor seri FP = <b>1</b>) otomatis <b>pindah ke Monitoring Pajak Masukan</b> dan hilang dari daftar ini. Faktur normal (digit ke-3 = <b>0</b>) tetap di sini dengan blok hijau; status <b>CANCELED</b> tetap di sini dengan blok merah.
+        <div class="pp-legend"><span><i style="background:rgba(22,163,74,.35)"></i>APPROVED · FP normal, belum dikreditkan</span><span><i style="background:rgba(220,38,38,.4)"></i>CANCELED · FP dibatalkan</span><span><i style="background:rgba(var(--primary-rgb),.45)"></i>CREDITED / AMENDED · otomatis pindah ke Pajak Masukan</span></div>`},
   PK:{label:'Pajak Keluaran',menu:'Pajak Keluaran',group:'PPN',party:'Pembeli',unit:'faktur',fields:PPN_FIELDS,id:'nofaktur',amount:'ppn',base:'dpp',amountLabel:'PPN',baseLabel:'DPP',
       need:['ppn','nofaktur'],key:['nofaktur','ppn','dpp'],needLabel:'Nomor Faktur Pajak" dan "PPN',
       cols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nofaktur',l:'Nomor Faktur',f:'strong'},{k:'npwp',l:'NPWP Pembeli'},{k:'nama',l:'Nama Pembeli',f:'wide'},
@@ -903,6 +936,47 @@ const key = (y,m) => `${y}-${pad(m+1)}`;
 const icon = (n,cls='i') => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
 const getRows = (t,y,m) => DB.data[t][key(y,m)] || [];
 const isCanceled = r => /batal|cancel|reject|tolak|diganti/i.test(r.status||'');
+const fpDigits = no => String(no||'').replace(/\D/g,'');
+const isPengganti = no => { const d=fpDigits(no); return d.length>=3 && d[2]==='1'; };
+const jenisFP = no => { const d=fpDigits(no); return d.length<3?'':d[2]==='1'?'Pengganti':d[2]==='0'?'Normal':''; };
+function ppStatusOf(r){
+  const s=String(r.status||'').toLowerCase();
+  if(/cancel|batal|reject|tolak/.test(s)) return 'CANCELED';
+  if(/credit|kredit/.test(s) && !/uncredit|belum|tidak/.test(s)) return 'CREDITED';
+  const d=fpDigits(r.nofaktur);
+  if(d.length>=3) return d[2]==='1'?'AMENDED':'APPROVED';
+  return /amend|pengganti/.test(s)?'AMENDED':'APPROVED';
+}
+function ppNorm(r,k){
+  r.status=ppStatusOf(r); r.jenisFP=jenisFP(r.nofaktur);
+  if(typeof r.kredit==='number'){ const y=r.kreditTahun||r.tahun||(k?+k.slice(0,4):null)||(/^(\d{4})/.exec(r.tanggal||'')||[])[1]; r.kredit=y?key(+y,r.kredit):''; }
+  if(r.kredit && !/^\d{4}-\d{2}$/.test(r.kredit)) r.kredit='';
+  delete r.kreditTahun; return r;
+}
+/* Pindahkan faktur CREDITED / AMENDED (FP pengganti) dari Prepopulated ke Monitoring Pajak Masukan;
+   faktur prepopulated yang nomornya sudah ada di Pajak Masukan dianggap sudah dikreditkan & dihapus dari prepopulated */
+function ppProcess(){
+  const res={moved:0,already:0,to:{}}, pp=DB.data.PP||(DB.data.PP={}), pm=DB.data.PM;
+  const inPM=new Set(); for(const arr of Object.values(pm)) for(const x of arr) { const fk=fakturKey(x.nofaktur); if(fk) inPM.add(fk); }
+  for(const [k,rows] of Object.entries(pp)){
+    const keep=[];
+    for(const r of rows){
+      ppNorm(r,k); const fk=fakturKey(r.nofaktur);
+      if(r.status==='CREDITED'||r.status==='AMENDED'){
+        let tk=r.kredit&&+r.kredit.slice(0,4)>=START_YEAR?r.kredit:k;
+        const arr=pm[tk]||(pm[tk]=[]), ex=fk?arr.find(x=>fakturKey(x.nofaktur)===fk):null, [ty,tm]=tk.split('-');
+        const rec={...r,masa:+tm-1,tahun:+ty,src:'PP',ppMasa:k,kredit:tk};
+        if(ex) Object.assign(ex,rec,{id:ex.id,bayar:ex.bayar,tglBayar:ex.tglBayar});
+        else { if(fk&&inPM.has(fk)){ res.already++; continue; } arr.push({...rec,id:uid(),bayar:false,tglBayar:''}); }
+        if(fk) inPM.add(fk); res.moved++; res.to[tk]=(res.to[tk]||0)+1;
+      } else if(r.status!=='CANCELED' && fk && inPM.has(fk)) res.already++;
+      else keep.push(r);
+    }
+    if(keep.length) pp[k]=keep; else delete pp[k];
+  }
+  return res;
+}
+const ppMsg = res => res.moved?` · ${fmt(res.moved)} faktur pindah ke Pajak Masukan (${Object.keys(res.to).sort().map(k=>`${MONTHS_S[+k.slice(5)-1]} ${k.slice(0,4)}`).join(', ')})`:'';
 const sumF = (rows,f) => rows.reduce((a,r)=> a + (isCanceled(r)?0:(+r[f]||0)), 0);
 const fakturKey = s => String(s||'').replace(/[^0-9a-z]/gi,'').toUpperCase();
 const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
@@ -1178,13 +1252,13 @@ const state={view:'dashboard', year:Math.max(START_YEAR,now.getFullYear()), mont
   search:'', f:{status:'all',bayar:'all',jenis:'all',spt:'all',rest:'all'}, page:1, sel:new Set()};
 const NAV=[
   {sec:'Utama'},{id:'dashboard',label:'Dashboard',ic:'grid'},
-  {sec:'PPN'},{id:'PM',label:'Pajak Masukan',ic:'in'},{id:'PK',label:'Pajak Keluaran',ic:'out'},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
+  {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP']},{id:'PK',label:'Pajak Keluaran',ic:'out'},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
   {sec:'Restitusi PPN'},{id:'rest',label:'Proses Restitusi',ic:'refund'},{id:'flow',label:'Flowchart Restitusi',ic:'flow'},
   {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},
   {sec:'Dokumen'},{id:'BPS',label:'Bukti Potong Saya',ic:'folder'},
   {sec:'Sistem'},{id:'settings',label:'Pengaturan & Tema',ic:'gear'},
 ];
-const TITLES={dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
+const TITLES={dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PP:'Prepopulated Pajak Masukan (Belum Dikreditkan)',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
   rest:'Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Tema Tampilan',BPS:'Bukti Potong Saya',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
   PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)'};
@@ -1205,7 +1279,7 @@ function navHTML(){
     if(n.sec) return `<div class="nav-label">${n.sec}</div>`;
     if(n.grp){ const on=n.items.includes(state.view);
       return `<div class="nav-grp ${on?'on':''}"><a class="gh" onclick="go('${n.items[0]}')">${icon(n.ic)}<span>${n.grp}</span></a>
-        <div class="nav-sub">${n.items.map(id=>`<a class="${state.view===id?'active':''}" onclick="go('${id}')">${TYPES[id].menu}</a>`).join('')}</div></div>`; }
+        <div class="nav-sub">${n.items.map(id=>`<a class="${state.view===id?'active':''}" onclick="go('${id}')">${TYPES[id].sub||TYPES[id].menu}</a>`).join('')}</div></div>`; }
     return `<a class="${state.view===n.id?'active':''}" onclick="go('${n.id}')">${icon(n.ic)}<span>${n.label}</span></a>`;
   }).join('');
 }
@@ -1240,15 +1314,19 @@ function pmStatus(y,i,vPM){
   if(vPM>0) return 'Lebih Bayar';
   return new Date()>new Date(y,i+2,0,23,59,59)?'Lapor Nihil':'Belum Dilapor';
 }
+function ppMovedMap(){ const m={}; for(const arr of Object.values(DB.data.PM)) for(const r of arr) if(r.src==='PP'&&r.ppMasa) m[r.ppMasa]=(m[r.ppMasa]||0)+1; return m; }
 function rekapData(y){
+  const mv=ppMovedMap();
   return MONTHS.map((n,i)=>{
+    const pp=getRows('PP',y,i), ppOk=pp.filter(r=>r.status!=='CANCELED'), ppCx=pp.filter(r=>r.status==='CANCELED'), S2=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0);
     const pm=getRows('PM',y,i), pk=getRows('PK',y,i), ok=pm.filter(r=>!isCanceled(r));
     const paid=ok.filter(r=>r.bayar), unpaid=ok.filter(r=>!r.bayar), S=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0);
     const vPM=S(ok,'ppn'), k=key(y,i);
     return {i,n,y,cPM:pm.length,cPK:pk.length,vPM,dPM:S(ok,'dpp'),vPK:sumF(pk,'ppn'),dPK:sumF(pk,'dpp'),
       paidPPN:S(paid,'ppn'),paidDPP:S(paid,'dpp'),paidN:paid.length,unpaidPPN:S(unpaid,'ppn'),unpaidDPP:S(unpaid,'dpp'),unpaidN:unpaid.length,
       restitusi:(vPM>0||DB.restitusi[k])?restItem(k).pengajuan:0, status:pmStatus(y,i,vPM), deadline:isoDate(new Date(y,i+2,0)),
-      has:!!(pm.length||pk.length)};
+      ppN:ppOk.length,ppDPP:S2(ppOk,'dpp'),ppPPN:S2(ppOk,'ppn'),ppCxN:ppCx.length,ppCxPPN:S2(ppCx,'ppn'),ppMoved:mv[key(y,i)]||0,
+      has:!!(pm.length||pk.length||pp.length)};
   });
 }
 const statusText = r => r.status;
@@ -1301,6 +1379,11 @@ function renderDashboard(){
     (agg[k]=agg[k]||{nama:r.nama||'-',npwp:r.npwp||'',ppn:0,n:0}); agg[k].ppn+=+r.ppn||0; agg[k].n++;
     if(!r.bayar){ (un[k]=un[k]||{nama:r.nama||'-',ppn:0,dpp:0,n:0}); un[k].ppn+=+r.ppn||0; un[k].dpp+=+r.dpp||0; un[k].n++; } }); });
   const top=Object.values(agg).sort((a,b)=>b.ppn-a.ppn).slice(0,6);
+  const ppAgg={}; ys.forEach(y=>{ for(let i=0;i<12;i++) getRows('PP',y,i).forEach(r=>{ if(r.status==='CANCELED') return; const k=rkKey(r);
+    (ppAgg[k]=ppAgg[k]||{nama:r.nama||'-',ppn:0,dpp:0,n:0}); ppAgg[k].ppn+=+r.ppn||0; ppAgg[k].dpp+=+r.dpp||0; ppAgg[k].n++; }); });
+  const topPP=Object.values(ppAgg).sort((a,b)=>b.ppn-a.ppn).slice(0,4);
+  const qN=T('ppN'), qD=T('ppDPP'), qP=T('ppPPN'), qCx=T('ppCxN'), qCxP=T('ppCxPPN'), qMv=T('ppMoved'), qPct=(tPM+qP)?tPM/(tPM+qP)*100:0;
+  const ppClick=r=>comb?`state.dashComb=false;state.year=${r.y};render()`:`state.month=${r.i};go('PP')`;
   const topUn=Object.values(un).sort((a,b)=>b.ppn-a.ppn).slice(0,4);
   const p21=pphSummary(ys,'PPH21'), pu=pphSummary(ys,'PPHU'), sp=ys.reduce((a,y)=>{ const s=sptYear(y); a.tot+=s.tot; a.up+=s.up; return a; },{tot:0,up:0});
   const mp=s=>s.months.length?`<div class="mp">${s.months.map((c,i)=>`<i class="${c}" title="${MONTHS[i]}"></i>`).join('')}</div>
@@ -1346,6 +1429,33 @@ function renderDashboard(){
         <td class="num"><span class="badge ${p>=100?'b-success':p>0?'b-primary':'b-warning'}">${p.toFixed(0)}%</span></td></tr>`; }).join('')
         || `<tr><td colspan="7"><div class="empty" style="padding:20px">Belum ada data pajak masukan.</div></td></tr>`}</tbody>
       ${cnt?`<tfoot><tr><td>Total</td><td class="num">${fmt(pN+uN)}</td><td class="num">${rp(pD)}</td><td class="num">${rp(pP)}</td><td class="num">${rp(uD)}</td><td class="num">${rp(uP)}</td><td class="num">${pct.toFixed(0)}%</td></tr></tfoot>`:''}
+    </table></div>
+  </div>
+
+  <div class="card mb">
+    <div class="card-h"><div><h3>Pajak Masukan Belum Dikreditkan (Prepopulated) · ${yl}</h3><p>Faktur prepopulated berstatus APPROVED yang belum dikreditkan — otomatis berkurang saat faktur CREDITED / FP pengganti pindah ke Pajak Masukan</p></div>
+      <button class="btn btn-outline btn-sm" onclick="go('PP')">${icon('in')} Kelola prepopulated</button></div>
+    <div class="card-b">
+      <div class="pay-grid">
+        <div class="pay-box no"><div class="pay-h">${icon('clock')} Belum Dikreditkan <span class="badge b-warning">${fmt(qN)} faktur</span></div>
+          <div class="pay-row"><small>DPP</small><b>${rp(qD)}</b></div><div class="pay-row"><small>PPN</small><b>${rp(qP)}</b></div><div class="pay-row"><small>DPP + PPN</small><b>${rp(qD+qP)}</b></div></div>
+        <div class="pay-box ok"><div class="pay-h">${icon('check')} Sudah Dikreditkan <span class="badge b-success">${fmt(cnt)} faktur</span></div>
+          <div class="pay-row"><small>PPN di Pajak Masukan</small><b>${rp(tPM)}</b></div><div class="pay-row"><small>Pindahan prepopulated</small><b>${fmt(qMv)} faktur</b></div>
+          <div class="pay-row"><small>FP canceled</small><b style="color:var(--danger)">${fmt(qCx)} · ${rp(qCxP)}</b></div></div>
+        <div class="pay-side"><h4>Rekanan belum dikreditkan (terbesar)</h4>
+          ${topPP.length?`<ul class="top-list">${topPP.map((t,i)=>`<li><span class="rank" style="background:rgba(217,119,6,.13);color:var(--warning)">${i+1}</span><div class="nm"><b title="${esc(t.nama)}">${esc(t.nama)}</b><small>${t.n} faktur · DPP ${short(t.dpp)}</small></div><span class="amt">${short(t.ppn)}</span></li>`).join('')}</ul>`
+            :`<div class="empty" style="padding:22px 0">${qCx||qMv?'Semua faktur prepopulated sudah dikreditkan 🎉':'Belum ada data prepopulated.'}</div>`}</div>
+      </div>
+      <div class="pay-bar"><span style="width:${qPct}%"></span></div>
+      <div class="pay-legend"><span style="color:var(--success)">● PPN sudah dikreditkan ${qPct.toFixed(1).replace('.',',')}%</span><span style="color:var(--warning)">● Belum dikreditkan ${(100-qPct).toFixed(1).replace('.',',')}%</span></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>${col1}</th><th class="num">Faktur Belum Dikreditkan</th><th class="num">DPP Belum Dikreditkan</th><th class="num">PPN Belum Dikreditkan</th><th class="num">FP Canceled</th><th class="num">Sudah Pindah ke PM</th></tr></thead>
+      <tbody>${units.filter(r=>r.ppN||r.ppCxN||r.ppMoved).map(r=>`<tr class="clickable" onclick="${ppClick(r)}"><td><b>${r.label}</b></td>
+        <td class="num">${fmt(r.ppN)}</td><td class="num" style="color:var(--warning)">${rp(r.ppDPP)}</td><td class="num" style="color:var(--warning);font-weight:700">${rp(r.ppPPN)}</td>
+        <td class="num" style="color:var(--danger)">${r.ppCxN?fmt(r.ppCxN):'—'}</td><td class="num" style="color:var(--success)">${r.ppMoved?fmt(r.ppMoved):'—'}</td></tr>`).join('')
+        || `<tr><td colspan="6"><div class="empty" style="padding:20px">Belum ada data prepopulated pajak masukan.</div></td></tr>`}</tbody>
+      ${qN||qCx||qMv?`<tfoot><tr><td>Total</td><td class="num">${fmt(qN)}</td><td class="num">${rp(qD)}</td><td class="num">${rp(qP)}</td><td class="num">${fmt(qCx)}</td><td class="num">${fmt(qMv)}</td></tr></tfoot>`:''}
     </table></div>
   </div>
 
@@ -1448,7 +1558,14 @@ function renderData(t){
   const flag = T.report ? i=>{ const r=repOf(T.rep,y,i), has=groupCount(T.rep,y,i); return r&&r.lapor==='Sudah'?'<i class="flag ok" title="Sudah dilaporkan"></i>':has?'<i class="flag wait" title="Belum dilaporkan"></i>':''; } : null;
   let minis;
   const bat=nBatal?` <span class="badge b-warning" style="font-size:10.5px">${nBatal} batal</span>`:'';
-  if(T.group==='PPN'){
+  if(t==='PP'){
+    const ok=rows.filter(r=>r.status!=='CANCELED'), cx=rows.filter(r=>r.status==='CANCELED'), S=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0), mv=ppMovedMap()[key(y,m)]||0;
+    minis=`
+    <div class="card mini"><small>Belum Dikreditkan (APPROVED)</small><b>${fmt(ok.length)} faktur</b><span class="sub">${ok.filter(r=>r.jenisFP==='Normal').length} FP normal</span></div>
+    <div class="card mini"><small>PPN Belum Dikreditkan</small><b style="color:var(--warning)">${rp(S(ok,'ppn'))}</b><span class="sub">DPP ${rp(S(ok,'dpp'))}</span></div>
+    <div class="card mini"><small>FP Canceled</small><b style="color:var(--danger)">${fmt(cx.length)} faktur</b><span class="sub">PPN ${rp(S(cx,'ppn'))}</span></div>
+    <div class="card mini"><small>Sudah Pindah ke Pajak Masukan</small><b style="color:var(--success)">${fmt(mv)} faktur</b><span class="sub"><a class="link" onclick="go('PM')">Buka Monitoring Pajak Masukan</a></span></div>`;
+  } else if(T.group==='PPN'){
     const ok=rows.filter(r=>!isCanceled(r)), paid=ok.filter(r=>r.bayar);
     minis=`
     <div class="card mini"><small>Jumlah Faktur</small><b>${fmt(rows.length)}${bat}</b></div>
@@ -1509,7 +1626,9 @@ function cellHTML(c,r){
     case 'strong': return `<td class="strike"><b>${esc(v||'-')}</b></td>`;
     case 'num': return `<td class="num">${fmt(v)}</td>`;
     case 'wide': return `<td class="wide" title="${esc(v)}">${esc(v||'-')}</td>`;
-    case 'status': return `<td>${v?`<span class="badge ${isCanceled(r)?'b-danger':/approv|setuju|normal|valid/i.test(v)?'b-success':'b-muted'}">${esc(v)}</span>`:'-'}</td>`;
+    case 'status': return `<td>${v?`<span class="badge ${isCanceled(r)?'b-danger':/approv|setuju|normal|valid|credit/i.test(v)?'b-success':/amend/i.test(v)?'b-primary':'b-muted'}" ${r.src==='PP'?`title="Dari prepopulated masa ${esc(r.ppMasa||'')}"`:''}>${esc(v)}</span>`:'-'}</td>`;
+    case 'ppstatus': return `<td><span class="badge ${{APPROVED:'b-success',CANCELED:'b-danger',CREDITED:'b-primary',AMENDED:'b-primary'}[v]||'b-muted'}">${esc(v||'APPROVED')}</span></td>`;
+    case 'jenisfp': return `<td>${v?`<span class="badge ${v==='Pengganti'?'b-primary':'b-success'}">${esc(v)}</span>`:'<span class="sub-t">—</span>'}</td>`;
     case 'jenis': return `<td>${v?`<span class="badge b-primary">${esc(v)}</span>`:'-'}</td>`;
     case 'bayar': return `<td><button class="badge ${r.bayar?'b-success':'b-warning'}" title="${r.bayar&&r.tglBayar?'Dibayar '+fmtDate(r.tglBayar)+' · ':''}Klik untuk mengubah" onclick="toggleBayar('${r.id}')">${r.bayar?'✓ Sudah dibayar':'Belum dibayar'}</button></td>`;
     case 'file': return `<td>${r.file?`<span class="file-pill" onclick="openStoredFile('${r.file.id}','${esc(r.file.name)}')" title="${esc(r.file.name)}">${icon('file')}<span>${esc(r.file.name)}</span></span>`:`<button class="btn btn-outline btn-sm" onclick="openRowForm('${state.view}','${r.id}')">${icon('upload')} Upload</button>`}</td>`;
@@ -1518,13 +1637,17 @@ function cellHTML(c,r){
 }
 function renderTableOnly(){
   const area=$('#tableArea'); if(!area) return;
-  const t=state.view, T=TYPES[t], list=filteredRows(t), selMode=t==='PM'&&isAdmin();
+  const t=state.view, T=TYPES[t], list=filteredRows(t), selMode=(t==='PM'||t==='PP')&&isAdmin();
   const pages=Math.max(1,Math.ceil(list.length/PER_PAGE)); if(state.page>pages) state.page=pages;
   const start=(state.page-1)*PER_PAGE, slice=list.slice(start,start+PER_PAGE);
   const allSel=slice.length&&slice.every(r=>state.sel.has(r.id));
   const ok=list.filter(r=>!isCanceled(r)), sum=k=>ok.reduce((a,r)=>a+(+r[k]||0),0);
   const nameIdx=T.cols.findIndex(c=>c.k==='nama');
-  area.innerHTML=(selMode&&state.sel.size?`
+  area.innerHTML=(selMode&&state.sel.size&&t==='PP'?`
+    <div class="bulk">${state.sel.size} faktur dipilih<span class="sp"></span>
+      <button class="btn btn-success btn-sm" onclick="openKredit()">${icon('check')} Kreditkan → Pajak Masukan</button>
+      <button class="btn btn-ghost btn-sm" onclick="state.sel=new Set();renderTableOnly()">Batal pilih</button></div>`
+  :selMode&&state.sel.size?`
     <div class="bulk">${state.sel.size} faktur dipilih<span class="sp"></span>
       <button class="btn btn-success btn-sm" onclick="bulkBayar(true)">${icon('check')} Tandai Sudah Dibayar</button>
       <button class="btn btn-outline btn-sm" onclick="bulkBayar(false)">Tandai Belum Dibayar</button>
@@ -1532,10 +1655,10 @@ function renderTableOnly(){
   +(list.length?`
     <div class="table-wrap" style="margin-top:${selMode&&state.sel.size?0:16}px"><table>
       <thead><tr>${selMode?`<th style="width:34px"><input type="checkbox" class="chk" ${allSel?'checked':''} onchange="selPage(this.checked)" title="Pilih semua di halaman ini"></th>`:''}<th>No</th>${T.cols.map(c=>`<th class="${c.f==='num'?'num':''}">${c.l}</th>`).join('')}<th></th></tr></thead>
-      <tbody>${slice.map((r,i)=>`<tr class="${isCanceled(r)?'canceled':''} ${state.sel.has(r.id)?'sel':''}">
-        ${selMode?`<td><input type="checkbox" class="chk" ${state.sel.has(r.id)?'checked':''} onchange="selRow('${r.id}',this.checked)"></td>`:''}
+      <tbody>${slice.map((r,i)=>`<tr class="${t==='PP'?(r.status==='CANCELED'?'pp-cancel':r.jenisFP==='Normal'?'pp-normal':''):isCanceled(r)?'canceled':''} ${state.sel.has(r.id)?'sel':''}">
+        ${selMode?`<td>${t==='PP'&&r.status==='CANCELED'?'':`<input type="checkbox" class="chk" ${state.sel.has(r.id)?'checked':''} onchange="selRow('${r.id}',this.checked)">`}</td>`:''}
         <td>${start+i+1}</td>${T.cols.map(c=>cellHTML(c,r)).join('')}
-        <td><div class="row-act"><button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button><button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button></div></td></tr>`).join('')}</tbody>
+        <td><div class="row-act">${t==='PP'&&r.status!=='CANCELED'?`<button class="icon-btn xs" style="color:var(--success)" title="Kreditkan — tandai CREDITED & pindahkan ke Pajak Masukan" onclick="openKredit('${r.id}')">${icon('check')}</button>`:''}<button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button><button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button></div></td></tr>`).join('')}</tbody>
       <tfoot><tr>${selMode?'<td></td>':''}<td></td>${T.cols.map((c,i)=>c.f==='num'?`<td class="num">${fmt(sum(c.k))}</td>`:i===nameIdx?`<td>Total (tanpa ${T.unit} batal)</td>`:'<td></td>').join('')}<td></td></tr></tfoot>
     </table></div>
     <div class="pager"><span>Menampilkan ${start+1}–${Math.min(start+PER_PAGE,list.length)} dari ${fmt(list.length)} ${T.unit}</span>
@@ -1545,7 +1668,7 @@ function renderTableOnly(){
   :`<div class="empty">Tidak ada data yang cocok dengan pencarian/filter.</div>`);
 }
 function selRow(id,on){ on?state.sel.add(id):state.sel.delete(id); renderTableOnly(); }
-function selPage(on){ const list=filteredRows(state.view), start=(state.page-1)*PER_PAGE; list.slice(start,start+PER_PAGE).forEach(r=>on?state.sel.add(r.id):state.sel.delete(r.id)); renderTableOnly(); }
+function selPage(on){ const list=filteredRows(state.view).filter(r=>!(state.view==='PP'&&r.status==='CANCELED')), start=(state.page-1)*PER_PAGE; list.slice(start,start+PER_PAGE).forEach(r=>on?state.sel.add(r.id):state.sel.delete(r.id)); renderTableOnly(); }
 async function toggleBayar(id){
   const r=getRows('PM',state.year,state.month).find(x=>x.id===id); if(!r) return;
   r.bayar=!r.bayar; r.tglBayar=r.bayar?(r.tglBayar||todayISO()):'';
@@ -1554,6 +1677,24 @@ async function toggleBayar(id){
 async function bulkBayar(on){
   let n=0; getRows('PM',state.year,state.month).forEach(r=>{ if(state.sel.has(r.id)){ r.bayar=on; r.tglBayar=on?(r.tglBayar||todayISO()):''; n++; } });
   state.sel=new Set(); await save(); refreshDataView(); toast(`${n} faktur ditandai ${on?'sudah':'belum'} dibayar`,'success');
+}
+let KREDIT=null;
+function openKredit(id){
+  const ids=id?[id]:[...state.sel]; if(!ids.length) return; KREDIT={ids};
+  const rows=getRows('PP',state.year,state.month).filter(r=>ids.includes(r.id)&&r.status!=='CANCELED'), ppn=rows.reduce((a,r)=>a+(+r.ppn||0),0);
+  openModal(`<div class="modal-h"><div><h3>Kreditkan Faktur Pajak</h3><p>${rows.length===1?esc(rows[0].nofaktur)+' · '+esc(rows[0].nama||''):rows.length+' faktur dipilih'} · PPN ${rp(ppn)}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 14px">${icon('alert')} Status faktur menjadi <b>CREDITED</b>, otomatis <b>pindah ke Monitoring Pajak Masukan</b> pada masa pengkreditan yang dipilih, dan hilang dari daftar prepopulated.</div>
+      <div class="row2"><div class="field"><label>Masa Dikreditkan</label><select class="select" id="kMonth">${MONTHS.map((n,i)=>`<option value="${i}" ${i===state.month?'selected':''}>${n}</option>`).join('')}</select></div>
+        <div class="field"><label>Tahun</label><select class="select" id="kYear">${years().map(y=>`<option ${y===state.year?'selected':''}>${y}</option>`).join('')}</select></div></div></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-success" id="kGo" onclick="doKredit()">${icon('check')} Kreditkan</button></div>`,'sm');
+}
+async function doKredit(){
+  if(!KREDIT) return; const m=+$('#kMonth').value, y=+$('#kYear').value, tk=key(y,m), k=key(state.year,state.month);
+  const bPM=JSON.parse(JSON.stringify(DB.data.PM)), bPP=JSON.parse(JSON.stringify(DB.data.PP||{}));
+  (DB.data.PP[k]||[]).forEach(r=>{ if(KREDIT.ids.includes(r.id)&&r.status!=='CANCELED'){ r.status='CREDITED'; r.kredit=tk; } });
+  const pr=ppProcess(); state.sel=new Set(); KREDIT=null;
+  if(await save()){ closeModal(); toast(`${fmt(pr.moved)} faktur dikreditkan → Pajak Masukan ${MONTHS[m]} ${y}`,'success'); refreshDataView(); }
+  else { DB.data.PM=bPM; DB.data.PP=bPP; }
 }
 function refreshDataView(){ const y=window.scrollY; render(); window.scrollTo(0,y); }
 function deleteRow(t,id){
@@ -1582,6 +1723,7 @@ function openRowForm(t,id){
     if(f.type==='date') inp=`<input class="input" type="date" name="${f.k}" value="${esc(/^\d{4}-\d{2}-\d{2}$/.test(val||'')?val:'')}">`;
     else if(f.type==='num') inp=`<input class="input" name="${f.k}" inputmode="decimal" value="${val?fmt(val):''}" placeholder="0">`;
     else if(f.type==='select') inp=`<select class="select" name="${f.k}"><option value="">— pilih —</option>${f.opts.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    else if(f.type==='month') inp=`<input class="input" type="month" name="${f.k}" value="${esc(/^\d{4}-\d{2}$/.test(val||'')?val:'')}" min="${START_YEAR}-01">`;
     else if(f.type==='bayar') inp=`<select class="select" name="${f.k}"><option value="0" ${!val?'selected':''}>Belum dibayar</option><option value="1" ${val?'selected':''}>Sudah dibayar</option></select>`;
     else inp=`<input class="input" name="${f.k}" value="${esc(val||'')}" ${f.list?`list="dl-${f.k}"`:''}>${f.list?`<datalist id="dl-${f.k}">${f.list.map(o=>`<option value="${o}">`).join('')}</datalist>`:''}`;
     return `<div class="field ${f.full?'full':''}">${lab}${inp}</div>`;
@@ -1607,7 +1749,8 @@ async function saveRowForm(e,t,id){
   if(!id){ const fk=fakturKey(rec[T.id]); if(fk && arr.some(x=>fakturKey(x[T.id])===fk)){ toast(`Nomor ${rec[T.id]} sudah ada di bulan ini`,'error'); return; } }
   if(T.hasFile){ try{ rec.file=await storePdf(cur?cur.file:null); }catch(err){ toast('Gagal menyimpan file: '+err.message,'error'); return; } }
   if(cur) Object.assign(cur,rec); else arr.push({id:uid(),masa:state.month,tahun:state.year,...rec});
-  if(await save()){ closeModal(); toast(id?'Data diperbarui':'Data ditambahkan','success'); refreshDataView(); }
+  const pr=(t==='PP'||t==='PM')?ppProcess():{moved:0};
+  if(await save()){ closeModal(); toast((id?'Data diperbarui':'Data ditambahkan')+ppMsg(pr),'success'); refreshDataView(); }
 }
 
 /* ---------- Status laporan bulanan PPh ---------- */
@@ -2267,7 +2410,7 @@ function openImport(t){
         <label><input type="radio" name="imode" value="replace" onchange="updatePlan()">Ganti data bulan tsb.</label>
       </div>
       <div id="planBox"></div>
-      <div class="note">Kolom wajib minimal: <b>"${T.needLabel}"</b>. ${t==='PM'?'Kolom <b>Status Pembayaran</b> (Sudah/Belum) dan <b>Tanggal Pembayaran</b> juga dikenali. ':''}Belum punya format? <a class="link" onclick="downloadTemplate('${t}')">Unduh template</a>.</div>
+      <div class="note">Kolom wajib minimal: <b>"${T.needLabel}"</b>. ${t==='PM'?'Kolom <b>Status Pembayaran</b> (Sudah/Belum) dan <b>Tanggal Pembayaran</b> juga dikenali. ':''}${t==='PP'?'Kolom <b>Status Faktur</b> (APPROVED / CANCELED / CREDITED / AMENDED) dan <b>Masa/Tahun Pajak Pengkreditan</b> dikenali. Faktur CREDITED dan FP pengganti (digit ke-3 nomor seri = 1) otomatis dipindahkan ke Monitoring Pajak Masukan. ':''}Belum punya format? <a class="link" onclick="downloadTemplate('${t}')">Unduh template</a>.</div>
     </div>
     <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="btnSave" disabled onclick="commitImport()">${icon('check')} Simpan Data</button></div>`);
   const drop=$('#drop'), fi=$('#fileIn');
@@ -2378,6 +2521,7 @@ function readAs(file,asText){
 const PPH_KODE={'22':'PPh 22','24':'PPh 23','28':'PPh 4(2)'};
 function normalizeRec(t,r){
   if(TYPES[t].pay){ r.bayar = r.bayar==null ? !!r.tglBayar : !!r.bayar; if(!r.bayar) r.tglBayar=r.tglBayar||''; }
+  if(t==='PP'){ r.statusAsli=r.status||''; ppNorm(r); }
   if(TYPES[t].rep==='PPHU' && !r.jenis && r.kode){ const p=String(r.kode).slice(0,2); if(PPH_KODE[p]) r.jenis=PPH_KODE[p]; }
   return r;
 }
@@ -2462,16 +2606,17 @@ async function commitImport(){
   if(!IMPORT || !IMPORT.plan) return;
   const p=IMPORT.plan, t=IMPORT.type, btn=$('#btnSave');
   btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…';
-  const backup={...DB.data[t]}; let n=0, firstKey=null;
+  const backup={...DB.data[t]}, bPM=(t==='PP'||t==='PM')?JSON.parse(JSON.stringify(DB.data.PM)):null, bPP=(t==='PP'||t==='PM')?JSON.parse(JSON.stringify(DB.data.PP||{})):null; let n=0, firstKey=null;
   Object.keys(p.groups).sort().forEach(k=>{
     DB.data[t][k]=p.mode==='replace'?p.groups[k]:(DB.data[t][k]||[]).concat(p.groups[k]);
     n+=p.groups[k].length; if(!firstKey) firstKey=k;
   });
+  const pr=(t==='PP'||t==='PM')?ppProcess():{moved:0};
   const ok=await save();
-  if(!ok){ DB.data[t]=backup; btn.disabled=false; btn.innerHTML=icon('check')+' Simpan Data'; return; }
+  if(!ok){ DB.data[t]=backup; if(bPM){ DB.data.PM=bPM; DB.data.PP=bPP; } btn.disabled=false; btn.innerHTML=icon('check')+' Simpan Data'; return; }
   if(firstKey){ state.year=+firstKey.slice(0,4); state.month=+firstKey.slice(5)-1; }
   state.view=t; closeModal(); resetFilters(); render();
-  toast(`${fmt(n)} ${TYPES[t].unit} berhasil diimport`,'success');
+  toast(`${fmt(n)} ${TYPES[t].unit} berhasil diimport${ppMsg(pr)}${pr.already?` · ${fmt(pr.already)} faktur sudah ada di Pajak Masukan (dianggap sudah dikreditkan)`:''}`,'success');
 }
 
 /* =========================================================
@@ -3243,7 +3388,7 @@ function cloudDisconnect(){
 ['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
  'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
  'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
- 'downloadTemplate','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
+ 'downloadTemplate','openKredit','doKredit','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
   const f=window[n]; if(typeof f!=='function') return;
   window[n]=function(...a){ if(!isAdmin()){ toast('Akun pengunjung hanya dapat melihat dan mengunduh data','error'); return; } return f.apply(this,a); };
 });
