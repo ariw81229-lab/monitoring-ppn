@@ -251,6 +251,12 @@ tr.pp-cancel td{background:rgba(220,38,38,.11)!important;color:#b91c1c}
 tr.pp-cancel td:first-child{box-shadow:inset 4px 0 0 var(--danger)}
 tr.pp-cancel td.strike{text-decoration:line-through}
 tr.pp-normal td{background:rgba(22,163,74,.08)!important}
+tr.pp-amend td{background:rgba(234,179,8,.14)!important}
+tr.pp-amend td:first-child{box-shadow:inset 4px 0 0 #eab308}
+.per-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.per-sel{width:auto;height:32px;padding:0 30px 0 10px;font-size:13px}
+.b-amber{background:rgba(234,179,8,.2);color:#a16207}
+[data-mode="dark"] .b-amber{color:#fde047}
 tr.pp-normal td:first-child{box-shadow:inset 4px 0 0 var(--success)}
 [data-mode="dark"] tr.pp-cancel td{color:#fca5a5}
 .pp-legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--muted);margin-top:8px}
@@ -681,7 +687,9 @@ const CLOUD=(()=>{ let c={url:SUPABASE_URL.trim(),key:SUPABASE_ANON_KEY.trim()};
 const CLOUD_ON=CLOUD.on;
 const STORE_KEY  = 'monitoring_ppn_v1';
 const THEME_KEY  = 'monitoring_ppn_theme';
-const PER_PAGE   = 25;
+const PER_OPTS=[10,25,50,100,250,500];
+let PER_PAGE=(()=>{ try{ const v=+localStorage.getItem('ppn_per'); return PER_OPTS.includes(v)?v:25; }catch(e){ return 25; } })();
+function setPer(v){ v=+v; if(!PER_OPTS.includes(v)) return; const first=(state.page-1)*PER_PAGE; PER_PAGE=v; state.page=Math.floor(first/v)+1; try{ localStorage.setItem('ppn_per',v); }catch(e){} renderTableOnly(); }
 const APP_KICKER = 'MONITORING DATA PAJAK PROYEK DUSEM SEGMEN-1';
 const MONTHS   = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const MONTHS_S = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
@@ -813,8 +821,8 @@ const TYPES = {
            ['0123456789012345','PT Contoh Sukses Makmur','04102600000000012','12/01/2026','01','2026','APPROVED',8000000,7333333,880000,0,'','','FP pengganti (digit ke-3 = 1)'],
            ['0987654321098765','CV Sumber Berkah','04002600000000013','15/01/2026','01','2026','CANCELED',5000000,4583333,550000,0,'','','Dibatalkan'],
            ['0987654321098765','CV Sumber Berkah','04002600000000014','20/01/2026','01','2026','CREDITED',4000000,3666667,440000,0,'02','2026','Dikreditkan masa Februari']],
-      desc:`Faktur pajak masukan dari <b>prepopulated Coretax</b> yang <b>belum dikreditkan</b>. Status <b>CREDITED</b> dan faktur <b>pengganti</b> (status <b>AMENDED</b> — digit ke-3 nomor seri FP = <b>1</b>) otomatis <b>pindah ke Monitoring Pajak Masukan</b> dan hilang dari daftar ini. Faktur normal (digit ke-3 = <b>0</b>) tetap di sini dengan blok hijau; status <b>CANCELED</b> tetap di sini dengan blok merah. <b>Batas pengkreditan</b>: paling lama 3 masa pajak setelah masa faktur dibuat (mis. faktur Januari dapat dikreditkan Januari–April; lewat akhir April hangus).
-        <div class="pp-legend"><span><i style="background:rgba(22,163,74,.35)"></i>APPROVED · FP normal, belum dikreditkan</span><span><i style="background:rgba(220,38,38,.4)"></i>CANCELED · FP dibatalkan</span><span><i style="background:rgba(var(--primary-rgb),.45)"></i>CREDITED / AMENDED · otomatis pindah ke Pajak Masukan</span></div>`},
+      desc:`Faktur pajak masukan dari <b>prepopulated Coretax</b> yang <b>belum dikreditkan</b>. Status <b>CREDITED</b> dan faktur <b>pengganti</b> (status <b>AMENDED</b> — digit ke-3 nomor seri FP = <b>1</b>) otomatis <b>pindah ke Monitoring Pajak Masukan</b> dan hilang dari daftar ini. Faktur normal (digit ke-3 = <b>0</b>) tetap di sini dengan blok hijau; status <b>CANCELED</b> tetap dengan blok merah; faktur normal yang diberi status <b>AMENDED</b> tetap dengan blok kuning (tidak dihitung belum dikreditkan). <b>Batas pengkreditan</b>: paling lama 3 masa pajak setelah masa faktur dibuat (mis. faktur Januari dapat dikreditkan Januari–April; lewat akhir April hangus).
+        <div class="pp-legend"><span><i style="background:rgba(22,163,74,.35)"></i>APPROVED · FP normal, belum dikreditkan</span><span><i style="background:rgba(220,38,38,.4)"></i>CANCELED · FP dibatalkan</span><span><i style="background:rgba(234,179,8,.45)"></i>AMENDED · FP normal yang diganti (tetap di sini)</span><span><i style="background:rgba(var(--primary-rgb),.45)"></i>CREDITED &amp; FP pengganti · otomatis pindah ke Pajak Masukan</span></div>`},
   PK:{label:'Pajak Keluaran',menu:'Pajak Keluaran',group:'PPN',party:'Pembeli',unit:'faktur',fields:PPN_FIELDS,id:'nofaktur',amount:'ppn',base:'dpp',amountLabel:'PPN',baseLabel:'DPP',
       need:['ppn','nofaktur'],key:['nofaktur','ppn','dpp'],needLabel:'Nomor Faktur Pajak" dan "PPN',
       cols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nofaktur',l:'Nomor Faktur',f:'strong'},{k:'npwp',l:'NPWP Pembeli'},{k:'nama',l:'Nama Pembeli',f:'wide'},
@@ -980,11 +988,14 @@ function ppStatusOf(r){
   const s=String(r.status||'').toLowerCase();
   if(/cancel|batal|reject|tolak/.test(s)) return 'CANCELED';
   if(/credit|kredit/.test(s) && !/uncredit|belum|tidak/.test(s)) return 'CREDITED';
-  const d=fpDigits(r.nofaktur);
-  if(d.length>=3) return d[2]==='1'?'AMENDED':'APPROVED';
+  if(isPengganti(r.nofaktur)) return 'AMENDED';
   return /amend|pengganti/.test(s)?'AMENDED':'APPROVED';
 }
+/* FP pengganti (digit ke-3 = 1) pindah ke Pajak Masukan; AMENDED pada FP normal tetap di prepopulated (blok kuning) */
+const ppMoves = r => r.status==='CREDITED' || (r.status==='AMENDED' && isPengganti(r.nofaktur));
+const ppOpen  = r => r.status==='APPROVED';
 function ppNorm(r,k){
+  if(!r.migAm){ if(r.status==='APPROVED' && /amend/i.test(r.statusAsli||'')) r.status='AMENDED'; r.migAm=1; }
   r.status=ppStatusOf(r); r.jenisFP=jenisFP(r.nofaktur);
   if(typeof r.kredit==='number'){ const y=r.kreditTahun||r.tahun||(k?+k.slice(0,4):null)||(/^(\d{4})/.exec(r.tanggal||'')||[])[1]; r.kredit=y?key(+y,r.kredit):''; }
   if(r.kredit && !/^\d{4}-\d{2}$/.test(r.kredit)) r.kredit='';
@@ -999,14 +1010,14 @@ function ppProcess(){
     const keep=[];
     for(const r of rows){
       ppNorm(r,k); r.ppK=k; const fk=fakturKey(r.nofaktur);
-      if(r.status==='CREDITED'||r.status==='AMENDED'){
+      if(ppMoves(r)){
         let tk=r.kredit&&+r.kredit.slice(0,4)>=START_YEAR?r.kredit:k;
         const arr=pm[tk]||(pm[tk]=[]), ex=fk?arr.find(x=>fakturKey(x.nofaktur)===fk):null, [ty,tm]=tk.split('-');
         const rec={...r,masa:+tm-1,tahun:+ty,src:'PP',ppMasa:k,kredit:tk};
         if(ex) Object.assign(ex,rec,{id:ex.id,bayar:ex.bayar,tglBayar:ex.tglBayar});
         else { if(fk&&inPM.has(fk)){ res.already++; continue; } arr.push({...rec,id:uid(),bayar:false,tglBayar:''}); }
         if(fk) inPM.add(fk); res.moved++; res.to[tk]=(res.to[tk]||0)+1;
-      } else if(r.status!=='CANCELED' && fk && inPM.has(fk)) res.already++;
+      } else if(ppOpen(r) && fk && inPM.has(fk)) res.already++;
       else keep.push(r);
     }
     if(keep.length) pp[k]=keep; else delete pp[k];
@@ -1020,7 +1031,7 @@ const nowMasa=()=>{ const d=new Date(); return key(d.getFullYear(),d.getMonth())
 const masaLabel=k=>`${MONTHS[+k.slice(5)-1]} ${k.slice(0,4)}`;
 function fpMasa(r,k){ const d=/^(\d{4})-(\d{2})/.exec(r.tanggal||''); return d?`${d[1]}-${d[2]}`:(k||r.ppK||null); }
 function batasInfo(r,k){
-  if(!r || r.status==='CANCELED') return null;
+  if(!r || !ppOpen(r)) return null;
   const fm=fpMasa(r,k); if(!fm) return null;
   const bm=addMasa(fm,3), left=masaDiff(bm,nowMasa());
   const lvl=left<0?'hangus':left===0?'akhir':left===1?'dekat':'aman';
@@ -1401,7 +1412,7 @@ function ppMovedMap(){ const m={}; for(const arr of Object.values(DB.data.PM)) f
 function rekapData(y){
   const mv=ppMovedMap();
   return MONTHS.map((n,i)=>{
-    const pp=getRows('PP',y,i), ppOk=pp.filter(r=>r.status!=='CANCELED'), ppCx=pp.filter(r=>r.status==='CANCELED'), S2=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0);
+    const pp=getRows('PP',y,i), ppOk=pp.filter(ppOpen), ppCx=pp.filter(r=>r.status==='CANCELED'), S2=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0);
     const pm=getRows('PM',y,i), pk=getRows('PK',y,i), ok=pm.filter(r=>!isCanceled(r));
     const paid=ok.filter(r=>r.bayar), unpaid=ok.filter(r=>!r.bayar), S=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0);
     const vPM=S(ok,'ppn'), k=key(y,i);
@@ -1462,7 +1473,7 @@ function renderDashboard(){
     (agg[k]=agg[k]||{nama:r.nama||'-',npwp:r.npwp||'',ppn:0,n:0}); agg[k].ppn+=+r.ppn||0; agg[k].n++;
     if(!r.bayar){ (un[k]=un[k]||{nama:r.nama||'-',ppn:0,dpp:0,n:0}); un[k].ppn+=+r.ppn||0; un[k].dpp+=+r.dpp||0; un[k].n++; } }); });
   const top=Object.values(agg).sort((a,b)=>b.ppn-a.ppn).slice(0,6);
-  const ppAgg={}; ys.forEach(y=>{ for(let i=0;i<12;i++) getRows('PP',y,i).forEach(r=>{ if(r.status==='CANCELED') return; const k=rkKey(r);
+  const ppAgg={}; ys.forEach(y=>{ for(let i=0;i<12;i++) getRows('PP',y,i).forEach(r=>{ if(!ppOpen(r)) return; const k=rkKey(r);
     (ppAgg[k]=ppAgg[k]||{nama:r.nama||'-',ppn:0,dpp:0,n:0}); ppAgg[k].ppn+=+r.ppn||0; ppAgg[k].dpp+=+r.dpp||0; ppAgg[k].n++; }); });
   const topPP=Object.values(ppAgg).sort((a,b)=>b.ppn-a.ppn).slice(0,4);
   const qN=T('ppN'), qD=T('ppDPP'), qP=T('ppPPN'), qCx=T('ppCxN'), qCxP=T('ppCxPPN'), qMv=T('ppMoved'), qPct=(tPM+qP)?tPM/(tPM+qP)*100:0;
@@ -1477,7 +1488,6 @@ function renderDashboard(){
   const col1=comb?'Tahun':'Masa Pajak', pr=v=>RS.total?(v/RS.total*100).toFixed(1).replace('.',',')+'%':'0%';
 
   $('#view').innerHTML=`
-  <div data-sec="alert">${batasAlerts(true)}</div>
   <div class="grid kpis mb" data-sec="kpi">
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('in')}</span>PPN Masukan · ${yl}</div><div class="val">${rp(tPM)}</div><div class="foot">DPP ${rp(dPM)}</div></div>
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('out')}</span>PPN Keluaran · ${yl}</div><div class="val">${rp(tPK)}</div><div class="foot">DPP ${rp(dPK)}</div></div>
@@ -1594,10 +1604,10 @@ function renderDashboard(){
   dashSections();
   drawChart(units);
 }
-const DASH_SEC=[['alert','Peringatan Batas Pengkreditan'],['kpi','Ringkasan PPN & Restitusi'],['pay','Status Pembayaran Pajak Masukan'],['pp','Pajak Masukan Belum Dikreditkan (Prepopulated)'],
+const DASH_SEC=[['kpi','Ringkasan PPN & Restitusi'],['pay','Status Pembayaran Pajak Masukan'],['pp','Pajak Masukan Belum Dikreditkan (Prepopulated)'],
   ['chart','Grafik PPN, Kelengkapan Upload & Top Penjual'],['pph','Ringkasan PPh, SPT Rekanan & Proses Restitusi'],['rekap','Rekap PPN per Masa Pajak']];
 const dashKey=()=>'ppn_dash_'+((currentUser()||{}).username||'');
-function dashPref(){ try{ const p=JSON.parse(localStorage.getItem(dashKey())||'null'); return {hidden:(p&&p.hidden)||[],closed:(p&&p.closed)||[]}; }catch(e){ return {hidden:[],closed:[]}; } }
+function dashPref(){ try{ const p=JSON.parse(localStorage.getItem(dashKey())||'null'); const ids=DASH_SEC.map(x=>x[0]); return {hidden:((p&&p.hidden)||[]).filter(x=>ids.includes(x)),closed:((p&&p.closed)||[]).filter(x=>ids.includes(x))}; }catch(e){ return {hidden:[],closed:[]}; } }
 function setDashPref(p){ try{ localStorage.setItem(dashKey(),JSON.stringify(p)); }catch(e){} }
 function dashSections(){
   const v=$('#view'), p=dashPref();
@@ -1672,16 +1682,16 @@ function monthTabs(t,y,m,extra){
 function renderData(t){
   const T=TYPES[t], y=state.year, m=state.month, rows=getRows(t,y,m);
   const nBatal=rows.filter(isCanceled).length;
-  const statuses=[...new Set(rows.map(r=>r.status||'(kosong)'))];
+  const statuses=t==='PP'?PP_ST.filter(x=>x!=='CREDITED'):[...new Set(rows.map(r=>r.status||'(kosong)'))];
   const flag = T.report ? i=>{ const r=repOf(T.rep,y,i), has=groupCount(T.rep,y,i); return r&&r.lapor==='Sudah'?'<i class="flag ok" title="Sudah dilaporkan"></i>':has?'<i class="flag wait" title="Belum dilaporkan"></i>':''; } : null;
   let minis;
   const bat=nBatal?` <span class="badge b-warning" style="font-size:10.5px">${nBatal} batal</span>`:'';
   if(t==='PP'){
-    const ok=rows.filter(r=>r.status!=='CANCELED'), cx=rows.filter(r=>r.status==='CANCELED'), S=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0), mv=ppMovedMap()[key(y,m)]||0;
+    const ok=rows.filter(ppOpen), cx=rows.filter(r=>r.status==='CANCELED'), am=rows.filter(r=>r.status==='AMENDED'), S=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0), mv=ppMovedMap()[key(y,m)]||0;
     minis=`
     <div class="card mini"><small>Belum Dikreditkan (APPROVED)</small><b>${fmt(ok.length)} faktur</b><span class="sub">${ok.filter(r=>r.jenisFP==='Normal').length} FP normal</span></div>
     <div class="card mini"><small>PPN Belum Dikreditkan</small><b style="color:var(--warning)">${rp(S(ok,'ppn'))}</b><span class="sub">DPP ${rp(S(ok,'dpp'))}</span></div>
-    <div class="card mini"><small>FP Canceled</small><b style="color:var(--danger)">${fmt(cx.length)} faktur</b><span class="sub">PPN ${rp(S(cx,'ppn'))}</span></div>
+    <div class="card mini"><small>FP Canceled · Amended</small><b><span style="color:var(--danger)">${fmt(cx.length)}</span> · <span style="color:#a16207">${fmt(am.length)}</span> faktur</b><span class="sub">PPN canceled ${rp(S(cx,'ppn'))} · amended ${rp(S(am,'ppn'))}</span></div>
     <div class="card mini"><small>Sudah Pindah ke Pajak Masukan</small><b style="color:var(--success)">${fmt(mv)} faktur</b><span class="sub"><a class="link" onclick="go('PM')">Buka Monitoring Pajak Masukan</a></span></div>`;
   } else if(T.group==='PPN'){
     const ok=rows.filter(r=>!isCanceled(r)), paid=ok.filter(r=>r.bayar);
@@ -1748,7 +1758,7 @@ function cellHTML(c,r){
     case 'wide': return `<td class="wide" title="${esc(v)}">${esc(v||'-')}</td>`;
     case 'status': return `<td>${v?`<span class="badge ${isCanceled(r)?'b-danger':/approv|setuju|normal|valid|credit/i.test(v)?'b-success':/amend/i.test(v)?'b-primary':'b-muted'}" ${r.src==='PP'?`title="Dari prepopulated masa ${esc(r.ppMasa||'')}"`:''}>${esc(v)}</span>`:'-'}</td>`;
     case 'batas': { const b=batasInfo(r,key(state.year,state.month)); return `<td>${b?`<div class="batas"><span class="badge ${BATAS_CLS[b.lvl]}" title="Masa faktur ${masaLabel(b.fm)} · paling lambat dikreditkan masa ${masaLabel(b.bm)}">${b.lvl==='aman'?`Sisa ${b.left} masa`:BATAS_LBL[b.lvl]}</span><small>s.d. ${MONTHS_S[+b.bm.slice(5)-1]} ${b.bm.slice(0,4)}</small></div>`:'<span class="sub-t">—</span>'}</td>`; }
-    case 'ppstatus': return `<td><span class="badge ${{APPROVED:'b-success',CANCELED:'b-danger',CREDITED:'b-primary',AMENDED:'b-primary'}[v]||'b-muted'}">${esc(v||'APPROVED')}</span></td>`;
+    case 'ppstatus': return `<td><span class="badge ${{APPROVED:'b-success',CANCELED:'b-danger',CREDITED:'b-primary',AMENDED:'b-amber'}[v]||'b-muted'}">${esc(v||'APPROVED')}</span></td>`;
     case 'jenisfp': return `<td>${v?`<span class="badge ${v==='Pengganti'?'b-primary':'b-success'}">${esc(v)}</span>`:'<span class="sub-t">—</span>'}</td>`;
     case 'jenis': return `<td>${v?`<span class="badge b-primary">${esc(v)}</span>`:'-'}</td>`;
     case 'bayar': return `<td><button class="badge ${r.bayar?'b-success':'b-warning'}" title="${r.bayar&&r.tglBayar?'Dibayar '+fmtDate(r.tglBayar)+' · ':''}Klik untuk mengubah" onclick="toggleBayar('${r.id}')">${r.bayar?'✓ Sudah dibayar':'Belum dibayar'}</button></td>`;
@@ -1762,7 +1772,7 @@ function renderTableOnly(){
   const pages=Math.max(1,Math.ceil(list.length/PER_PAGE)); if(state.page>pages) state.page=pages;
   const start=(state.page-1)*PER_PAGE, slice=list.slice(start,start+PER_PAGE);
   const allSel=slice.length&&slice.every(r=>state.sel.has(r.id));
-  const ok=list.filter(r=>!isCanceled(r)), sum=k=>ok.reduce((a,r)=>a+(+r[k]||0),0);
+  const ok=list.filter(r=>t==='PP'?ppOpen(r):!isCanceled(r)), sum=k=>ok.reduce((a,r)=>a+(+r[k]||0),0);
   const nameIdx=T.cols.findIndex(c=>c.k==='nama');
   area.innerHTML=(selMode&&state.sel.size&&t==='PP'?`
     <div class="bulk">${state.sel.size} faktur dipilih<span class="sp"></span>
@@ -1776,20 +1786,20 @@ function renderTableOnly(){
   +(list.length?`
     <div class="table-wrap" style="margin-top:${selMode&&state.sel.size?0:16}px"><table>
       <thead><tr>${selMode?`<th style="width:34px"><input type="checkbox" class="chk" ${allSel?'checked':''} onchange="selPage(this.checked)" title="Pilih semua di halaman ini"></th>`:''}<th>No</th>${T.cols.map(c=>`<th class="${c.f==='num'?'num':''}">${c.l}</th>`).join('')}<th></th></tr></thead>
-      <tbody>${slice.map((r,i)=>`<tr class="${t==='PP'?(r.status==='CANCELED'?'pp-cancel':r.jenisFP==='Normal'?'pp-normal':''):isCanceled(r)?'canceled':''} ${state.sel.has(r.id)?'sel':''}">
-        ${selMode?`<td>${t==='PP'&&r.status==='CANCELED'?'':`<input type="checkbox" class="chk" ${state.sel.has(r.id)?'checked':''} onchange="selRow('${r.id}',this.checked)">`}</td>`:''}
+      <tbody>${slice.map((r,i)=>`<tr class="${t==='PP'?(r.status==='CANCELED'?'pp-cancel':r.status==='AMENDED'?'pp-amend':r.jenisFP==='Normal'?'pp-normal':''):isCanceled(r)?'canceled':''} ${state.sel.has(r.id)?'sel':''}">
+        ${selMode?`<td>${t==='PP'&&!ppOpen(r)?'':`<input type="checkbox" class="chk" ${state.sel.has(r.id)?'checked':''} onchange="selRow('${r.id}',this.checked)">`}</td>`:''}
         <td>${start+i+1}</td>${T.cols.map(c=>cellHTML(c,r)).join('')}
-        <td><div class="row-act">${t==='PP'&&r.status!=='CANCELED'?`<button class="icon-btn xs" style="color:var(--success)" title="Kreditkan — tandai CREDITED & pindahkan ke Pajak Masukan" onclick="openKredit('${r.id}')">${icon('check')}</button>`:''}<button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button><button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button></div></td></tr>`).join('')}</tbody>
-      <tfoot><tr>${selMode?'<td></td>':''}<td></td>${T.cols.map((c,i)=>c.f==='num'?`<td class="num">${fmt(sum(c.k))}</td>`:i===nameIdx?`<td>Total (tanpa ${T.unit} batal)</td>`:'<td></td>').join('')}<td></td></tr></tfoot>
+        <td><div class="row-act">${t==='PP'&&ppOpen(r)?`<button class="icon-btn xs" style="color:var(--success)" title="Kreditkan — tandai CREDITED & pindahkan ke Pajak Masukan" onclick="openKredit('${r.id}')">${icon('check')}</button>`:''}<button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button><button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button></div></td></tr>`).join('')}</tbody>
+      <tfoot><tr>${selMode?'<td></td>':''}<td></td>${T.cols.map((c,i)=>c.f==='num'?`<td class="num">${fmt(sum(c.k))}</td>`:i===nameIdx?`<td>${t==='PP'?'Total belum dikreditkan (APPROVED)':`Total (tanpa ${T.unit} batal)`}</td>`:'<td></td>').join('')}<td></td></tr></tfoot>
     </table></div>
-    <div class="pager"><span>Menampilkan ${start+1}–${Math.min(start+PER_PAGE,list.length)} dari ${fmt(list.length)} ${T.unit}</span>
+    <div class="pager"><span class="per-wrap">Tampilkan <select class="select per-sel" onchange="setPer(this.value)" title="Jumlah baris per halaman">${PER_OPTS.map(v=>`<option ${v===PER_PAGE?'selected':''}>${v}</option>`).join('')}</select> · Menampilkan ${start+1}–${Math.min(start+PER_PAGE,list.length)} dari ${fmt(list.length)} ${T.unit}</span>
       <div class="btns"><button class="btn btn-outline btn-sm" ${state.page<=1?'disabled':''} onclick="setPage(${state.page-1})">‹ Sebelumnya</button>
       <span class="btn btn-sm" style="cursor:default">${state.page} / ${pages}</span>
       <button class="btn btn-outline btn-sm" ${state.page>=pages?'disabled':''} onclick="setPage(${state.page+1})">Berikutnya ›</button></div></div>`
   :`<div class="empty">Tidak ada data yang cocok dengan pencarian/filter.</div>`);
 }
 function selRow(id,on){ on?state.sel.add(id):state.sel.delete(id); renderTableOnly(); }
-function selPage(on){ const list=filteredRows(state.view).filter(r=>!(state.view==='PP'&&r.status==='CANCELED')), start=(state.page-1)*PER_PAGE; list.slice(start,start+PER_PAGE).forEach(r=>on?state.sel.add(r.id):state.sel.delete(r.id)); renderTableOnly(); }
+function selPage(on){ const list=filteredRows(state.view).filter(r=>!(state.view==='PP'&&!ppOpen(r))), start=(state.page-1)*PER_PAGE; list.slice(start,start+PER_PAGE).forEach(r=>on?state.sel.add(r.id):state.sel.delete(r.id)); renderTableOnly(); }
 async function toggleBayar(id){
   const r=getRows('PM',state.year,state.month).find(x=>x.id===id); if(!r) return;
   r.bayar=!r.bayar; r.tglBayar=r.bayar?(r.tglBayar||todayISO()):'';
@@ -1802,7 +1812,7 @@ async function bulkBayar(on){
 let KREDIT=null;
 function openKredit(id){
   const ids=id?[id]:[...state.sel]; if(!ids.length) return; KREDIT={ids};
-  const rows=getRows('PP',state.year,state.month).filter(r=>ids.includes(r.id)&&r.status!=='CANCELED'), ppn=rows.reduce((a,r)=>a+(+r.ppn||0),0);
+  const rows=getRows('PP',state.year,state.month).filter(r=>ids.includes(r.id)&&ppOpen(r)), ppn=rows.reduce((a,r)=>a+(+r.ppn||0),0);
   openModal(`<div class="modal-h"><div><h3>Kreditkan Faktur Pajak</h3><p>${rows.length===1?esc(rows[0].nofaktur)+' · '+esc(rows[0].nama||''):rows.length+' faktur dipilih'} · PPN ${rp(ppn)}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b"><div class="note" style="margin:0 0 14px">${icon('alert')} Status faktur menjadi <b>CREDITED</b>, otomatis <b>pindah ke Monitoring Pajak Masukan</b> pada masa pengkreditan yang dipilih, dan hilang dari daftar prepopulated.</div>
       <div id="kInfo"></div>
@@ -1827,7 +1837,7 @@ function kreditInfo(){
 async function doKredit(){
   if(!KREDIT) return; const m=+$('#kMonth').value, y=+$('#kYear').value, tk=key(y,m), k=key(state.year,state.month);
   const bPM=JSON.parse(JSON.stringify(DB.data.PM)), bPP=JSON.parse(JSON.stringify(DB.data.PP||{}));
-  (DB.data.PP[k]||[]).forEach(r=>{ if(KREDIT.ids.includes(r.id)&&r.status!=='CANCELED'){ r.status='CREDITED'; r.kredit=tk; } });
+  (DB.data.PP[k]||[]).forEach(r=>{ if(KREDIT.ids.includes(r.id)&&ppOpen(r)){ r.status='CREDITED'; r.kredit=tk; } });
   const pr=ppProcess(); state.sel=new Set(); KREDIT=null;
   if(await save()){ closeModal(); toast(`${fmt(pr.moved)} faktur dikreditkan → Pajak Masukan ${MONTHS[m]} ${y}`,'success'); refreshDataView(); }
   else { DB.data.PM=bPM; DB.data.PP=bPP; }
