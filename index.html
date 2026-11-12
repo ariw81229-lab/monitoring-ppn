@@ -863,7 +863,7 @@ const TYPES = {
       desc:'Bukti Pemotongan Unifikasi <b>PPh Pasal 4 ayat 2 (Final)</b>, mis. jasa konstruksi subkontraktor dan sewa tanah/bangunan.',
       cols:unifCols, form:unifForm,
       tpl:[UNIF_TPL_H,['0123456789012345','CV Mitra Konstruksi','2600000101','20/01/2026','01','2026','',100000000,'2,65%',2650000,'NORMAL','Contoh jasa konstruksi']]},
-  BPS:{label:'Bukti Potong Saya',menu:'Bukti Potong Saya',group:'DOK',party:'Pemotong',unit:'bukti potong',fields:BPS_FIELDS,id:'nobukti',amount:'pajak',base:'dpp',
+  BPS:{label:'Bukti Potong Owner',menu:'Bukti Potong Owner',group:'DOK',party:'Pemotong',unit:'bukti potong',fields:BPS_FIELDS,id:'nobukti',amount:'pajak',base:'dpp',
       amountLabel:'Pajak Dipotong/Dipungut',baseLabel:'DPP',need:['pajak','nobukti'],key:['nobukti','pajak','dpp'],needLabel:'Nomor Bukti Potong" dan "Pajak Dipotong',hasFile:true,
       desc:'Arsip <b>bukti potong yang diterima proyek</b>: bupot PPh dari Owner/pemberi kerja dan bukti pungut PPN atas pajak keluaran. Unggah file PDF pada setiap baris.',
       cols:[cT,{k:'nobukti',l:'Nomor Bukti',f:'strong'},{k:'jenis',l:'Jenis',f:'jenis'},{k:'npwp',l:'NPWP Pemotong'},{k:'nama',l:'Pemotong / Owner',f:'wide'},{k:'dpp',l:'DPP',f:'num'},{k:'tarif',l:'Tarif'},{k:'pajak',l:'Pajak',f:'num'},{k:'file',l:'File Bukti',f:'file'}],
@@ -1335,11 +1335,11 @@ const NAV=[
   {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP']},{id:'PK',label:'Pajak Keluaran',ic:'out'},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
   {sec:'Restitusi PPN'},{id:'rest',label:'Proses Restitusi',ic:'refund'},{id:'flow',label:'Flowchart Restitusi',ic:'flow'},
   {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},
-  {sec:'Dokumen'},{id:'BPS',label:'Bukti Potong Saya',ic:'folder'},
+  {sec:'Dokumen'},{id:'BPS',label:'Bukti Potong Owner',ic:'folder'},
   {sec:'Sistem'},{id:'settings',label:'Pengaturan & Tema',ic:'gear'},
 ];
 const TITLES={dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PP:'Prepopulated Pajak Masukan (Belum Dikreditkan)',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
-  rest:'Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Tema Tampilan',BPS:'Bukti Potong Saya',
+  rest:'Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Tema Tampilan',BPS:'Bukti Potong Owner',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
   PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)'};
 const COMB={dashboard:'dashComb',rest:'restComb',flow:'restComb'};
