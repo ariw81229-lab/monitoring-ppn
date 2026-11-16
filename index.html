@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#2563eb">
 <title>Monitoring Data Pajak — Proyek Dusem Segmen-1</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
@@ -863,7 +865,7 @@ const TYPES = {
       desc:'Bukti Pemotongan Unifikasi <b>PPh Pasal 4 ayat 2 (Final)</b>, mis. jasa konstruksi subkontraktor dan sewa tanah/bangunan.',
       cols:unifCols, form:unifForm,
       tpl:[UNIF_TPL_H,['0123456789012345','CV Mitra Konstruksi','2600000101','20/01/2026','01','2026','',100000000,'2,65%',2650000,'NORMAL','Contoh jasa konstruksi']]},
-  BPS:{label:'Bukti Potong Owner',menu:'Bukti Potong Owner',group:'DOK',party:'Pemotong',unit:'bukti potong',fields:BPS_FIELDS,id:'nobukti',amount:'pajak',base:'dpp',
+  BPS:{label:'Bukti Potong Saya',menu:'Bukti Potong Saya',group:'DOK',party:'Pemotong',unit:'bukti potong',fields:BPS_FIELDS,id:'nobukti',amount:'pajak',base:'dpp',
       amountLabel:'Pajak Dipotong/Dipungut',baseLabel:'DPP',need:['pajak','nobukti'],key:['nobukti','pajak','dpp'],needLabel:'Nomor Bukti Potong" dan "Pajak Dipotong',hasFile:true,
       desc:'Arsip <b>bukti potong yang diterima proyek</b>: bupot PPh dari Owner/pemberi kerja dan bukti pungut PPN atas pajak keluaran. Unggah file PDF pada setiap baris.',
       cols:[cT,{k:'nobukti',l:'Nomor Bukti',f:'strong'},{k:'jenis',l:'Jenis',f:'jenis'},{k:'npwp',l:'NPWP Pemotong'},{k:'nama',l:'Pemotong / Owner',f:'wide'},{k:'dpp',l:'DPP',f:'num'},{k:'tarif',l:'Tarif'},{k:'pajak',l:'Pajak',f:'num'},{k:'file',l:'File Bukti',f:'file'}],
@@ -964,6 +966,7 @@ async function openStoredFile(id,name,download){
   else { const w=window.open(url,'_blank'); if(!w){ const a=document.createElement('a'); a.href=url; a.download=name||'dokumen.pdf'; a.click(); } }
   setTimeout(()=>URL.revokeObjectURL(url),120000);
 }
+function pwCheck(p){ p=String(p||''); if(p.length<8) return 'Password minimal 8 karakter'; if(!/[A-Za-z]/.test(p)||!/[0-9]/.test(p)) return 'Password harus mengandung huruf dan angka'; return ''; }
 const fmtSize = b => b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 
 /* =========================================================
@@ -1283,8 +1286,8 @@ function openForgot(){
       <div class="field"><label>Username</label><input class="input" id="fgUser" required></div>
       <div class="field"><label>Kode Pemulihan</label><input class="input" id="fgCode" placeholder="XXXX-XXXX-XXXX" style="text-transform:uppercase;font-family:monospace;letter-spacing:.08em" required></div>
       <div class="row2">
-        <div class="field"><label>Password Baru</label><input class="input" id="fgNew" type="password" minlength="6" required></div>
-        <div class="field"><label>Ulangi Password</label><input class="input" id="fgNew2" type="password" minlength="6" required></div>
+        <div class="field"><label>Password Baru</label><input class="input" id="fgNew" type="password" minlength="8" required></div>
+        <div class="field"><label>Ulangi Password</label><input class="input" id="fgNew2" type="password" minlength="8" required></div>
       </div>
       <div class="login-err" id="fgErr" hidden></div>
       <button class="btn btn-primary" style="width:100%;height:46px" type="submit">${icon('key')} Atur Ulang Password</button>
@@ -1297,7 +1300,7 @@ async function doReset(e){
   const u=$('#fgUser').value.trim(), code=$('#fgCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), n1=$('#fgNew').value, n2=$('#fgNew2').value;
   const user=DB.users.find(x=>x.username.toLowerCase()===u.toLowerCase());
   if(!user || String(user.recovery||'').replace(/-/g,'')!==code) return err('Username atau kode pemulihan tidak cocok.');
-  if(n1.length<6) return err('Password baru minimal 6 karakter.');
+  if(pwCheck(n1)) return err(pwCheck(n1)+'.');
   if(n1!==n2) return err('Konfirmasi password tidak sama.');
   user.password=n1; user.recovery=genCode(); await save();
   closeModal(); $('#lu').value=user.username; $('#lp').value=''; $('#lp').focus();
@@ -1335,11 +1338,11 @@ const NAV=[
   {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP']},{id:'PK',label:'Pajak Keluaran',ic:'out'},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
   {sec:'Restitusi PPN'},{id:'rest',label:'Proses Restitusi',ic:'refund'},{id:'flow',label:'Flowchart Restitusi',ic:'flow'},
   {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},
-  {sec:'Dokumen'},{id:'BPS',label:'Bukti Potong Owner',ic:'folder'},
+  {sec:'Dokumen'},{id:'BPS',label:'Bukti Potong Saya',ic:'folder'},
   {sec:'Sistem'},{id:'settings',label:'Pengaturan & Tema',ic:'gear'},
 ];
 const TITLES={dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PP:'Prepopulated Pajak Masukan (Belum Dikreditkan)',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
-  rest:'Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Tema Tampilan',BPS:'Bukti Potong Owner',
+  rest:'Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Tema Tampilan',BPS:'Bukti Potong Saya',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
   PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)'};
 const COMB={dashboard:'dashComb',rest:'restComb',flow:'restComb'};
@@ -2974,7 +2977,7 @@ function renderSettings(){
         <div class="field"><label>Username</label><input class="input" id="sUser" value="${esc(u.username)}" required ${CLOUD_ON?'readonly title="Username akun server tidak dapat diubah"':''}></div>
         <div class="row2">
           <div class="field"><label>Password lama</label><input class="input" id="sOld" type="password" required></div>
-          <div class="field"><label>Password baru (opsional)</label><input class="input" id="sNew" type="password" minlength="6" placeholder="min. 6 karakter"></div>
+          <div class="field"><label>Password baru (opsional)</label><input class="input" id="sNew" type="password" minlength="8" placeholder="min. 8 karakter, huruf & angka"></div>
         </div>
         <button class="btn btn-primary" type="submit">${icon('check')} Simpan Akun</button>
         ${CLOUD_ON?'':`<div class="field" style="margin:22px 0 0"><label>Kode Pemulihan (untuk "Lupa password")</label>
@@ -3049,7 +3052,7 @@ function usersCard(){
     </tbody></table></div>
     <div class="card-b" style="padding-top:12px">${CLOUD_ON?`<div class="note" style="margin:0">${icon('alert')} Akun tersimpan di server — pengguna dapat masuk dari <b>komputer/HP mana saja</b> dengan username &amp; password yang Anda bagikan. Akun <b>Pengunjung</b> dikunci oleh database: hanya melihat &amp; mengunduh. Menonaktifkan akun langsung memutus aksesnya.</div>`:`<div class="note" style="margin:0">${icon('alert')} <b>Di browser ini</b>, akun pengunjung otomatis mengikuti data admin — tab yang sedang terbuka ikut diperbarui seketika setelah admin menyimpan. <b>Untuk komputer/HP lain</b>: klik <b>Unduh Paket Data</b> (berisi data, akun, dan semua file PDF), kirim ke pengguna, lalu pengguna memilih <b>“Muat paket data dari admin”</b> di halaman login atau di menu Tema. Ulangi setiap ada perubahan. Bagikan paket hanya kepada orang yang berwenang karena berisi akun login.</div>`}</div></div>`;
 }
-function genPass(){ const ch='abcdefghjkmnpqrstuvwxyz23456789'; let a; try{ a=crypto.getRandomValues(new Uint32Array(10)); }catch(e){ a=Array.from({length:10},()=>Math.floor(Math.random()*1e9)); } return Array.from(a,v=>ch[v%ch.length]).join(''); }
+function genPass(){ const ch='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; for(;;){ const a=crypto.getRandomValues(new Uint32Array(12)), p=Array.from(a,v=>ch[v%ch.length]).join(''); if(!pwCheck(p)) return p; } }
 function openUserForm(i){
   const u=i!=null?DB.users[i]:null;
   openModal(`<div class="modal-h"><div><h3>${u?'Ubah Akun':'Buat Akun Baru'}</h3><p>${u?esc(u.username):'Akun untuk dibagikan kepada pengguna lain'}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
@@ -3061,7 +3064,7 @@ function openUserForm(i){
       <div class="field"><label>Nama Tampilan</label><input class="input" name="name" required value="${esc(u?u.name||'':'')}"></div>
       <div class="field"><label>Username</label><input class="input" name="username" required value="${esc(u?u.username:'')}" autocomplete="off" ${u&&CLOUD_ON?'readonly':''}></div>
       <div class="field full"><label>${u?'Password Baru (kosongkan bila tidak diubah)':'Password'}</label>
-        <div style="display:flex;gap:8px"><input class="input" name="password" id="ufPass" ${u?'':'required'} minlength="6" autocomplete="new-password" placeholder="min. 6 karakter"><button type="button" class="btn btn-outline btn-sm" onclick="$('#ufPass').value=genPass()">Buat otomatis</button></div></div>
+        <div style="display:flex;gap:8px"><input class="input" name="password" id="ufPass" ${u?'':'required'} minlength="8" autocomplete="new-password" placeholder="min. 8 karakter, huruf & angka"><button type="button" class="btn btn-outline btn-sm" onclick="$('#ufPass').value=genPass()">Buat otomatis</button></div></div>
     </div></div>
    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`);
 }
@@ -3070,7 +3073,7 @@ async function saveUser(e,i){
   const fd=new FormData($('#userForm')), name=(fd.get('name')||'').trim(), un=(fd.get('username')||'').trim(), pw=(fd.get('password')||'').toString(), role=fd.get('role');
   if(!/^[A-Za-z0-9._-]{3,}$/.test(un)){ toast('Username minimal 3 karakter (huruf, angka, titik, _ atau -)','error'); return; }
   if(DB.users.some((x,j)=>j!==i&&x.username.toLowerCase()===un.toLowerCase())){ toast('Username sudah dipakai','error'); return; }
-  if(pw && pw.length<6){ toast('Password minimal 6 karakter','error'); return; }
+  if(pw && pwCheck(pw)){ toast(pwCheck(pw),'error'); return; }
   if(i!=null){
     const u=DB.users[i];
     if(u.role!=='user'&&role==='user'&&u.active!==false&&adminCount()<=1){ toast('Minimal harus ada 1 admin aktif','error'); return; }
@@ -3107,7 +3110,7 @@ async function saveAccount(e){
   const u=currentUser();
   if($('#sOld').value!==u.password){ toast('Password lama salah','error'); return; }
   const nu=$('#sUser').value.trim(); if(!nu){ toast('Username wajib diisi','error'); return; }
-  if($('#sNew').value && $('#sNew').value.length<6){ toast('Password baru minimal 6 karakter','error'); return; }
+  if($('#sNew').value && pwCheck($('#sNew').value)){ toast(pwCheck($('#sNew').value),'error'); return; }
   const remember=(()=>{ try{ return !!localStorage.getItem('ppn_user_r'); }catch(_){ return false; } })();
   u.name=$('#sName').value.trim()||nu; u.username=nu;
   if($('#sNew').value) u.password=$('#sNew').value;
@@ -3324,6 +3327,7 @@ async function cloudSave(){
   for(let i=0;i<dels.length;i+=100){ const part=dels.slice(i,i+100);
     const {error}=await SB.from('app_state').delete().in('key',part); if(error) throw new Error(cloudErr(error)); part.forEach(k=>CLOUD_SYNCED.delete(k)); }
   CLOUD.lastOwn=Date.now(); CLOUD.savedAt=new Date(); cloudStatus('ok');
+  { const ks=[...ups.map(x=>x.k),...dels.map(k=>'hapus '+k)].map(k=>k.replace(/^d\|(\w+)\|(\d{4}-\d{2})\|\d+$/,'$1 $2')); audit('simpan data',[...new Set(ks)].slice(0,12).join(', ')+(ks.length>12?' …':'')); }
   return true;
 }
 function cloudStatus(s){ CLOUD.status=s; const el=$('#cloudStat'); if(el) el.innerHTML=cloudStatusText(); }
@@ -3349,6 +3353,7 @@ async function cloudAfterLogin(remember){
   cloudBuild(await cloudFetchAll());
   CLOUD.loaded=true; CLOUD.loadedAt=new Date(); CLOUD.status='ok';
   session.set(prof.username,remember);
+  audit('login',navigator.userAgent.replace(/^Mozilla\/5\.0 /,'').slice(0,160));
   cloudSubscribe();
 }
 async function cloudLogin(u,p,remember){
@@ -3382,7 +3387,7 @@ function cloudReset(){
   for(const k of Object.keys(MEMFILES)) delete MEMFILES[k];
   const st=DB.settings; DB=cloudEmptyDB(); DB.settings=st;
 }
-async function cloudLogout(){ const s=SB; cloudReset(); try{ s&&await s.auth.signOut(); }catch(e){} }
+async function cloudLogout(){ const s=SB; if(CLOUD.uid) await audit('logout'); cloudReset(); try{ s&&await s.auth.signOut({scope:'local'}); }catch(e){} }
 /* ---------- Sinkron realtime ---------- */
 function cloudSubscribe(){
   if(CLOUD_CH) try{ SB.removeChannel(CLOUD_CH); }catch(e){}
@@ -3437,11 +3442,15 @@ async function cloudSaveUser(i,{name,un,pw,role}){
       const {data,error}=await SB.from('profiles').update({name:name||u.username,role}).eq('id',u.id).select('id');
       if(error) throw new Error(cloudErr(error)); if(!data||!data.length) throw new Error('Akun tidak ditemukan atau akses ditolak');
       if(pw){ const r=await SB.rpc('admin_set_password',{uid:u.id,new_password:pw}); if(r.error) throw new Error(cloudErr(r.error)); }
+      audit('ubah akun',`${u.username}${pw?' · password direset':''} · ${role==='admin'?'Admin':'Pengunjung'}`);
       await cloudLoadUsers(); render();
       if(pw) showCred(u.username,pw,role); else { closeModal(); toast('Akun diperbarui','success'); }
       return;
     }
     if(!pw) throw new Error('Password wajib diisi');
+    const rc=await SB.rpc('admin_create_user',{p_username:un.toLowerCase(),p_password:pw,p_name:name||un,p_role:role});
+    if(!rc.error){ audit('buat akun',`${un.toLowerCase()} (${role==='admin'?'Admin':'Pengunjung'})`); await cloudLoadUsers(); render(); showCred(un.toLowerCase(),pw,role); return; }
+    if(!/PGRST202|could not find the function|schema cache/i.test((rc.error.code||'')+' '+(rc.error.message||''))) throw new Error(cloudErr(rc.error));
     const tmp=cloudTmpClient();
     const r=await tmp.auth.signUp({email:toEmail(un),password:pw,options:{data:{username:un.toLowerCase(),name:name||un}}});
     if(r.error) throw new Error(/already|registered|exists/i.test(r.error.message)?'Username sudah dipakai':/signups? not allowed|disabled/i.test(r.error.message)?'Pendaftaran akun dimatikan di Supabase. Aktifkan "Allow new users to sign up" (Authentication → Sign In / Providers).':cloudErr(r.error));
@@ -3457,11 +3466,13 @@ async function cloudSaveUser(i,{name,un,pw,role}){
 async function cloudToggleUser(u){
   const {error}=await SB.from('profiles').update({active:u.active===false}).eq('id',u.id);
   if(error){ toast(cloudErr(error),'error'); return; }
+  audit(u.active===false?'aktifkan akun':'nonaktifkan akun',u.username);
   await cloudLoadUsers(); render(); toast(`Akun ${u.username} ${u.active===false?'diaktifkan':'dinonaktifkan'}`,'success');
 }
 async function cloudDeleteUser(u){
   const {error}=await SB.rpc('admin_delete_user',{uid:u.id});
   if(error){ toast(cloudErr(error),'error'); return; }
+  audit('hapus akun',u.username);
   try{ localStorage.removeItem('ppn_theme_'+u.username); }catch(e){}
   await cloudLoadUsers(); render(); toast('Akun dihapus','success');
 }
@@ -3472,7 +3483,7 @@ async function cloudVerifyPass(username,pw){
 async function cloudSaveAccount(e){
   e.preventDefault();
   const u=currentUser(), nw=$('#sNew').value, nm=$('#sName').value.trim()||u.username;
-  if(nw&&nw.length<6){ toast('Password baru minimal 6 karakter','error'); return; }
+  if(nw&&pwCheck(nw)){ toast(pwCheck(nw),'error'); return; }
   if(!await cloudVerifyPass(u.username,$('#sOld').value)){ toast('Password lama salah','error'); return; }
   const {error}=await SB.from('profiles').update({name:nm}).eq('id',u.id);
   if(error){ toast(cloudErr(error),'error'); return; }
@@ -3482,7 +3493,7 @@ async function cloudSaveAccount(e){
 async function saveMyPass(e){
   e.preventDefault();
   const u=currentUser(), o=$('#mpOld').value, n1=$('#mpNew').value, n2=$('#mpNew2').value;
-  if(n1.length<6){ toast('Password baru minimal 6 karakter','error'); return; }
+  if(pwCheck(n1)){ toast(pwCheck(n1),'error'); return; }
   if(n1!==n2){ toast('Konfirmasi password tidak sama','error'); return; }
   if(!await cloudVerifyPass(u.username,o)){ toast('Password lama salah','error'); return; }
   const r=await SB.auth.updateUser({password:n1}); if(r.error){ toast(cloudErr(r.error),'error'); return; }
@@ -3493,7 +3504,7 @@ function cloudAdminCard(){
   if(!CLOUD_ON) return `<div class="card mb"><div class="card-h"><div><h3>Pasang di Server (Online)</h3><p>Saat ini data hanya tersimpan di browser perangkat ini. Hubungkan ke database Supabase agar bisa login dari perangkat mana saja.</p></div>
     <button class="btn btn-primary btn-sm" onclick="openCloudSetup()">${icon('shield')} Hubungkan Server</button></div></div>`;
   return `<div class="card mb"><div class="card-h"><div><h3>Server Database (Supabase)</h3><p id="cloudStat">${cloudStatusText()}</p></div>
-    <div class="toolbar"><button class="btn btn-outline btn-sm" onclick="cloudReload(true)">${icon('upload')} Muat Ulang</button>
+    <div class="toolbar"><button class="btn btn-outline btn-sm" onclick="openAudit()">${icon('clock')} Riwayat Aktivitas</button><button class="btn btn-outline btn-sm" onclick="cloudReload(true)">${icon('upload')} Muat Ulang</button>
     <label class="btn btn-outline btn-sm">${icon('upload')} Pindahkan Data dari Paket<input type="file" accept=".json,application/json" hidden onchange="importPackage(this.files[0]);this.value=''"></label>
     ${CLOUD.local?`<button class="btn btn-ghost btn-sm" onclick="cloudDisconnect()">Putuskan</button>`:''}</div></div>
     <div class="card-b" style="padding-top:0"><div class="note" style="margin:0">${icon('alert')} Semua perubahan admin langsung tersimpan di server dan tampil otomatis di perangkat pengguna lain. Akun pengunjung dikunci oleh database — hanya bisa melihat &amp; mengunduh. Untuk memindahkan data lama: di perangkat lama klik <b>Unduh Paket Data</b>, lalu di sini klik <b>Pindahkan Data dari Paket</b>.</div></div></div>`;
@@ -3505,8 +3516,8 @@ function cloudUserCards(){
   <div class="card mb"><div class="card-h"><div><h3>Ganti Password</h3><p>Ganti password login akun Anda</p></div></div>
     <form class="card-b" id="mpForm" onsubmit="saveMyPass(event)" style="max-width:640px">
       <div class="field"><label>Password lama</label><input class="input" id="mpOld" type="password" required autocomplete="current-password"></div>
-      <div class="row2"><div class="field"><label>Password baru</label><input class="input" id="mpNew" type="password" minlength="6" required autocomplete="new-password"></div>
-        <div class="field"><label>Ulangi password baru</label><input class="input" id="mpNew2" type="password" minlength="6" required autocomplete="new-password"></div></div>
+      <div class="row2"><div class="field"><label>Password baru</label><input class="input" id="mpNew" type="password" minlength="8" required autocomplete="new-password"></div>
+        <div class="field"><label>Ulangi password baru</label><input class="input" id="mpNew2" type="password" minlength="8" required autocomplete="new-password"></div></div>
       <button class="btn btn-primary" type="submit">${icon('key')} Ganti Password</button></form></div>`;
 }
 function openCloudSetup(){
@@ -3526,6 +3537,38 @@ function saveCloudSetup(e){
 }
 function cloudDisconnect(){
   confirmBox('Putuskan server?','Browser ini kembali memakai data lokal. Data di server tidak dihapus.','Putuskan',async()=>{ try{ localStorage.removeItem(CLOUD_CFG_KEY); }catch(e){} await cloudLogout(); session.clear(); location.reload(); });
+}
+
+/* =========================================================
+   KEAMANAN — riwayat aktivitas & keluar otomatis
+========================================================= */
+async function audit(action,detail){
+  if(!CLOUD_ON||!SB||!CLOUD.uid) return;
+  try{ await SB.from('audit_log').insert({action:String(action).slice(0,80),detail:detail==null?null:String(detail).slice(0,500)}); }catch(e){}
+}
+['openStoredFile','doExport','exportPackage','backupData'].forEach(n=>{
+  const f=window[n]; if(typeof f!=='function') return;
+  window[n]=function(...a){
+    const d=n==='openStoredFile'?`${a[2]?'unduh':'buka'} file · ${a[1]||''}`:n==='doExport'?`export ${a[0]} · ${(document.querySelector('input[name=xfmt]:checked')||{}).value||''}`:n==='exportPackage'?'unduh paket data lengkap':'backup json';
+    audit(n==='openStoredFile'?'dokumen':'unduh',d); return f.apply(this,a); };
+});
+const IDLE_MIN=30, IDLE_KEY='ppn_last_act';
+let IDLE_LAST=Date.now(), IDLE_SAVED=0;
+function idleTouch(){ IDLE_LAST=Date.now(); if(IDLE_LAST-IDLE_SAVED>5000){ IDLE_SAVED=IDLE_LAST; try{ localStorage.setItem(IDLE_KEY,String(IDLE_LAST)); }catch(e){} } }
+['pointerdown','keydown','mousemove','touchstart','wheel','scroll'].forEach(ev=>document.addEventListener(ev,idleTouch,{passive:true,capture:true}));
+setInterval(()=>{
+  if($('#app').hidden||!currentUser()){ IDLE_LAST=Date.now(); return; }
+  let last=IDLE_LAST; try{ last=Math.max(last,+localStorage.getItem(IDLE_KEY)||0); }catch(e){}
+  if(Date.now()-last>IDLE_MIN*60000){ if(CLOUD_ON) audit('keluar otomatis','tidak aktif '+IDLE_MIN+' menit'); closeModal(); logout(); toast(`Anda keluar otomatis karena tidak ada aktivitas selama ${IDLE_MIN} menit`,'error'); }
+},15000);
+async function openAudit(){
+  openModal(`<div class="modal-h"><div><h3>Riwayat Aktivitas</h3><p>200 aktivitas terakhir · hanya dapat dilihat admin</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b" id="auditBody"><div class="empty"><span class="spin-sm" style="border-color:rgba(var(--primary-rgb),.25);border-top-color:var(--primary)"></span> Memuat…</div></div>`);
+  const {data,error}=await SB.from('audit_log').select('at,username,action,detail').order('at',{ascending:false}).limit(200);
+  const el=$('#auditBody'); if(!el) return;
+  if(error){ el.innerHTML=`<div class="note" style="margin:0">${icon('alert')} Riwayat belum aktif. Jalankan <b>keamanan-supabase.sql</b> di Supabase → SQL Editor. <small>(${esc(cloudErr(error))})</small></div>`; return; }
+  el.innerHTML=data&&data.length?`<div class="table-wrap" style="max-height:60vh"><table><thead><tr><th>Waktu</th><th>Akun</th><th>Aktivitas</th><th>Detail</th></tr></thead><tbody>${data.map(r=>`<tr><td style="white-space:nowrap">${new Date(r.at).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td><b>${esc(r.username||'-')}</b></td><td>${esc(r.action)}</td><td class="wrap" style="max-width:420px;font-size:12.5px;color:var(--muted)">${esc(r.detail||'')}</td></tr>`).join('')}</tbody></table></div>`
+    :'<div class="empty">Belum ada aktivitas tercatat.</div>';
 }
 
 /* =========================================================
