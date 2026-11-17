@@ -599,6 +599,34 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .rk-legend{font-size:13px;line-height:2;color:var(--muted)}
 @media(max-width:900px){.rk-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.rk-sum{grid-template-columns:1fr}.rk-tab{padding:9px 10px;font-size:13px}}
+.flow2-wrap svg{min-width:980px}
+.flow2 .fn{cursor:pointer;transition:transform .18s, opacity .18s}
+.flow2 .fn:hover{opacity:.93}
+.flow2 .fn-card{fill:var(--surface);stroke:var(--border);stroke-width:1}
+.flow2 .fn-t{fill:var(--text);font-size:12.5px;font-weight:800;letter-spacing:.04em}
+.flow2 .fn-s{fill:var(--muted);font-size:11.5px;font-weight:500}
+.flow2 .fn-v{fill:var(--text);font-weight:800;letter-spacing:-.01em}
+.flow2 .fn-pill{font-size:11.5px;font-weight:800}
+.flow2 .fn-link{fill:none;stroke-width:2.4;stroke-linecap:round;opacity:.85}
+.flow2 .fn-bus{fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;opacity:.55}
+.flow2 .fn-chev{fill:none;stroke:var(--muted);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.flow2 .fn-track{fill:var(--surface-2);stroke:var(--border)}
+.flow2 .fh-t{fill:#fff;font-size:14px;font-weight:800;letter-spacing:.05em}
+.flow2 .fh-s{fill:#dbeafe;font-size:12px;font-weight:500}
+.flow2 .fh-v{fill:#fff;font-size:34px;font-weight:800;letter-spacing:-.02em}
+.flow2 .fh-p{fill:#fff;font-size:20px;font-weight:800}
+.flow2 .fh-ps{fill:#dbeafe;font-size:10.5px;font-weight:600}
+.rk-xl{display:flex;align-items:center;gap:16px;padding:16px 18px;margin:0 0 18px;border-radius:16px;border:1px solid rgba(22,163,74,.35);background:rgba(22,163,74,.06)}
+.rk-xl>div:nth-child(2){flex:1;display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted);line-height:1.5}
+.rk-xl>div:nth-child(2) b:first-child{color:var(--text);font-size:14.5px}
+.rk-xl-ic{width:44px;height:44px;border-radius:12px;background:#16a34a;color:#fff;display:grid;place-items:center;flex:none}
+.rk-xl-ic .i{width:22px;height:22px}
+@media(max-width:700px){.rk-xl{flex-direction:column;align-items:flex-start}}
+.a1-info{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.a1-info>div{display:flex;flex-direction:column;gap:4px}
+.a1-info b{color:var(--text)}
+.a1-info span{line-height:1.55}
+@media(max-width:760px){.a1-info{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -811,6 +839,12 @@ const PPH21A1_FIELDS = {
   pphSetahun:{t:'n',a:['pph21terutangsetahun','pph21terutang','pphterutangsetahun','pphterutang','pph21setahun']},
   pphSebelum:{t:'n',a:['pph21dipotongmasasebelumnya','pphdipotongmasasebelumnya','pph21telahdipotong','pphtelahdipotong','pphmasasebelumnya']},
   pph:{t:'n',a:['pph21masaterakhir','pphmasaterakhir','pph21kurangbayar','pph21dipotong','pphdipotong','pph21','pph']},
+  masaAwal:{t:'m',a:['masaawalperiodepenghasilan','masaawalperolehan','masaperolehanawal','masaawal','periodeawal','awalperiode','bulanawal']},
+  masaAkhir:{t:'m',a:['masaakhirperiodepenghasilan','masaakhirperolehan','masaperolehanakhir','masaakhir','periodeakhir','akhirperiode','bulanakhir']},
+  pengurang:{t:'n',a:['jumlahpengurangan','jumlahpengurang','pengurangan','pengurang','potongan','jumlahpotongan','biayajabatandaniuranpensiun','biayajabatan']},
+  neto:{t:'n',a:['jumlahpenghasilanneto','penghasilannetosetahun','penghasilanneto','neto']},
+  ptkp:{t:'n',a:['penghasilantidakkenapajak','ptkp']},
+  pkp:{t:'n',a:['penghasilankenapajaksetahun','penghasilankenapajak','pkp']},
   status:STBP, ket:KET,
 };
 const BPS_FIELDS = {
@@ -892,11 +926,19 @@ const TYPES = {
            ['3171000000000002','Slamet','2600000201','31/01/2026','01','2026','',4500000,4500000,'0,5%',22500,'NORMAL','Contoh upah harian']]},
   PPH21A1:{...PPH_BASE,rep:'PPH21',label:'BP A1 — Masa Pajak Terakhir',menu:'BP A1 · Masa Pajak Terakhir',party:'Pegawai',fields:PPH21A1_FIELDS,base:'bruto',
       amountLabel:'PPh 21 Masa Terakhir',baseLabel:'Penghasilan Bruto Setahun',key:['nobukti','pph','bruto','pphSetahun'],
-      desc:'Bukti Pemotongan <b>A1 masa pajak terakhir</b> — bukti potong akhir tahun (Desember) atau masa terakhir bekerja, berisi penghitungan PPh 21 setahun.',
-      cols:[cT,cNo,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',f:'wide'},{k:'periode',l:'Masa Perolehan'},{k:'bruto',l:'Bruto Setahun',f:'num'},{k:'pphSetahun',l:'PPh 21 Setahun',f:'num'},{k:'pphSebelum',l:'Dipotong Sebelumnya',f:'num'},{k:'pph',l:'PPh 21 Masa Terakhir',f:'num'},cSt],
-      form:[fNo,fTgl,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',req:1},{k:'periode',l:'Masa Perolehan (mis. 01–12)'},fNum('bruto','Penghasilan Bruto Setahun'),fNum('pphSetahun','PPh 21 Terutang Setahun'),fNum('pphSebelum','PPh 21 Dipotong Masa Sebelumnya'),fNum('pph','PPh 21 Masa Terakhir',1),fSt,fKet],
-      tpl:[['NPWP/NIK Pegawai','Nama Pegawai','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Masa Perolehan','Penghasilan Bruto Setahun','PPh 21 Terutang Setahun','PPh 21 Dipotong Masa Sebelumnya','PPh 21 Masa Terakhir','Status','Keterangan'],
-           ['3171000000000001','Budi Santoso','2600001201','31/12/2026','12','2026','01-12',96000000,2010000,1650000,360000,'NORMAL','Contoh']]},
+      desc:`<div class="a1-info"><div><b>${'Fungsi BP A1'}</b><span>Menunjukkan total <b>penghasilan bruto, pengurang, penghasilan neto</b>, serta <b>PPh Pasal 21 yang telah dipotong &amp; dilunasi</b> pemberi kerja selama satu tahun pajak atau bagian tahun pajak. Menjadi <b>dasar pegawai mengisi SPT Tahunan Orang Pribadi</b>.</span></div>
+        <div><b>Kapan BP A1 dibuat?</b><span>Pada <b>Masa Pajak Terakhir</b>: <b>(1) Masa Desember</b> — pegawai tetap yang bekerja setahun penuh (Januari–Desember); <b>(2) Masa saat berhenti bekerja</b> — pegawai yang mengundurkan diri, di-PHK, atau berhenti sebelum Desember; pajak dihitung dari penghasilan riil selama masa kerja.</span></div></div>`,
+      cols:[cT,cNo,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',f:'wide'},{k:'_per',l:'Periode Penghasilan',f:'a1per'},{k:'_jenis',l:'Masa Pajak Terakhir',f:'a1jenis'},
+            {k:'bruto',l:'Penghasilan Bruto',f:'num'},{k:'pengurang',l:'Pengurang',f:'num'},{k:'neto',l:'Penghasilan Neto',f:'num'},{k:'pphSetahun',l:'PPh 21 Terutang',f:'num'},{k:'pphLunas',l:'PPh 21 Dipotong & Dilunasi',f:'num'},{k:'pph',l:'PPh 21 Masa Terakhir',f:'num'},cSt],
+      xcols:[{k:'tanggal',l:'Tanggal Bukti Potong',f:'date'},{k:'nobukti',l:'Nomor Bukti Potong'},{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',w:30},{k:'_per',l:'Periode Penghasilan',f:'a1perx'},{k:'_jenis',l:'Masa Pajak Terakhir',f:'a1jenisx',w:34},
+            {k:'bruto',l:'Penghasilan Bruto',f:'num'},{k:'pengurang',l:'Pengurang',f:'num'},{k:'neto',l:'Penghasilan Neto',f:'num'},{k:'ptkp',l:'PTKP',f:'num'},{k:'pkp',l:'PKP',f:'num'},
+            {k:'pphSetahun',l:'PPh 21 Terutang',f:'num'},{k:'pphSebelum',l:'PPh 21 Dipotong Masa Sebelumnya',f:'num'},{k:'pph',l:'PPh 21 Masa Terakhir',f:'num'},{k:'pphLunas',l:'PPh 21 Dipotong & Dilunasi',f:'num'},{k:'status',l:'Status',f:'status'},{k:'ket',l:'Keterangan'}],
+      form:[fNo,fTgl,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',req:1},{k:'masaAwal',l:'Masa Awal Periode Penghasilan',type:'mon'},{k:'masaAkhir',l:'Masa Akhir Periode Penghasilan',type:'mon'},
+            fNum('bruto','Penghasilan Bruto'),fNum('pengurang','Pengurang (biaya jabatan, iuran pensiun)'),fNum('neto','Penghasilan Neto (kosongkan = bruto − pengurang)'),fNum('ptkp','PTKP'),fNum('pkp','PKP'),
+            fNum('pphSetahun','PPh 21 Terutang'),fNum('pphSebelum','PPh 21 Dipotong Masa Sebelumnya'),fNum('pph','PPh 21 Masa Terakhir',1),fSt,fKet],
+      tpl:[['NPWP/NIK Pegawai','Nama Pegawai','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Masa Awal Periode Penghasilan','Masa Akhir Periode Penghasilan','Penghasilan Bruto','Jumlah Pengurangan','Penghasilan Neto','PTKP','PKP','PPh 21 Terutang','PPh 21 Dipotong Masa Sebelumnya','PPh 21 Masa Terakhir','Status','Keterangan'],
+           ['3171000000000001','Budi Santoso','2600001201','31/12/2026','12','2026','01','12',96000000,4800000,91200000,54000000,37200000,1860000,1500000,360000,'NORMAL','Setahun penuh'],
+           ['3171000000000002','Sari Wulandari','2600000701','31/07/2026','07','2026','01','07',49000000,2450000,46550000,31500000,15050000,752500,650000,102500,'NORMAL','Berhenti bekerja Juli']]},
   PPH21:{...PPH_BASE,rep:'PPH21',label:'PPh 21 — Bulanan Pegawai Tetap',menu:'Bulanan Pegawai Tetap',party:'Pegawai',fields:PPH21_FIELDS,base:'bruto',
       amountLabel:'PPh 21 Dipotong',baseLabel:'Penghasilan Bruto',key:['nobukti','pph','bruto'],
       desc:'Bukti Pemotongan PPh 21 <b>bulanan pegawai tetap</b> (karyawan tetap), umumnya memakai tarif efektif rata-rata (TER).',
@@ -916,7 +958,7 @@ const TYPES = {
       tpl:[UNIF_TPL_H,['0123456789012345','CV Mitra Konstruksi','2600000101','20/01/2026','01','2026','',100000000,'2,65%',2650000,'NORMAL','Contoh jasa konstruksi']]},
   BPS:{label:'Bukti Potong ESDM',menu:'Bukti Potong ESDM',group:'DOK',party:'Pemotong',unit:'bukti potong',fields:BPS_FIELDS,id:'nobukti',amount:'pajak',base:'dpp',
       amountLabel:'Pajak Dipotong/Dipungut',baseLabel:'DPP',need:['pajak','nobukti'],key:['nobukti','pajak','dpp'],needLabel:'Nomor Bukti Potong" dan "Pajak Dipotong',hasFile:true,
-      desc:'Arsip <b>bukti potong yang diterima proyek</b>: bupot PPh dari Owner/pemberi kerja dan bukti pungut PPN atas pajak keluaran. Unggah file PDF pada setiap baris.',
+      desc:'Arsip <b>bukti potong dari ESDM</b> (pemberi kerja/owner) yang diterima proyek: bupot PPh dan bukti pungut PPN atas pajak keluaran. Unggah file PDF pada setiap baris.',
       cols:[cT,{k:'nobukti',l:'Nomor Bukti',f:'strong'},{k:'jenis',l:'Jenis',f:'jenis'},{k:'npwp',l:'NPWP Pemotong'},{k:'nama',l:'Pemotong / Owner',f:'wide'},{k:'dpp',l:'DPP',f:'num'},{k:'tarif',l:'Tarif'},{k:'pajak',l:'Pajak',f:'num'},{k:'file',l:'File Bukti',f:'file'}],
       xcols:[{k:'tanggal',l:'Tanggal',f:'date'},{k:'nobukti',l:'Nomor Bukti'},{k:'jenis',l:'Jenis',w:28},{k:'npwp',l:'NPWP Pemotong'},{k:'nama',l:'Pemotong / Owner',w:30},{k:'dpp',l:'DPP',f:'num'},{k:'tarif',l:'Tarif'},{k:'pajak',l:'Pajak',f:'num'},{k:'file',l:'File',f:'filename',w:24}],
       form:[{k:'jenis',l:'Jenis Bukti Potong / Pungut',type:'select',opts:JENIS_BPS},{k:'nobukti',l:'Nomor Bukti Potong / Pungut',req:1},fTgl,fKode,{k:'npwp',l:'NPWP Pemotong / Pemungut'},{k:'nama',l:'Nama Pemotong / Owner',req:1},fNum('dpp','DPP'),fTarif,fNum('pajak','Pajak Dipotong / Dipungut',1),{k:'file',l:'File Bukti Potong (PDF)',type:'file'},fKet],
@@ -1033,6 +1075,23 @@ const key = (y,m) => `${y}-${pad(m+1)}`;
 const icon = (n,cls='i') => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
 const getRows = (t,y,m) => DB.data[t][key(y,m)] || [];
 const isCanceled = r => /batal|cancel|reject|tolak|diganti/i.test(r.status||'');
+/* BP A1: periode penghasilan & jenis masa pajak terakhir */
+function a1Norm(r,k){
+  const pr=/(\d{1,2})\D+(\d{1,2})/.exec(String(r.periode||''));
+  if((r.masaAwal==null||r.masaAwal==='')&&pr) r.masaAwal=Math.min(11,Math.max(0,+pr[1]-1));
+  if((r.masaAkhir==null||r.masaAkhir==='')&&pr) r.masaAkhir=Math.min(11,Math.max(0,+pr[2]-1));
+  if(r.masaAkhir==null||r.masaAkhir===''){ const kk=k||MASA_OF.get(r); if(kk) r.masaAkhir=+kk.slice(5)-1; else if(r.masa!=null&&r.masa!=='') r.masaAkhir=+r.masa; }
+  if(r.masaAwal==null||r.masaAwal==='') r.masaAwal=0;
+  if((r.neto==null||r.neto==='')&&r.bruto) r.neto=(+r.bruto||0)-(+r.pengurang||0);
+  r.pphLunas=(+r.pphSebelum||0)+(+r.pph||0);
+  return r;
+}
+function a1Info(r){
+  const aw=+r.masaAwal||0, ak=r.masaAkhir==null||r.masaAkhir===''?11:+r.masaAkhir, j=ak<11?'berhenti':aw>0?'tengah':'penuh';
+  return {aw,ak,j,n:Math.max(1,ak-aw+1),per:`${MONTHS_S[aw]} – ${MONTHS_S[ak]}`,
+    short:j==='berhenti'?`Berhenti · ${MONTHS[ak]}`:j==='tengah'?'Masa Desember · sebagian tahun':'Masa Desember · setahun penuh',
+    label:j==='berhenti'?`Masa ${MONTHS[ak]} — berhenti bekerja sebelum Desember`:j==='tengah'?`Masa Desember — bagian tahun pajak (mulai ${MONTHS[aw]})`:'Masa Desember — bekerja setahun penuh (Januari–Desember)'};
+}
 const fpDigits = no => String(no||'').replace(/\D/g,'');
 const isPengganti = no => { const d=fpDigits(no); return d.length>=3 && d[2]==='1'; };
 const jenisFP = no => { const d=fpDigits(no); return d.length<3?'':d[2]==='1'?'Pengganti':d[2]==='0'?'Normal':''; };
@@ -1107,7 +1166,7 @@ function batasAlerts(compact){
   if(S.hangus.n) h+=`<div class="bt-alert dark">${icon('x')}<div><b>${fmt(S.hangus.n)} faktur (PPN ${rp(S.hangus.ppn)}) sudah melewati batas pengkreditan (hangus).</b> Faktur tetap tercatat di prepopulated sebagai arsip.${compact?'':btns(S.hangus.m,'hangus')}</div></div>`;
   return h;
 }
-function goBatas(k,lvl){ state.view='PP'; resetFilters(); state.year=+k.slice(0,4); state.month=+k.slice(5)-1; state.f.batas=lvl; closeSidebar(); render(); window.scrollTo(0,0); }
+function goBatas(k,lvl){ switchView('PP'); state.dataComb=false; resetFilters(); state.year=+k.slice(0,4); state.month=+k.slice(5)-1; state.f.batas=lvl; closeSidebar(); render(); window.scrollTo(0,0); }
 const ppMsg = res => res.moved?` · ${fmt(res.moved)} faktur pindah ke Pajak Masukan (${Object.keys(res.to).sort().map(k=>`${MONTHS_S[+k.slice(5)-1]} ${k.slice(0,4)}`).join(', ')})`:'';
 const sumF = (rows,f) => rows.reduce((a,r)=> a + (isCanceled(r)?0:(+r[f]||0)), 0);
 const fakturKey = s => String(s||'').replace(/[^0-9a-z]/gi,'').toUpperCase();
@@ -1380,7 +1439,7 @@ setInterval(tickClock,15000);
 ========================================================= */
 const now=new Date();
 const state={view:'dashboard', year:Math.max(START_YEAR,now.getFullYear()), month:now.getFullYear()>=START_YEAR?now.getMonth():0,
-  dashComb:false, restComb:true,
+  dashComb:false, restComb:true, yearBy:{}, combBy:{},
   search:'', f:{status:'all',bayar:'all',jenis:'all',spt:'all',rest:'all'}, page:1, sel:new Set()};
 const NAV=[
   {sec:'Utama'},{id:'dashboard',label:'Dashboard',ic:'grid'},
@@ -1408,17 +1467,29 @@ function combTabs(t,countFn){
   return `<div class="note" style="margin:0 0 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">${icon('grid')} <span>Menampilkan <b>gabungan seluruh tahun &amp; masa pajak</b> (baca saja). Pilih tahun untuk menambah atau mengubah data:</span>
     ${ys.map(y=>{ const c=countFn(y); return `<button class="btn btn-outline btn-sm" onclick="state.dataComb=false;state.year=${y};render()">${y} <span class="badge ${c?'b-primary':'b-muted'}" style="margin-left:4px">${fmt(c)}</span></button>`; }).join('')}</div>`;
 }
-function resetFilters(){ state.page=1; state.search=''; state.f={status:'all',bayar:'all',jenis:'all',spt:'all',rest:'all',batas:'all'}; state.sel=new Set(); }
-function go(v){ state.view=v; resetFilters(); closeSidebar();
+function resetFilters(){ state.page=1; state.search=''; state.f={status:'all',bayar:'all',jenis:'all',spt:'all',rest:'all',batas:'all',a1aw:'all',a1ak:'all',a1j:'all'}; state.sel=new Set(); }
+/* Pilihan tahun & mode gabungan disimpan per menu, sehingga mengganti tahun di satu menu tidak mengubah menu lain */
+const DEF_YEAR=state.year, COMB_DEF={dashComb:false,restComb:true,dataComb:false};
+function switchView(v){
+  const p=state.view; if(p===v) return;
+  state.yearBy[p]=state.year; const pk=COMB[p]; if(pk) state.combBy[p]=!!state[pk];
+  state.view=v; state.year=state.yearBy[v]!=null?state.yearBy[v]:DEF_YEAR;
+  const nk=COMB[v]; if(nk) state[nk]=state.combBy[v]!=null?state.combBy[v]:COMB_DEF[nk];
+}
+/* dari dashboard: buka menu lain dengan tahun/gabungan yang sedang dilihat di dashboard */
+function goD(v){ const comb=!!state.dashComb, y=state.year; switchView(v); const k=COMB[v]; if(k) state[k]=comb; if(!comb) state.year=y; go(v); }
+function goY(v,y,comb){ switchView(v); if(y!=null) state.year=y; const k=COMB[v]; if(k) state[k]=!!comb; go(v); }
+function go(v){ switchView(v); resetFilters(); closeSidebar();
   const g=NAV.find(n=>n.grp&&n.items.includes(v)), sec=(()=>{ let cur=null; for(const n of NAV){ if(n.sec) cur=n.sec; if(n.id===v||(n.grp&&n.items.includes(v))) return cur; } return null; })(), st=navState();
   if(g) st['grp:'+g.grp]=true; if(sec) st['sec:'+sec]=false; try{ localStorage.setItem(NAVK,JSON.stringify(st)); }catch(e){}
   render(); window.scrollTo(0,0); }
-function goRest(st){ state.view='rest'; resetFilters(); state.f.rest=st||'all'; closeSidebar(); render(); window.scrollTo(0,0); }
+function goRest(st){ if(state.view==='flow'){ const c=state.restComb, y=state.year; switchView('rest'); state.restComb=c; state.year=y; } else switchView('rest'); resetFilters(); state.f.rest=st||'all'; closeSidebar(); render(); window.scrollTo(0,0); }
 function openSidebar(){ $('#sidebar').classList.add('open'); $('#overlay').hidden=false; }
 function closeSidebar(){ $('#sidebar').classList.remove('open'); $('#overlay').hidden=true; }
 $('#yearSel').addEventListener('change',e=>{
   const v=e.target.value, ck=COMB[state.view];
   if(v==='all'){ if(ck) state[ck]=true; } else { state.year=+v; if(ck) state[ck]=false; }
+  state.yearBy[state.view]=state.year; if(ck) state.combBy[state.view]=!!state[ck];
   state.page=1; state.sel=new Set(); render();
 });
 const NAVK='ppn_nav_state';
@@ -1519,7 +1590,7 @@ function pphSummary(ys,g){
 ========================================================= */
 let chart=null;
 function dashUnits(){
-  if(!state.dashComb) return rekapData(state.year).map(r=>({...r,label:r.n,short:MONTHS_S[r.i],click:`state.month=${r.i};go('PM')`}));
+  if(!state.dashComb) return rekapData(state.year).map(r=>({...r,label:r.n,short:MONTHS_S[r.i],click:`state.month=${r.i};goD('PM')`}));
   return years().map(y=>{
     const rs=rekapData(y), o={}, sc={};
     rs.forEach(r=>{ for(const k in r) if(typeof r[k]==='number'&&k!=='i'&&k!=='y') o[k]=(o[k]||0)+r[k]; sc[r.status]=(sc[r.status]||0)+1; });
@@ -1543,7 +1614,7 @@ function renderDashboard(){
     (ppAgg[k]=ppAgg[k]||{nama:r.nama||'-',ppn:0,dpp:0,n:0}); ppAgg[k].ppn+=+r.ppn||0; ppAgg[k].dpp+=+r.dpp||0; ppAgg[k].n++; }); });
   const topPP=Object.values(ppAgg).sort((a,b)=>b.ppn-a.ppn).slice(0,4);
   const qN=T('ppN'), qD=T('ppDPP'), qP=T('ppPPN'), qCx=T('ppCxN'), qCxP=T('ppCxPPN'), qMv=T('ppMoved'), qPct=(tPM+qP)?tPM/(tPM+qP)*100:0;
-  const ppClick=r=>comb?`state.dashComb=false;state.year=${r.y};render()`:`state.month=${r.i};go('PP')`;
+  const ppClick=r=>comb?`state.dashComb=false;state.year=${r.y};render()`:`state.month=${r.i};goD('PP')`;
   const topUn=Object.values(un).sort((a,b)=>b.ppn-a.ppn).slice(0,4);
   const p21=pphSummary(ys,'PPH21'), pu=pphSummary(ys,'PPHU'), sp=ys.reduce((a,y)=>{ const s=sptYear(y); a.tot+=s.tot; a.up+=s.up; return a; },{tot:0,up:0});
   const mp=s=>s.months.length?`<div class="mp">${s.months.map((c,i)=>`<i class="${c}" title="${MONTHS[i]}"></i>`).join('')}</div>
@@ -1557,7 +1628,7 @@ function renderDashboard(){
   <div class="grid kpis mb" data-sec="kpi">
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('in')}</span>PPN Masukan · ${yl}</div><div class="val">${rp(tPM)}</div><div class="foot">DPP ${rp(dPM)}</div></div>
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('out')}</span>PPN Keluaran · ${yl}</div><div class="val">${rp(tPK)}</div><div class="foot">DPP ${rp(dPK)}</div></div>
-    <div class="card kpi hl" style="cursor:pointer" onclick="state.restComb=${comb};go('flow')" title="Buka flowchart restitusi">
+    <div class="card kpi hl" style="cursor:pointer" onclick="goD('flow')" title="Buka flowchart restitusi">
       <div class="lbl"><span class="ico">${icon('refund')}</span>Total Pengajuan Restitusi · ${yl}</div><div class="val">${rp(RS.total)}</div>
       <div class="foot">Cair ${short(RS.cair)} (${pr(RS.cair)}) · Belum cair ${short(RS.belum)} · Koreksi ${short(RS.koreksi)}</div></div>
     <div class="card kpi"><div class="lbl"><span class="ico">${icon('receipt')}</span>Faktur Pajak Masukan</div><div class="val">${fmt(cnt)} <span style="font-size:13px;color:var(--muted);font-weight:600">faktur</span></div>
@@ -1566,7 +1637,7 @@ function renderDashboard(){
 
   <div class="card mb" data-sec="pay">
     <div class="card-h"><div><h3>Status Pembayaran Pajak Masukan · ${yl}</h3><p>DPP dan PPN atas faktur pajak masukan yang sudah dan belum dibayar kepada rekanan</p></div>
-      <button class="btn btn-outline btn-sm" onclick="go('PM')">${icon('wallet')} Kelola pembayaran</button></div>
+      <button class="btn btn-outline btn-sm" onclick="goD('PM')">${icon('wallet')} Kelola pembayaran</button></div>
     <div class="card-b">
       <div class="pay-grid">
         <div class="pay-box ok"><div class="pay-h">${icon('check')} Sudah Dibayar <span class="badge b-success">${fmt(pN)} faktur</span></div>
@@ -1594,7 +1665,7 @@ function renderDashboard(){
 
   <div class="card mb" data-sec="pp">
     <div class="card-h"><div><h3>Pajak Masukan Belum Dikreditkan (Prepopulated) · ${yl}</h3><p>Faktur prepopulated berstatus APPROVED yang belum dikreditkan — otomatis berkurang saat faktur CREDITED / FP pengganti pindah ke Pajak Masukan</p></div>
-      <button class="btn btn-outline btn-sm" onclick="go('PP')">${icon('in')} Kelola prepopulated</button></div>
+      <button class="btn btn-outline btn-sm" onclick="goD('PP')">${icon('in')} Kelola prepopulated</button></div>
     <div class="card-b">
       <div class="pay-grid">
         <div class="pay-box no"><div class="pay-h">${icon('clock')} Belum Dikreditkan <span class="badge b-warning">${fmt(qN)} faktur</span></div>
@@ -1638,15 +1709,15 @@ function renderDashboard(){
   </div>
 
   <div class="grid four mb" data-sec="pph">
-    <div class="card sum-card" onclick="go('PPH21NP')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('users')}</span>PPh 21 · ${yl}</div></div>
+    <div class="card sum-card" onclick="goD('PPH21NP')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('users')}</span>PPh 21 · ${yl}</div></div>
       <div class="val">${rp(p21.total)}</div><div class="foot">${fmt(p21.n)} bukti potong · ${p21.lapor} dari ${p21.withData} bulan sudah dilaporkan</div>${bt(p21)}${mp(p21)}</div>
-    <div class="card sum-card" onclick="go('PPH23')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('receipt')}</span>PPh Unifikasi · ${yl}</div></div>
+    <div class="card sum-card" onclick="goD('PPH23')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('receipt')}</span>PPh Unifikasi · ${yl}</div></div>
       <div class="val">${rp(pu.total)}</div><div class="foot">${fmt(pu.n)} bukti potong · ${pu.lapor} dari ${pu.withData} bulan sudah dilaporkan</div>${bt(pu)}${mp(pu)}</div>
-    <div class="card sum-card" onclick="go('spt')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico ${sp.tot&&sp.up===sp.tot?'g':'o'}">${icon('shield')}</span>SPT PPN Rekanan · ${yl}</div></div>
+    <div class="card sum-card" onclick="goD('spt')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico ${sp.tot&&sp.up===sp.tot?'g':'o'}">${icon('shield')}</span>SPT PPN Rekanan · ${yl}</div></div>
       <div class="val">${fmt(sp.up)} / ${fmt(sp.tot)}</div><div class="foot">rekanan sudah upload bukti SPT · ${fmt(sp.tot-sp.up)} belum</div>
       <div class="progress" style="margin-top:14px"><span style="width:${sp.tot?sp.up/sp.tot*100:0}%;background:var(--success)"></span></div>
       <div class="legend-mini"><span>${sp.tot?(sp.up/sp.tot*100).toFixed(0):0}% lengkap</span></div></div>
-    <div class="card sum-card" onclick="state.restComb=${comb};go('rest')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('flow')}</span>Proses Restitusi · ${yl}</div></div>
+    <div class="card sum-card" onclick="goD('rest')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('flow')}</span>Proses Restitusi · ${yl}</div></div>
       <div class="val">${RS.n} masa</div><div class="foot">${RS.overdue?`<span style="color:var(--danger)">${RS.overdue} masa melewati estimasi</span>`:'Tahap proses restitusi'}</div>
       ${REST_ST.map(s=>`<div class="bt"><span><i class="st-dot" style="background:${s.c}"></i>${s.l}</span><b>${RS.st[s.k].n}</b></div>`).join('')}</div>
   </div>
@@ -1736,6 +1807,8 @@ function filteredRows(t){
     if(f.status!=='all' && (r.status||'(kosong)')!==f.status) return false;
     if(t==='PM' && f.bayar!=='all' && (!!r.bayar)!==(f.bayar==='sudah')) return false;
     if(t==='BPS' && f.jenis!=='all' && (r.jenis||'(kosong)')!==f.jenis) return false;
+    if(t==='PPH21A1' && ((f.a1aw&&f.a1aw!=='all')||(f.a1ak&&f.a1ak!=='all')||(f.a1j&&f.a1j!=='all'))){ const a=a1Info(r);
+      if(f.a1aw&&f.a1aw!=='all'&&a.aw!==+f.a1aw) return false; if(f.a1ak&&f.a1ak!=='all'&&a.ak!==+f.a1ak) return false; if(f.a1j&&f.a1j!=='all'&&a.j!==f.a1j) return false; }
     if(t==='PP' && f.batas && f.batas!=='all'){ const b=batasInfo(r,rowMasa(r)); if(!b||b.lvl!==f.batas) return false; }
     if(!q) return true;
     return [r[TYPES[t].id],r.npwp,r.nama,r.ket,r.kode,r.jenis].some(v=>String(v||'').toLowerCase().includes(q));
@@ -1747,12 +1820,21 @@ function monthTabs(t,y,m,extra){
 }
 function renderData(t){
   const T=TYPES[t], y=state.year, m=state.month, comb=isComb(t), rows=viewRows(t);
+  if(t==='PPH21A1') rows.forEach(r=>a1Norm(r,comb?MASA_OF.get(r):key(y,m)));
   const nBatal=rows.filter(isCanceled).length;
   const statuses=t==='PP'?PP_ST.filter(x=>x!=='CREDITED'):[...new Set(rows.map(r=>r.status||'(kosong)'))];
   const flag = T.report ? i=>{ const r=repOf(T.rep,y,i), has=groupCount(T.rep,y,i); return r&&r.lapor==='Sudah'?'<i class="flag ok" title="Sudah dilaporkan"></i>':has?'<i class="flag wait" title="Belum dilaporkan"></i>':''; } : null;
   let minis;
   const bat=nBatal?` <span class="badge b-warning" style="font-size:10.5px">${nBatal} batal</span>`:'';
-  if(t==='PP'){
+  if(t==='PPH21A1'){
+    const ok=rows.filter(r=>!isCanceled(r)), S=f=>ok.reduce((a,r)=>a+(+r[f]||0),0), J={penuh:0,tengah:0,berhenti:0}; ok.forEach(r=>J[a1Info(r).j]++);
+    const sel=S('pphSetahun')-S('pphLunas');
+    minis=`
+    <div class="card mini"><small>Jumlah BP A1${bat}</small><b>${fmt(ok.length)}</b><span class="sub">${J.penuh} setahun penuh · ${J.tengah} sebagian tahun · ${J.berhenti} berhenti bekerja</span></div>
+    <div class="card mini"><small>Penghasilan Bruto</small><b>${rp(S('bruto'))}</b><span class="sub">Pengurang ${rp(S('pengurang'))}</span></div>
+    <div class="card mini"><small>Penghasilan Neto</small><b>${rp(S('neto'))}</b><span class="sub">PKP ${rp(S('pkp'))}</span></div>
+    <div class="card mini"><small>PPh 21 Dipotong &amp; Dilunasi</small><b style="color:var(--primary)">${rp(S('pphLunas'))}</b><span class="sub">${Math.abs(sel)>1?`<span style="color:var(--danger)">Selisih dgn terutang ${rp(sel)}</span>`:`Sama dengan PPh 21 terutang ${rp(S('pphSetahun'))}`}</span></div>`;
+  } else if(t==='PP'){
     const ok=rows.filter(ppOpen), cx=rows.filter(r=>r.status==='CANCELED'), am=rows.filter(r=>r.status==='AMENDED'), S=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0), mvm=ppMovedMap(), mv=comb?Object.values(mvm).reduce((a,b)=>a+b,0):(mvm[key(y,m)]||0);
     minis=`
     <div class="card mini"><small>Belum Dikreditkan (APPROVED)</small><b>${fmt(ok.length)} faktur</b><span class="sub">${ok.filter(r=>r.jenisFP==='Normal').length} FP normal</span></div>
@@ -1807,6 +1889,9 @@ function renderData(t){
         <div class="search">${icon('search')}<input class="input" placeholder="Cari nomor, NPWP, nama ${T.party.toLowerCase()}…" value="${esc(state.search)}" oninput="setSearch(this.value)"></div>
         ${t==='PM'?`<select class="select" onchange="setFilter('bayar',this.value)"><option value="all">Semua pembayaran</option><option value="sudah" ${state.f.bayar==='sudah'?'selected':''}>Sudah dibayar</option><option value="belum" ${state.f.bayar==='belum'?'selected':''}>Belum dibayar</option></select>`:''}
         ${t==='PP'?`<select class="select" onchange="setFilter('batas',this.value)"><option value="all">Semua batas kredit</option>${['akhir','dekat','aman','hangus'].map(v=>`<option value="${v}" ${state.f.batas===v?'selected':''}>${{akhir:'Bulan terakhir (segera!)',dekat:'Sisa 1 masa',aman:'Aman',hangus:'Hangus'}[v]}</option>`).join('')}</select>`:''}
+        ${t==='PPH21A1'?`<select class="select" onchange="setFilter('a1aw',this.value)" title="Masa awal periode penghasilan"><option value="all">Masa awal: semua</option>${MONTHS.map((nm,i)=>`<option value="${i}" ${String(state.f.a1aw)===String(i)?'selected':''}>Awal ${nm}</option>`).join('')}</select>
+          <select class="select" onchange="setFilter('a1ak',this.value)" title="Masa akhir periode penghasilan"><option value="all">Masa akhir: semua</option>${MONTHS.map((nm,i)=>`<option value="${i}" ${String(state.f.a1ak)===String(i)?'selected':''}>Akhir ${nm}</option>`).join('')}</select>
+          <select class="select" onchange="setFilter('a1j',this.value)"><option value="all">Semua jenis A1</option>${[['penuh','Desember · setahun penuh'],['tengah','Desember · sebagian tahun'],['berhenti','Berhenti bekerja']].map(([v,l])=>`<option value="${v}" ${state.f.a1j===v?'selected':''}>${l}</option>`).join('')}</select>`:''}
         ${t==='BPS'?`<select class="select" onchange="setFilter('jenis',this.value)"><option value="all">Semua jenis PPh</option>${[...new Set(rows.map(r=>r.jenis||'(kosong)'))].map(s=>`<option ${s===state.f.jenis?'selected':''} value="${esc(s)}">${esc(s)}</option>`).join('')}</select>`:''}
         <select class="select" onchange="setFilter('status',this.value)"><option value="all">Semua status</option>${statuses.map(s=>`<option ${s===state.f.status?'selected':''} value="${esc(s)}">${esc(s)}</option>`).join('')}</select>
       </div>
@@ -1826,6 +1911,8 @@ function cellHTML(c,r){
     case 'wide': return `<td class="wide" title="${esc(v)}">${esc(v||'-')}</td>`;
     case 'status': return `<td>${v?`<span class="badge ${isCanceled(r)?'b-danger':/approv|setuju|normal|valid|credit/i.test(v)?'b-success':/amend/i.test(v)?'b-primary':'b-muted'}" ${r.src==='PP'?`title="Dari prepopulated masa ${esc(r.ppMasa||'')}"`:''}>${esc(v)}</span>`:'-'}</td>`;
     case 'batas': { const b=batasInfo(r,rowMasa(r)); return `<td>${b?`<div class="batas"><span class="badge ${BATAS_CLS[b.lvl]}" title="Masa faktur ${masaLabel(b.fm)} · paling lambat dikreditkan masa ${masaLabel(b.bm)}">${b.lvl==='aman'?`Sisa ${b.left} masa`:BATAS_LBL[b.lvl]}</span><small>s.d. ${MONTHS_S[+b.bm.slice(5)-1]} ${b.bm.slice(0,4)}</small></div>`:'<span class="sub-t">—</span>'}</td>`; }
+    case 'a1per': { const a=a1Info(r); return `<td style="white-space:nowrap">${a.per}<small class="sub-t" style="display:block">${a.n} bulan</small></td>`; }
+    case 'a1jenis': { const a=a1Info(r); return `<td><span class="badge ${a.j==='berhenti'?'b-warning':a.j==='tengah'?'b-primary':'b-success'}">${esc(a.short)}</span></td>`; }
     case 'ppstatus': return `<td><span class="badge ${{APPROVED:'b-success',CANCELED:'b-danger',CREDITED:'b-primary',AMENDED:'b-amber'}[v]||'b-muted'}">${esc(v||'APPROVED')}</span></td>`;
     case 'jenisfp': return `<td>${v?`<span class="badge ${v==='Pengganti'?'b-primary':'b-success'}">${esc(v)}</span>`:'<span class="sub-t">—</span>'}</td>`;
     case 'jenis': return `<td>${v?`<span class="badge b-primary">${esc(v)}</span>`:'-'}</td>`;
@@ -1937,6 +2024,7 @@ function openRowForm(t,id){
     if(f.type==='date') inp=`<input class="input" type="date" name="${f.k}" value="${esc(/^\d{4}-\d{2}-\d{2}$/.test(val||'')?val:'')}">`;
     else if(f.type==='num') inp=`<input class="input" name="${f.k}" inputmode="decimal" value="${val?fmt(val):''}" placeholder="0">`;
     else if(f.type==='select') inp=`<select class="select" name="${f.k}"><option value="">— pilih —</option>${f.opts.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    else if(f.type==='mon') inp=`<select class="select" name="${f.k}"><option value="">— pilih bulan —</option>${MONTHS.map((nm,i)=>`<option value="${i}" ${val!==''&&val!=null&&+val===i?'selected':''}>${nm}</option>`).join('')}</select>`;
     else if(f.type==='month') inp=`<input class="input" type="month" name="${f.k}" value="${esc(/^\d{4}-\d{2}$/.test(val||'')?val:'')}" min="${START_YEAR}-01">`;
     else if(f.type==='bayar') inp=`<select class="select" name="${f.k}"><option value="0" ${!val?'selected':''}>Belum dibayar</option><option value="1" ${val?'selected':''}>Sudah dibayar</option></select>`;
     else inp=`<input class="input" name="${f.k}" value="${esc(val||'')}" ${f.list?`list="dl-${f.k}"`:''}>${f.list?`<datalist id="dl-${f.k}">${f.list.map(o=>`<option value="${o}">`).join('')}</datalist>`:''}`;
@@ -1954,7 +2042,7 @@ async function saveRowForm(e,t,id){
     if(f.type==='file') continue;
     let val=(fd.get(f.k)||'').toString().trim();
     if(f.req && !val){ toast(`${f.l} wajib diisi`,'error'); return; }
-    if(f.type==='num') val=toNum(val); else if(f.type==='bayar') val=val==='1';
+    if(f.type==='num') val=toNum(val); else if(f.type==='bayar') val=val==='1'; else if(f.type==='mon') val=val===''?null:+val;
     rec[f.k]=val;
   }
   if(T.pay){ if(rec.bayar && !rec.tglBayar) rec.tglBayar=todayISO(); if(!rec.bayar) rec.tglBayar=''; }
@@ -1962,7 +2050,9 @@ async function saveRowForm(e,t,id){
   const k=key(state.year,state.month), arr=DB.data[t][k]||(DB.data[t][k]=[]), cur=id?arr.find(x=>x.id===id):null;
   if(!id){ const fk=fakturKey(rec[T.id]); if(fk && arr.some(x=>fakturKey(x[T.id])===fk)){ toast(`Nomor ${rec[T.id]} sudah ada di bulan ini`,'error'); return; } }
   if(T.hasFile){ try{ rec.file=await storePdf(cur?cur.file:null); }catch(err){ toast('Gagal menyimpan file: '+err.message,'error'); return; } }
+  if(t==='PPH21A1'){ rec.neto=rec.neto||''; if(rec.masaAkhir==null) rec.masaAkhir=state.month; }
   if(cur) Object.assign(cur,rec); else arr.push({id:uid(),masa:state.month,tahun:state.year,...rec});
+  if(t==='PPH21A1') a1Norm(cur||arr[arr.length-1],k);
   const pr=(t==='PP'||t==='PM')?ppProcess():{moved:0};
   if(await save()){ closeModal(); toast((id?'Data diperbarui':'Data ditambahkan')+ppMsg(pr),'success'); refreshDataView(); }
 }
@@ -2462,12 +2552,104 @@ function flowSVG(M){
     <filter id="fsh2" x="-10%" y="-20%" width="120%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".18"/></filter></defs>
     <g class="fl">${L.map(l=>ln(...l)).join('')}${ln(b.x+16,b.y1,b.tx,b.y1)}${ln(b.x,b.mid,b.tx,b.mid)}${ln(b.x+16,b.y2,b.tx,b.y2)}<path d="${bp}" fill="none"/></g>${nodes}</svg>`;
 }
+/* ---------- Flowchart restitusi (tampilan layar, desain kartu) ---------- */
+function flowSVG2(S){
+  const W=1200, H=790, P=v=>S.total?v/S.total*100:0, pf=v=>P(v).toFixed(1).replace('.',',')+'%', st=S.st;
+  const K=v=>S.koreksi?(v/S.koreksi*100).toFixed(1).replace('.',',')+'%':'0%', mr=k=>k.length?masaRangeText(k):'Tidak ada masa';
+  const C={total:'#1d4ed8',cair:'#16a34a',belum:'#0e7490',kor:'#dc2626',sp2:'#64748b',periksa:'#d97706',selesai:'#7c3aed',biaya:'#475569',sanksi:'#ea580c',tanpa:'#0284c7'};
+  const T=(x,y,s,cls,extra='')=>`<text x="${x}" y="${y}" class="${cls}" ${extra}>${esc(s)}</text>`;
+  const lines=(x,y,arr,max,lh,cls,n)=>{ let out='', yy=y; arr.filter(Boolean).forEach(s=>wrapTxt(s,max).forEach(l=>{ if(n-->0){ out+=T(x,yy,l,cls); yy+=lh; } })); return out; };
+  const pill=(x,y,txt,c)=>{ const w=txt.length*6.6+18; return `<rect x="${x-w}" y="${y}" width="${w}" height="22" rx="11" fill="${c}" fill-opacity=".13"/><text x="${x-w/2}" y="${y+15}" class="fn-pill" fill="${c}" text-anchor="middle">${esc(txt)}</text>`; };
+  const ico=(x,y,id,c,r=17)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" fill-opacity=".13"/><use href="#i-${id}" x="${x-r*.55}" y="${y-r*.55}" width="${r*1.1}" height="${r*1.1}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const card=(o)=>{ const {x,y,w,h,c,go}=o; const vf=o.vf||20;
+    return `<g class="fn" onclick="goRest('${go}')"><title>${esc(o.t)} — klik untuk membuka rincian</title>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="16" class="fn-card" filter="url(#fsd)"/>
+      <path d="M${x+16} ${y} H${x+w-16} Q${x+w} ${y} ${x+w} ${y+16} V${y+6} H${x} V${y+16} Q${x} ${y} ${x+16} ${y} Z" fill="${c}"/>
+      ${ico(x+30,y+36,o.ic,c)}
+      ${lines(x+56,y+32,[o.t],Math.floor((w-150)/7.1),14,'fn-t',2)}
+      ${o.pct!=null?pill(x+w-14,y+20,o.pct,c):''}
+      ${lines(x+18,y+70,o.s||[],Math.floor((w-36)/6.2),15,'fn-s',o.sn||2)}
+      <text x="${x+18}" y="${y+h-18}" class="fn-v" font-size="${vf}">${esc(rp(o.v))}</text></g>`; };
+  const curve=(x1,y1,x2,y2,c,dash)=>{ const my=(y1+y2)/2; return `<path d="M${x1} ${y1} C${x1} ${my}, ${x2} ${my}, ${x2} ${y2-6}" class="fn-link" stroke="${c}" ${dash?'stroke-dasharray="6 6"':''} marker-end="url(#ar-${c.slice(1)})"/>`; };
+  const marks=[...new Set(Object.values(C))].map(c=>`<marker id="ar-${c.slice(1)}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${c}"/></marker>`).join('');
+  // hero
+  const hx=360, hy=18, hw=480, hh=160, pc=P(S.cair), R=46, cxr=hx+hw-70, cyr=hy+hh/2, ang=Math.min(99.99,pc)/100*Math.PI*2;
+  const arc=pc>0?`<path d="M${cxr} ${cyr-R} A${R} ${R} 0 ${ang>Math.PI?1:0} 1 ${cxr+R*Math.sin(ang)} ${cyr-R*Math.cos(ang)}" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>`:'';
+  const hero=`<g class="fn" onclick="goRest('all')"><title>Total pengajuan — klik untuk membuka semua masa</title>
+    <rect x="${hx}" y="${hy}" width="${hw}" height="${hh}" rx="20" fill="url(#gHero)" filter="url(#fsd)"/>
+    ${ico(hx+34,hy+36,'refund','#ffffff',18)}
+    <text x="${hx+62}" y="${hy+33}" class="fh-t">TOTAL PENGAJUAN RESTITUSI</text>
+    <text x="${hx+62}" y="${hy+51}" class="fh-s">${esc(`${S.n} masa pajak · ${S.range}`).slice(0,60)}</text>
+    <text x="${hx+24}" y="${hy+104}" class="fh-v">${esc(rp(S.total))}</text>
+    <text x="${hx+24}" y="${hy+134}" class="fh-s">Disetujui ${esc(rp(S.disetujui))} · terkoreksi ${esc(pf(S.koreksi))}</text>
+    <circle cx="${cxr}" cy="${cyr}" r="${R}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="10"/>${arc}
+    <text x="${cxr}" y="${cyr+2}" class="fh-p" text-anchor="middle">${pc.toFixed(0)}%</text><text x="${cxr}" y="${cyr+18}" class="fh-ps" text-anchor="middle">sudah cair</text></g>`;
+  // level 2
+  const L2y=250, L2h=158, L2w=340, X2={cair:30,belum:430,kor:830};
+  const n2=[
+    card({x:X2.cair,y:L2y,w:L2w,h:L2h,c:C.cair,go:'cair',ic:'check',t:'RESTITUSI SUDAH CAIR',pct:pf(S.cair),v:S.cair,vf:22,s:[`${st.cair.n} masa · ${st.cair.n?'Masa '+mr(st.cair.keys):'belum ada yang cair'}`]}),
+    card({x:X2.belum,y:L2y,w:L2w,h:L2h,c:C.belum,go:'all',ic:'clock',t:'RESTITUSI BELUM CAIR',pct:pf(S.belum),v:S.belum,vf:22,s:[`${S.n-st.cair.n} masa dalam proses`,S.next?`Estimasi cair terdekat ${fmtDate(S.next)}`:'']}),
+    card({x:X2.kor,y:L2y,w:L2w,h:L2h,c:C.kor,go:'all',ic:'alert',t:'TOTAL TERKOREKSI',pct:pf(S.koreksi),v:S.koreksi,vf:22,s:[`${S.items.length} item koreksi pajak masukan`,'Rincian kategori di bawah']})];
+  // level 3a: tahap proses (belum cair)
+  const L3y=470, L3h=140, sw=232, sg=20, sx=[30,30+sw+sg,30+2*(sw+sg)];
+  const stg=[['sp2','MENUNGGU TERBIT SP2',C.sp2,'file','Surat Perintah Pemeriksaan'],['periksa','DALAM PEMERIKSAAN',C.periksa,'search',''],['selesai','SELESAI DIPERIKSA',C.selesai,'shield','Proses pencairan (SKPLB/SPMKP)']];
+  const n3=stg.map(([k,t,c,ic,sub],i)=>{ const o=st[k]; return card({x:sx[i],y:L3y,w:sw,h:L3h,c,go:k,ic,t,v:o.amt,vf:17,pct:`${o.n} masa`,sn:3,
+    s:[o.n?'Masa '+mr(o.keys):'Tidak ada masa', o.next?`Est. cair ${fmtDate(o.next)}`:sub]}); }).join('');
+  const chev=[0,1].map(i=>{ const x=sx[i]+sw+sg/2, y=L3y+L3h/2; return `<path d="M${x-5} ${y-9} L${x+4} ${y} L${x-5} ${y+9}" class="fn-chev"/>`; }).join('');
+  // level 3b: kategori koreksi
+  const kx=890, kw=280, kh=86, ky=[452,552,652];
+  const kat=[['biaya','ADA BIAYA','PPN sudah dibayar ke rekanan',C.biaya,'wallet'],['sanksi','SANKSI / DENDA / BUNGA','',C.sanksi,'alert'],['tanpa','TIDAK ADA BIAYA','PPN tidak dibayar ke rekanan',C.tanpa,'receipt']];
+  const n3k=kat.map(([k,t,sub,c,ic],i)=>{ const y=ky[i], v=S.kor[k]||0;
+    return `<g class="fn" onclick="goRest('all')"><title>Terkoreksi ${esc(t.toLowerCase())}</title><rect x="${kx}" y="${y}" width="${kw}" height="${kh}" rx="14" class="fn-card" filter="url(#fsd)"/>
+      <rect x="${kx}" y="${y}" width="6" height="${kh}" rx="3" fill="${c}"/>${ico(kx+30,y+28,ic,c,14)}
+      <text x="${kx+52}" y="${y+25}" class="fn-t">${esc(t)}</text><text x="${kx+52}" y="${y+41}" class="fn-s">${esc(`${S.korN[k]||0} item${sub?' · '+sub:''}`).slice(0,42)}</text>
+      <text x="${kx+18}" y="${y+72}" class="fn-v" font-size="16">${esc(rp(v))}</text>${pill(kx+kw-12,y+56,K(v),c)}</g>`; }).join('');
+  const spine=`<path d="M${X2.kor+L2w/2} ${L2y+L2h} V${L2y+L2h+22} H${kx-30} V${ky[2]+kh/2}" class="fn-link" stroke="${C.kor}"/>`
+    +ky.map(y=>`<path d="M${kx-30} ${y+kh/2} H${kx-6}" class="fn-link" stroke="${C.kor}" marker-end="url(#ar-${C.kor.slice(1)})"/>`).join('');
+  // pita alur proses
+  const by=660, bx=30, bw=sx[2]+sw-30, segs=[['Cair',S.cair,C.cair],['Selesai diperiksa',st.selesai.amt,C.selesai],['Pemeriksaan',st.periksa.amt,C.periksa],['Menunggu SP2',st.sp2.amt,C.sp2],['Terkoreksi',S.koreksi,C.kor]];
+  const tot=segs.reduce((a,s)=>a+s[1],0)||1; let xx=bx;
+  const bar=segs.map(([l,v,c])=>{ const w=v/tot*bw; const r=w>0?`<rect x="${xx}" y="${by+26}" width="${Math.max(0,w)}" height="22" fill="${c}"><title>${l}: ${rp(v)}</title></rect>`:''; xx+=w; return r; }).join('');
+  let lx=bx; const leg=segs.map(([l,v,c])=>{ const s=`${l} ${(v/tot*100).toFixed(0)}%`, o=`<circle cx="${lx+5}" cy="${by+68}" r="5" fill="${c}"/><text x="${lx+15}" y="${by+72}" class="fn-s">${esc(s)}</text>`; lx+=s.length*6.4+34; return o; }).join('');
+  const ribbon=`<text x="${bx}" y="${by+14}" class="fn-t">KOMPOSISI NILAI PENGAJUAN</text>
+    <clipPath id="clipBar"><rect x="${bx}" y="${by+26}" width="${bw}" height="22" rx="11"/></clipPath><rect x="${bx}" y="${by+26}" width="${bw}" height="22" rx="11" class="fn-track"/><g clip-path="url(#clipBar)">${bar}</g>${leg}`;
+  // penghubung (pohon ortogonal)
+  const bus=(x0,y0,yb,tg)=>{ const xs=tg.map(t=>t[0]); let d=`<path d="M${x0} ${y0} V${yb} M${Math.min(x0,...xs)} ${yb} H${Math.max(x0,...xs)}" class="fn-bus"/>`;
+    tg.forEach(([x,y,c])=>{ d+=`<path d="M${x} ${yb} V${y-7}" class="fn-link" stroke="${c}" marker-end="url(#ar-${c.slice(1)})"/>`; }); return d; };
+  const links=bus(600,hy+hh,214,[[X2.cair+L2w/2,L2y,C.cair],[X2.belum+L2w/2,L2y,C.belum],[X2.kor+L2w/2,L2y,C.kor]])
+    +bus(X2.belum+L2w/2,L2y+L2h,440,sx.map((x,i)=>[x+sw/2,L3y,[C.sp2,C.periksa,C.selesai][i]]));
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="flow2" font-family="Plus Jakarta Sans, Arial, sans-serif">
+    <defs>${marks}<linearGradient id="gHero" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e3a8a"/><stop offset="1" stop-color="#2563eb"/></linearGradient>
+      <filter id="fsd" x="-8%" y="-10%" width="116%" height="135%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f172a" flood-opacity=".12"/></filter></defs>
+    <g>${links}${spine}</g>${hero}${n2.join('')}${n3}${chev}${n3k}${ribbon}</svg>`;
+}
+
+/* Flowchart untuk PDF: SVG desain baru dirender ke gambar (tema terang, ikon & gaya disertakan) */
+async function flowPng(S){
+  const W=1200, H=790, SC=2.6;
+  let svg=flowSVG2(S).replace('<svg ',`<svg width="${W}" height="${H}" `).replace(/ onclick="[^"]*"/g,'');
+  const syms=[...document.querySelectorAll('svg symbol')].map(x=>x.outerHTML).join('');
+  const css=`.fn-card{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}.fn-t{fill:#0f172a;font-size:12.5px;font-weight:800;letter-spacing:.04em}.fn-s{fill:#64748b;font-size:11.5px;font-weight:500}
+    .fn-v{fill:#0f172a;font-weight:800}.fn-pill{font-size:11.5px;font-weight:800}.fn-link{fill:none;stroke-width:2.4;stroke-linecap:round;opacity:.85}
+    .fn-bus{fill:none;stroke:#64748b;stroke-width:2.2;stroke-linecap:round;opacity:.55}.fn-chev{fill:none;stroke:#64748b;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+    .fn-track{fill:#f1f5f9;stroke:#e2e8f0}.fh-t{fill:#fff;font-size:14px;font-weight:800;letter-spacing:.05em}.fh-s{fill:#dbeafe;font-size:12px;font-weight:500}
+    .fh-v{fill:#fff;font-size:34px;font-weight:800}.fh-p{fill:#fff;font-size:20px;font-weight:800}.fh-ps{fill:#dbeafe;font-size:10.5px;font-weight:600}
+    text{font-family:Arial,Helvetica,sans-serif}`;
+  svg=svg.replace('<defs>',`<defs><style>${css}</style>${syms}`).replace(/<title>[^<]*<\/title>/g,'');
+  const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+  try{
+    const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('render flowchart gagal')); i.src=url; });
+    const cv=document.createElement('canvas'); cv.width=W*SC; cv.height=H*SC; const ctx=cv.getContext('2d');
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,cv.width,cv.height); ctx.drawImage(img,0,0,cv.width,cv.height);
+    return {data:cv.toDataURL('image/png'),w:W,h:H};
+  } finally { URL.revokeObjectURL(url); }
+}
 function renderFlow(){
   const list=restList(), S=restSummary(list), scope=state.restComb?'Gabungan Semua Tahun':`Tahun ${state.year}`;
   $('#view').innerHTML=`
   <div class="card mb"><div class="card-h"><div><h3>Flowchart Restitusi PPN — ${scope}</h3><p>Terhubung otomatis dengan Pajak Masukan &amp; menu Proses Restitusi · klik kotak untuk membuka rinciannya</p></div>
-    <div class="toolbar"><button class="btn btn-outline" onclick="go('rest')">${icon('refund')}<span class="hide-sm">Proses Restitusi</span></button><button class="btn btn-primary" onclick="openRestExport()">${icon('download')} Unduh PDF</button></div></div>
-    <div class="card-b">${list.length?`<div class="flow-wrap">${flowSVG(flowModel(S))}</div>`:`<div class="empty">${icon('flow')}<b>Belum ada data restitusi</b>Import Pajak Masukan atau tambahkan masa pengajuan di menu Proses Restitusi.<br><br><button class="btn btn-primary" onclick="go('rest')">Buka Proses Restitusi</button></div>`}</div></div>
+    <div class="toolbar"><button class="btn btn-outline" onclick="goRest('all')">${icon('refund')}<span class="hide-sm">Proses Restitusi</span></button><button class="btn btn-primary" onclick="openRestExport()">${icon('download')} Unduh PDF</button></div></div>
+    <div class="card-b">${list.length?`<div class="flow-wrap flow2-wrap">${flowSVG2(S)}</div>`:`<div class="empty">${icon('flow')}<b>Belum ada data restitusi</b>Import Pajak Masukan atau tambahkan masa pengajuan di menu Proses Restitusi.<br><br><button class="btn btn-primary" onclick="go('rest')">Buka Proses Restitusi</button></div>`}</div></div>
   ${list.length?`
   <div class="card mb"><div class="card-h"><div><h3>Informasi Detail</h3><p>Ringkasan angka penting proses restitusi · ${scope}</p></div></div><div class="card-b"><div class="detail-grid">${restDetails(S).map(d=>`<div class="det"><small>${d.l}</small><b>${d.v}</b><span>${esc(d.s||'')}</span></div>`).join('')}</div></div></div>
   <div class="grid two mb">
@@ -2530,7 +2712,10 @@ async function exportRestPdf(includeDocs){
   const sub=`Masa ${S.range} | ${S.n} masa pajak | Dicetak ${printed}`, R=a=>({halign:'right'}), nums=(...c)=>Object.fromEntries(c.map(i=>[i,{halign:'right'}]));
   // Halaman 1: flowchart
   tl.T.title=`Flowchart Restitusi PPN - ${scope}`; tl.T.sub=sub; tl.header(); tl.footer();
-  drawFlowPdf(doc,flowModel(S),{x:tl.M,y:tl.top+1,w:tl.W-2*tl.M,h:tl.H-tl.top-15});
+  { const area={x:tl.M,y:tl.top+1,w:tl.W-2*tl.M,h:tl.H-tl.top-15}; let png=null;
+    try{ png=await flowPng(S); }catch(e){ console.warn('flow png',e); }
+    if(png){ const r=Math.min(area.w/png.w,area.h/png.h), w=png.w*r, h=png.h*r; doc.addImage(png.data,'PNG',area.x+(area.w-w)/2,area.y,w,h,'flow2','FAST'); }
+    else drawFlowPdf(doc,flowModel(S),area); }
   // Lampiran 1
   doc.addPage(); tl.T.title='Lampiran 1 - Ringkasan & Rincian per Tahap Proses'; tl.T.sub=`Restitusi PPN ${scope} | ${sub}`;
   doc.autoTable(atBase(tl,{startY:tl.top,head:[['Informasi','Nilai','Keterangan']],body:restDetails(S).map(d=>[PDF_SAFE(d.l),PDF_SAFE(d.v),PDF_SAFE(d.s||'')]),
@@ -2737,6 +2922,7 @@ const PPH_KODE={'22':'PPh 22','24':'PPh 23','28':'PPh 4(2)'};
 function normalizeRec(t,r){
   if(TYPES[t].pay){ r.bayar = r.bayar==null ? !!r.tglBayar : !!r.bayar; if(!r.bayar) r.tglBayar=r.tglBayar||''; }
   if(t==='PP'){ r.statusAsli=r.status||''; ppNorm(r); }
+  if(t==='PPH21A1') a1Norm(r);
   if(TYPES[t].rep==='PPHU' && !r.jenis && r.kode){ const p=String(r.kode).slice(0,2); if(PPH_KODE[p]) r.jenis=PPH_KODE[p]; }
   return r;
 }
@@ -2878,7 +3064,7 @@ function exportInfo(kind){
   $('#xGo').disabled=!n;
 }
 const PDF_SAFE=s=>String(s??'').replace(/[−–—]/g,'-').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[✓✔]\s?/g,'').replace(/…/g,'...').replace(/→/g,'->');
-const xVal=(c,r)=>c.f==='batasx'?((b=>b?b.endTxt:'-')(batasInfo(r))):c.f==='batasl'?((b=>b?BATAS_LBL[b.lvl]+(b.lvl==='aman'?` (sisa ${b.left} masa)`:''):'-')(batasInfo(r))):c.f==='filename'?(r.file?r.file.name:''):c.f==='date'?fmtDate(r[c.k]):c.f==='bayar'?(r.bayar?'Sudah dibayar':'Belum dibayar'):c.f==='num'?(+r[c.k]||0):(r[c.k]??'');
+const xVal=(c,r)=>c.f==='a1perx'?a1Info(r).per:c.f==='a1jenisx'?a1Info(r).label:c.f==='batasx'?((b=>b?b.endTxt:'-')(batasInfo(r))):c.f==='batasl'?((b=>b?BATAS_LBL[b.lvl]+(b.lvl==='aman'?` (sisa ${b.left} masa)`:''):'-')(batasInfo(r))):c.f==='filename'?(r.file?r.file.name:''):c.f==='date'?fmtDate(r[c.k]):c.f==='bayar'?(r.bayar?'Sudah dibayar':'Belum dibayar'):c.f==='num'?(+r[c.k]||0):(r[c.k]??'');
 function buildExport(kind,scope){
   const y=state.year, printed=new Date().toLocaleString('id-ID',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const yearly=scope!=='month', allY=scope==='all', YS=allY?years():[y], months=yearly?MONTHS.map((_,i)=>i):[state.month], period=allY?`Gabungan ${YS[0]}-${YS[YS.length-1]}`:yearly?`Tahun ${y}`:`${MONTHS[state.month]} ${y}`;
@@ -3724,35 +3910,32 @@ function rekonCompute(j,to,tol){
 /* ---------- Halaman ---------- */
 function renderRpm(){
   const o=rpmOpts(), R=rpmCompute(o), kso=brandKso(), adm=isAdmin();
-  const r137=rekonCompute('137',o.to,+o.tol||0), r138=rekonCompute('138',o.to,+o.tol||0), ppAll=Object.values(rekonVendors(o.to)).reduce((a,v)=>a+v.pp,0);
-  const kDev=(r,j)=>r.has?`<div class="card mini"><small>Deviasi ${REKON_J[j].akun}</small><b style="color:${Math.abs(r.T.dev)<=(+o.tol||0)&&!r.C.selisih?'var(--success)':'var(--danger)'}">${rp(r.T.dev)}</b>
-      <span class="sub">${r.C.sesuai} sesuai · ${r.C.selisih+r.C.akt+r.C.pajak} perlu dicek · kecocokan ${r.pct.toFixed(0)}%</span></div>`
-    :`<div class="card mini rk-empty" onclick="setRpm('tab','r${j}')"><small>Deviasi ${REKON_J[j].akun}</small><b class="sub-t" style="font-size:15px">Belum ada data akuntansi</b><span class="sub">${adm?'Klik untuk upload buku besar':'Menunggu admin upload buku besar'}</span></div>`;
-  const tabBtn=(id,t,badge)=>`<button class="rk-tab ${o.tab===id?'on':''}" onclick="setRpm('tab','${id}')">${t}${badge||''}</button>`;
-  const bdg=r=>r.has&&(r.C.selisih+r.C.akt+r.C.pajak)?`<span class="nav-cnt" style="margin-left:6px">${r.C.selisih+r.C.akt+r.C.pajak}</span>`:r.has?`<span class="badge b-success" style="margin-left:6px;font-size:10.5px">✓</span>`:'';
   $('#view').innerHTML=`
-  <div class="card mb"><div class="card-h"><div><h3>Rekonsiliasi Pajak Masukan</h3><p>Bandingkan data pajak (Monitoring PM &amp; Prepopulated) dengan pembukuan akuntansi untuk menemukan deviasi per vendor.</p></div></div>
+  <div class="card mb"><div class="card-h"><div><h3>Rekonsiliasi Pajak Masukan</h3><p>Pilih periode, lalu unduh Excel untuk direkonsiliasi manual dengan data akuntansi — kolom saldo akuntansi, deviasi, dan status sudah disiapkan.</p></div></div>
     <div class="card-b" style="padding-top:0">
       <div class="rpm-opts">
         <div class="field"><label>Periode dari</label><select class="select" onchange="setRpm('from',this.value)">${rpmMasaOptions(o.from)}</select></div>
         <div class="field"><label>s.d.</label><select class="select" onchange="setRpm('to',this.value)">${rpmMasaOptions(o.to)}</select></div>
         <div class="field"><label>Pilih cepat</label><div class="seg sm rk-pre">${[['last','Bulan terakhir'],['q','Triwulan'],['s','Semester'],['ytd','Jan s.d. bulan ini']].map(([p,l])=>`<label><input type="radio" name="rkp" ${rpmPresetOn(o,p)?'checked':''} onchange="setRpmPreset('${p}')">${l}</label>`).join('')}</div></div>
       </div>
-      <div class="rk-info">${icon('clock')} <span>Mutasi <b>${R.s} s.d ${R.e}</b> · Akumulasi periode lalu: <b>${R.laluTxt}</b> · Posisi rekon akuntansi: <b>${dmy(masaEnd(o.to))}</b></span></div>
+      <div class="rk-info">${icon('clock')} <span>Mutasi <b>${R.s} s.d ${R.e}</b> · Akumulasi periode lalu: <b>${R.laluTxt}</b></span></div>
       ${kso?'':`<div class="note" style="margin:10px 0 0">${icon('alert')} <b>Nama KSO</b> belum diisi${adm?` — <a class="link" onclick="go('settings')">isi di Pengaturan → Identitas Proyek</a>`:' — hubungi admin'}. Baris Nama KSO di hasil export akan kosong.</div>`}
     </div></div>
 
   <div class="grid minis">
-    <div class="card mini"><small>PM Sudah Dilapor (Debet)</small><b style="color:var(--primary)">${rp(R.T.d)}</b><span class="sub">${fmt(R.nD)} faktur · akumulasi ${rp(R.T.lalu+R.T.d)}</span></div>
-    <div class="card mini"><small>PM Belum Dilapor (Kredit)</small><b style="color:var(--warning)">${rp(R.T.k)}</b><span class="sub">${fmt(R.nK)} faktur periode ini · total s.d. periode ${rp(ppAll)}</span></div>
-    ${kDev(r137,'137')}${kDev(r138,'138')}
+    <div class="card mini"><small>Akumulasi s/d Periode Lalu</small><b>${rp(R.T.lalu)}</b><span class="sub">${R.laluTxt}</span></div>
+    <div class="card mini"><small>PM Sudah Dilapor (Debet)</small><b style="color:var(--primary)">${rp(R.T.d)}</b><span class="sub">${fmt(R.nD)} faktur pada periode ini</span></div>
+    <div class="card mini"><small>PM Belum Dilapor (Kredit)</small><b style="color:var(--warning)">${rp(R.T.k)}</b><span class="sub">${fmt(R.nK)} faktur prepopulated belum dikreditkan</span></div>
+    <div class="card mini"><small>Akumulasi s/d Periode Ini</small><b>${rp(R.T.ini)}</b><span class="sub">${fmt(R.list.length)} vendor · lalu + debet − kredit</span></div>
   </div>
 
-  <div class="rk-tabs">${tabBtn('rincian','Rincian Per Vendor')}${tabBtn('r137','Rekon PM (137)',bdg(r137))}${tabBtn('r138','Rekon Piutang PPN (138)',bdg(r138))}${tabBtn('guide','Panduan')}</div>
+  <div class="rk-xl">
+    <div class="rk-xl-ic">${icon('grid')}</div>
+    <div><b>Excel siap rekonsiliasi</b><span>Sheet <b>Rincian PM</b> berformat kertas kerja + kolom <b>No. Akun</b>, <b>Saldo Akuntansi</b> (diisi manual), <b>Deviasi</b> &amp; <b>Status</b> yang menghitung otomatis, dan <b>Keterangan</b>. Sheet <b>Detail Faktur</b> berisi seluruh faktur pembentuk angka untuk menelusuri selisih.</span></div>
+    <button class="btn btn-success" onclick="rpmExport('xlsx')">${icon('download')} Unduh Excel Rekon</button>
+  </div>
   <div id="rkBody"></div>`;
-  if(o.tab==='r137'||o.tab==='r138') renderRekonTab(o.tab.slice(1),o.tab==='r137'?r137:r138);
-  else if(o.tab==='guide') renderRekonGuide();
-  else renderRincianTab(R);
+  renderRincianTab(R);
 }
 function renderRincianTab(R){
   const o=rpmOpts(), kso=brandKso(), list=R.list;
@@ -3760,7 +3943,7 @@ function renderRincianTab(R){
   $('#rkBody').innerHTML=`
   <div class="card rpm-sheet">
     <div class="card-h"><div><h3>Rincian Pajak Masukan Per Vendor</h3><p>Format sama dengan Kertas Kerja · Akumulasi s/d periode ini = periode lalu + debet − kredit</p></div>
-      <div class="toolbar"><button class="btn btn-outline" onclick="rpmExport('xlsx')">${icon('grid')} Export Excel</button><button class="btn btn-primary" onclick="rpmExport('pdf')">${icon('download')} Export PDF</button></div></div>
+      <div class="toolbar"><button class="btn btn-outline" onclick="rpmExport('xlsx')">${icon('grid')} Excel Rekon</button><button class="btn btn-primary" onclick="rpmExport('pdf')">${icon('download')} Export PDF</button></div></div>
     <div class="rpm-kop">
       <div class="logos" data-logos="sm"></div>
       <div class="rpm-title"><b>${esc(kso.toUpperCase()||'NAMA KSO')}</b><b>${esc(brandProyek().toUpperCase())}</b><b>RINCIAN PAJAK MASUKAN</b><span>${R.periode}</span></div>
@@ -3997,6 +4180,7 @@ async function xlsxKop(sheetName,W,judul,periode,headRows){
     z.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF969696'}}; z.border={top:S.thin,bottom:S.thin,left:S.thin,right:S.thin}; } };
   const totalStyle=(r,labelCols)=>{ for(let c=1;c<=n;c++){ const z=ws.getCell(r,c); z.font={...S.fB,bold:true}; z.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC0C0C0'}};
     z.alignment={horizontal:c<=labelCols?'center':'right',vertical:'middle'}; z.border={top:S.med,bottom:S.med,left:S.thin,right:S.thin}; } ws.getRow(r).height=18; };
+  wb.calcProperties={fullCalcOnLoad:true};
   const finish=async file=>{ const buf=await wb.xlsx.writeBuffer(); saveBytes(new Uint8Array(buf),file+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); };
   return {wb,ws,S,headStyle,totalStyle,finish};
 }
@@ -4028,27 +4212,101 @@ async function rpmExport(fmtX){
   try{ if(fmtX==='pdf') await rpmPdf(R); else await rpmXlsx(R); toast(`Rincian Pajak Masukan (${fmtX==='pdf'?'PDF':'Excel'}) berhasil diunduh`,'success'); }
   catch(e){ console.error(e); toast('Export gagal: '+(e.message||e),'error'); }
 }
+function rpmDetail(o){
+  const from=o.from, to=o.to, acc=`${from.slice(0,4)}-01`, out=[];
+  for(const m of Object.keys(DB.data.PM||{}).sort()){ if(m<acc||m>to) continue;
+    for(const r of DB.data.PM[m]){ if(isCanceled(r)) continue; out.push({src:m<from?'Akumulasi periode lalu':'Debet · PM sudah dilapor',m,r}); } }
+  for(const m of Object.keys(DB.data.PP||{}).sort()){ if(m<from||m>to) continue;
+    for(const r of DB.data.PP[m]){ if(!ppOpen(r)) continue; out.push({src:'Kredit · PM belum dilapor',m,r}); } }
+  return out;
+}
 async function rpmXlsx(R){
-  const W=[10.78,30.44,30.44,21.33,23.44,21.11,22.44];
-  const {ws,S,headStyle,totalStyle,finish}=await xlsxKop('Rincian PM '+R.e.slice(3).replace(/\//g,'-'),W,'RINCIAN PAJAK MASUKAN',R.periode,3);
+  const W=[10.78,30.44,30.44,21.33,23.44,21.11,22.44,17,24,21,15,40], col=i=>String.fromCharCode(65+i);
+  const {wb,ws,S,headStyle,totalStyle,finish}=await xlsxKop('Rincian PM '+R.e.slice(3).replace(/\//g,'-'),W,'RINCIAN PAJAK MASUKAN',R.periode,3);
   const H=(r1,c1,r2,c2,txt)=>{ if(r1!==r2||c1!==c2) ws.mergeCells(r1,c1,r2,c2); ws.getCell(r1,c1).value=txt; };
   H(7,1,9,1,'NOMOR'); H(7,2,9,3,'ACCOUNT NAME'); H(7,4,9,4,'AKUMULASI S/D PERIODE LALU'); H(7,5,8,6,R.mutasi);
   ws.getCell(9,5).value='DEBET\n(PM yang sudah dilapor)'; ws.getCell(9,6).value='KREDIT\n(PM yang belum dilapor)'; H(7,7,9,7,'AKUMULASI S/D PERIODE INI');
-  headStyle(7,9); ws.getRow(7).height=15; ws.getRow(8).height=15; ws.getRow(9).height=44.4;
-  let r=10;
+  H(7,8,7,12,'REKONSILIASI DENGAN DATA AKUNTANSI'); H(8,8,9,8,'NO. AKUN\n(AKUNTANSI)'); H(8,9,9,9,'SALDO AKUNTANSI\nS/D PERIODE INI\n(diisi manual)');
+  H(8,10,9,10,'DEVIASI\n(Akuntansi − Pajak)'); H(8,11,9,11,'STATUS'); H(8,12,9,12,'KETERANGAN');
+  headStyle(7,9);
+  for(let r=7;r<=9;r++) for(let c=8;c<=12;c++) ws.getCell(r,c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFBDD7EE'}};
+  ws.getRow(7).height=18; ws.getRow(8).height=15; ws.getRow(9).height=44.4;
+  const input={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}}, first=10;
+  let r=first;
   R.list.forEach((v,i)=>{
     ws.mergeCells(r,2,r,3);
     [i+1,v.acc,null,v.lalu,v.d,v.k,v.ini].forEach((val,j)=>{ if(j===2) return; const c=ws.getCell(r,j+1); c.value=val; c.font=S.fB;
       c.alignment={horizontal:j<=1?'left':'right',vertical:'bottom',wrapText:j===1}; if(j>=3) c.numFmt='#,##0;-#,##0;0'; c.border={left:S.thin,right:S.thin}; });
-    ws.getCell(r,3).border={right:S.thin}; ws.getRow(r).height=v.acc.length>34?31.2:15.6; r++;
+    ws.getCell(r,3).border={right:S.thin};
+    ws.getCell(r,7).value={formula:`D${r}+E${r}-F${r}`,result:v.ini};
+    for(let c=8;c<=12;c++){ const z=ws.getCell(r,c); z.font=S.fB; z.border={left:S.thin,right:S.thin,bottom:{style:'hair',color:{argb:'FFBFBFBF'}}}; }
+    [8,9,12].forEach(c=>ws.getCell(r,c).fill=input);
+    ws.getCell(r,9).numFmt='#,##0;-#,##0;0'; ws.getCell(r,9).alignment={horizontal:'right'};
+    ws.getCell(r,12).alignment={wrapText:true,vertical:'top'};
+    r++;
   });
   if(!R.list.length){ ws.mergeCells(r,2,r,3); ws.getCell(r,2).value='(tidak ada data pada periode ini)'; ws.getCell(r,2).font={...S.fB,italic:true}; r++; }
-  const first=10, lastD=r-1;
-  for(let i=first;i<=lastD&&R.list.length;i++) ws.getCell(i,7).value={formula:`D${i}+E${i}-F${i}`,result:R.list[i-first].ini};
-  ws.mergeCells(r,1,r,3); ws.getCell(r,1).value='TOTAL';
-  [4,5,6,7].forEach(c=>{ const col=String.fromCharCode(64+c); ws.getCell(r,c).value=R.list.length?{formula:`SUM(${col}${first}:${col}${lastD})`,result:[R.T.lalu,R.T.d,R.T.k,R.T.ini][c-4]}:0; ws.getCell(r,c).numFmt='#,##0;-#,##0;0'; });
-  totalStyle(r,3);
-  await finish(R.file);
+  const last=r-1, tot=r, tolRow=tot+3, has=R.list.length>0, TOL=`$D$${tolRow}`;
+  for(let i=first;i<=last&&has;i++){
+    ws.getCell(i,10).value={formula:`IF(I${i}="","",I${i}-G${i})`}; ws.getCell(i,10).numFmt='#,##0;-#,##0;0'; ws.getCell(i,10).alignment={horizontal:'right'};
+    ws.getCell(i,11).value={formula:`IF(I${i}="","Belum diisi",IF(ABS(J${i})<=${TOL},"Sesuai","Selisih"))`,result:'Belum diisi'}; ws.getCell(i,11).alignment={horizontal:'center'};
+    ws.getRow(i).height=R.list[i-first].acc.length>34?31.2:15.6;
+  }
+  // total
+  ws.mergeCells(tot,1,tot,3); ws.getCell(tot,1).value='TOTAL';
+  [4,5,6,7].forEach(c=>{ ws.getCell(tot,c).value=has?{formula:`SUM(${col(c-1)}${first}:${col(c-1)}${last})`,result:[R.T.lalu,R.T.d,R.T.k,R.T.ini][c-4]}:0; ws.getCell(tot,c).numFmt='#,##0;-#,##0;0'; });
+  if(has){ ws.getCell(tot,9).value={formula:`SUM(I${first}:I${last})`,result:0}; ws.getCell(tot,10).value={formula:`IF(COUNT(I${first}:I${last})=0,"",SUM(J${first}:J${last}))`};
+    ws.getCell(tot,11).value={formula:`COUNTIF(K${first}:K${last},"Sesuai")&" sesuai"`}; }
+  totalStyle(tot,3); [9,10].forEach(c=>ws.getCell(tot,c).numFmt='#,##0;-#,##0;0'); ws.getCell(tot,11).alignment={horizontal:'center'};
+  // pewarnaan otomatis status & deviasi
+  if(has){
+    ws.addConditionalFormatting({ref:`K${first}:K${last}`,rules:[
+      {type:'expression',priority:1,formulae:[`K${first}="Selisih"`],style:{font:{bold:true,color:{argb:'FFC00000'}},fill:{type:'pattern',pattern:'solid',bgColor:{argb:'FFFFE1E1'}}}},
+      {type:'expression',priority:2,formulae:[`K${first}="Sesuai"`],style:{font:{bold:true,color:{argb:'FF0B7A2F'}},fill:{type:'pattern',pattern:'solid',bgColor:{argb:'FFDDF5E3'}}}},
+      {type:'expression',priority:3,formulae:[`K${first}="Belum diisi"`],style:{font:{italic:true,color:{argb:'FF808080'}}}}]});
+    ws.addConditionalFormatting({ref:`J${first}:J${last}`,rules:[{type:'expression',priority:4,formulae:[`AND(J${first}<>"",K${first}="Selisih")`],style:{font:{bold:true,color:{argb:'FFC00000'}}}}]});
+  }
+  // ringkasan & petunjuk
+  let y=tot+2; const lab=(rr,t,bold)=>{ ws.mergeCells(rr,2,rr,3); const c=ws.getCell(rr,2); c.value=t; c.font={...S.fB,bold:!!bold}; };
+  const val=(rr,v,fmtx)=>{ const c=ws.getCell(rr,4); c.value=v; c.font={...S.fB,bold:true}; c.numFmt=fmtx||'#,##0;-#,##0;0'; c.alignment={horizontal:'right'}; c.border={bottom:{style:'hair',color:{argb:'FFBFBFBF'}}}; };
+  lab(y,'RINGKASAN REKONSILIASI',true); y++;
+  lab(y,'Toleransi pembulatan (Rp) — boleh diubah'); val(y,10); ws.getCell(y,4).fill=input; y++;
+  const K=`K${first}:K${last}`;
+  [['Total data pajak (Akumulasi s/d periode ini)',has?{formula:`G${tot}`}:0],['Total saldo akuntansi',has?{formula:`I${tot}`}:0],['Total deviasi (Akuntansi − Pajak)',has?{formula:`IF(COUNT(I${first}:I${last})=0,"",I${tot}-G${tot})`}:0],
+   ['Vendor sesuai',has?{formula:`COUNTIF(${K},"Sesuai")`}:0,'0'],['Vendor selisih',has?{formula:`COUNTIF(${K},"Selisih")`}:0,'0'],['Belum diisi',has?{formula:`COUNTIF(${K},"Belum diisi")`}:0,'0'],
+   ['Tingkat kecocokan (dari yang sudah diisi)',has?{formula:`IFERROR(COUNTIF(${K},"Sesuai")/(COUNTIF(${K},"Sesuai")+COUNTIF(${K},"Selisih")),0)`}:0,'0.0%']
+  ].forEach(([t,v,f])=>{ lab(y,t); val(y,v,f); y++; });
+  y++; lab(y,'PETUNJUK REKONSILIASI',true); y++;
+  ['1. Isi kolom kuning NO. AKUN dan SALDO AKUNTANSI S/D PERIODE INI sesuai buku besar per vendor (saldo kredit diisi negatif).',
+   '2. Kolom DEVIASI dan STATUS terhitung otomatis: Sesuai bila selisih ≤ toleransi, Selisih bila melebihi toleransi.',
+   '3. Telusuri vendor berstatus Selisih melalui sheet "Detail Faktur" (filter kolom Account Name), lalu tulis hasilnya di kolom KETERANGAN.',
+   '4. Vendor yang hanya ada di buku besar dapat ditambahkan di baris kosong di bawah tabel sebelum baris TOTAL (sisipkan baris).']
+   .forEach(t=>{ ws.mergeCells(y,2,y,12); const c=ws.getCell(y,2); c.value=t; c.font={...S.fB,size:11}; c.alignment={wrapText:true,vertical:'top'}; ws.getRow(y).height=18; y++; });
+  ws.views=[{state:'frozen',xSplit:3,ySplit:9,showGridLines:false,activeCell:'I10'}];
+
+  // sheet detail faktur
+  const D=rpmDetail(rpmOpts()), wd=wb.addWorksheet('Detail Faktur',{views:[{state:'frozen',ySplit:4,showGridLines:false}],
+    pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,printTitlesRow:'4:4'}});
+  wd.columns=[7,26,16,13,22,20,34,38,18,18,14].map(w=>({width:w}));
+  wd.mergeCells(1,1,1,11); wd.getCell(1,1).value=`DETAIL FAKTUR PEMBENTUK RINCIAN PAJAK MASUKAN — ${brandProyek().toUpperCase()}`; wd.getCell(1,1).font=S.fH;
+  wd.mergeCells(2,1,2,11); wd.getCell(2,1).value=`${R.periode} · Akumulasi periode lalu: ${R.laluTxt}`; wd.getCell(2,1).font=S.fB;
+  const hd=['NO','SUMBER','MASA PAJAK','TANGGAL FAKTUR','NOMOR FAKTUR','NPWP','NAMA VENDOR','ACCOUNT NAME','DPP','PPN','STATUS'];
+  hd.forEach((t,i)=>{ const z=wd.getCell(4,i+1); z.value=t; z.font={...S.fH,size:10.5}; z.alignment={horizontal:'center',vertical:'middle',wrapText:true};
+    z.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF969696'}}; z.border={top:S.thin,bottom:S.thin,left:S.thin,right:S.thin}; });
+  wd.getRow(4).height=30;
+  const srcFill={'Akumulasi periode lalu':'FFF2F2F2','Debet · PM sudah dilapor':'FFE2EFDA','Kredit · PM belum dilapor':'FFFCE4D6'};
+  D.forEach((x,i)=>{ const rr=5+i, r0=x.r, tg=/^\d{4}-\d{2}-\d{2}$/.test(r0.tanggal||'')?new Date(Date.UTC(+r0.tanggal.slice(0,4),+r0.tanggal.slice(5,7)-1,+r0.tanggal.slice(8,10))):(r0.tanggal||'');
+    [i+1,x.src,masaLabel(x.m),tg,r0.nofaktur||'',r0.npwp||'',r0.nama||'','PPN '+String(r0.nama||'-').trim().toUpperCase(),+r0.dpp||0,+r0.ppn||0,r0.status||''].forEach((v,c)=>{
+      const z=wd.getCell(rr,c+1); z.value=v; z.font={...S.fB,size:11}; z.border={left:S.thin,right:S.thin,bottom:{style:'hair',color:{argb:'FFBFBFBF'}}};
+      if(c===3&&v instanceof Date) z.numFmt='dd/mm/yyyy'; if(c>=8&&c<=9) z.numFmt='#,##0;-#,##0;0'; });
+    wd.getCell(rr,2).fill={type:'pattern',pattern:'solid',fgColor:{argb:srcFill[x.src]}};
+  });
+  const dl=4+D.length, dt=dl+1;
+  wd.mergeCells(dt,1,dt,8); wd.getCell(dt,1).value='TOTAL (mengikuti filter)';
+  [9,10].forEach(c=>{ wd.getCell(dt,c).value=D.length?{formula:`SUBTOTAL(9,${col(c-1)}5:${col(c-1)}${dl})`}:0; wd.getCell(dt,c).numFmt='#,##0;-#,##0;0'; });
+  for(let c=1;c<=11;c++){ const z=wd.getCell(dt,c); z.font={...S.fB,bold:true}; z.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC0C0C0'}}; z.border={top:S.med,bottom:S.med}; }
+  if(D.length) wd.autoFilter={from:{row:4,column:1},to:{row:dl,column:11}};
+  await finish(R.file+' - Rekonsiliasi');
 }
 async function rpmPdf(R){
   const {doc,base,finish}=await pdfKop('RINCIAN PAJAK MASUKAN',R.periode), N=v=>fmt(v);
