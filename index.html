@@ -627,6 +627,48 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .a1-info b{color:var(--text)}
 .a1-info span{line-height:1.55}
 @media(max-width:760px){.a1-info{grid-template-columns:1fr}}
+.al-head{display:grid;grid-template-columns:1.1fr .9fr 1.4fr 1.2fr;gap:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--surface-2);margin:0 0 12px}
+.al-head small{display:block;font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.al-head b{font-size:13.5px;line-height:1.35;display:block}
+.al-head .progress{margin-top:6px}
+.al-tipe{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;font-size:13px;font-weight:700}
+.al-tahap{border-left:3px solid var(--c);padding-left:12px;margin:0 0 14px}
+.al-th{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--c);margin:0 0 8px}
+.al-step{border:1px solid var(--border);border-radius:12px;background:var(--surface);margin:0 0 8px;overflow:hidden}
+.al-step>summary{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;list-style:none}
+.al-step>summary::-webkit-details-marker{display:none}
+.al-step>summary .chev{width:16px;height:16px;flex:none;transition:transform .2s;color:var(--muted)}
+.al-step[open]>summary .chev{transform:rotate(180deg)}
+.al-n{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;font-weight:800;background:var(--surface-2);border:2px solid var(--border);color:var(--muted)}
+.al-step.st-selesai .al-n{background:var(--success);border-color:var(--success);color:#fff}
+.al-step.st-proses .al-n{border-color:var(--warning);color:var(--warning)}
+.al-step.st-na{opacity:.7}
+.al-h{flex:1;min-width:0;display:flex;flex-direction:column}
+.al-h b{font-size:13.5px;line-height:1.35}
+.al-h small{font-size:12px;color:var(--muted)}
+.al-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.al-chips .badge .i{width:12px;height:12px;vertical-align:-2px}
+.al-b{padding:0 14px 14px 50px;border-top:1px dashed var(--border)}
+.al-d{font-size:12.5px;line-height:1.55;color:var(--muted);margin:10px 0 12px}
+.al-f{margin-bottom:10px}
+.al-docs{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.al-dh{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.al-dh b{font-size:12.5px}
+.al-doc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0;border-bottom:1px dashed var(--border)}
+.al-doc .select{width:auto;min-width:200px;max-width:280px;height:32px;font-size:12.5px}
+.al-doc .file-pill{max-width:260px}
+.file-pill.new{background:rgba(22,163,74,.08);border-color:rgba(22,163,74,.3);color:var(--success)}
+.al-add{margin-top:8px}
+.al-guide>summary{list-style:none;cursor:pointer}
+.al-guide>summary::-webkit-details-marker{display:none}
+.al-guide>summary .chev{width:18px;height:18px;transition:transform .2s;color:var(--muted)}
+.al-guide[open]>summary .chev{transform:rotate(180deg)}
+.al-gt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.al-gc{border:1px solid var(--border);border-top:4px solid var(--c);border-radius:12px;padding:12px 14px;background:var(--surface)}
+.al-gc b{font-size:13px;color:var(--c)}
+.al-gc ol{margin:8px 0 0;padding-left:22px;font-size:12.5px;line-height:1.6}
+@media(max-width:900px){.al-head{grid-template-columns:1fr 1fr}.al-gt{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.al-head{grid-template-columns:1fr}.al-gt{grid-template-columns:1fr}.al-b{padding-left:14px}.al-chips{display:none}}
 </style>
 </head>
 <body>
@@ -2231,9 +2273,9 @@ function deleteSpt(rk){
    RESTITUSI PPN — pengajuan → SP2 → pemeriksaan → pencairan
 ========================================================= */
 const REST_ST=[
-  {k:'sp2',l:'Menunggu Terbit SP2',d:'SPT Lebih Bayar sudah diajukan, menunggu Surat Perintah Pemeriksaan',c:'#5b6b7d'},
-  {k:'periksa',l:'Dalam Proses Pemeriksaan',d:'SP2 sudah terbit, pemeriksaan sedang berjalan',c:'#6f8f5a'},
-  {k:'selesai',l:'Selesai Diperiksa · Proses Pencairan',d:'SKPLB terbit, menunggu SPMKP & pencairan dana',c:'#b5646d'},
+  {k:'sp2',l:'Menunggu Terbit SP2',d:'Tahap 0 · SPT LB disampaikan, menunggu SP2 & Surat Pemberitahuan Pemeriksaan',c:'#5b6b7d'},
+  {k:'periksa',l:'Dalam Proses Pemeriksaan',d:'Tahap 1–3 · SP2, peminjaman dokumen, pengujian, SPHP, PAHP & LHP',c:'#6f8f5a'},
+  {k:'selesai',l:'Selesai Diperiksa · Proses Pencairan',d:'Tahap 4–5 · SKPLB terbit, proses SKPKPP, SPMKP & SP2D',c:'#b5646d'},
   {k:'cair',l:'Sudah Cair',d:'Dana restitusi sudah diterima',c:'#3f7d20'}];
 const ST_MAP=Object.fromEntries(REST_ST.map(s=>[s.k,s]));
 const KOR_KAT=[
@@ -2249,11 +2291,216 @@ function addMonths(iso,n){ if(!iso) return ''; const [y,m,d]=iso.split('-').map(
 const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 const pmSum=(y,m)=>y>=START_YEAR?sumF(getRows('PM',y,m),'ppn'):0;
 const hasVal=v=>v!==undefined&&v!==null&&v!=='';
+/* =========================================================
+   ALUR PEMERIKSAAN RESTITUSI PPN LEBIH BAYAR (Pasal 17B UU KUP)
+   Acuan: PMK 15/2025 (pemeriksaan) & PMK 81/2024 (pengembalian, era Coretax)
+   Tahap 0–5 · 17 langkah · tiap langkah punya tanggal, nomor surat, tenggat & dokumen pendukung
+========================================================= */
+const ALUR_TAHAP=[
+  {t:0,l:'Tahap 0 — SPT Masa PPN Lebih Bayar',c:'#475569'},
+  {t:1,l:'Tahap 1 — SP2 & Surat Pemberitahuan Pemeriksaan',c:'#2563eb'},
+  {t:2,l:'Tahap 2 — Peminjaman Dokumen & Pengujian',c:'#0891b2'},
+  {t:3,l:'Tahap 3 — SPHP, Tanggapan, PAHP & QA',c:'#d97706'},
+  {t:4,l:'Tahap 4 — Ketetapan Pajak',c:'#7c3aed'},
+  {t:5,l:'Tahap 5 — Pengembalian sampai ke Rekening (PMK 81/2024)',c:'#16a34a'}];
+const ALUR=[
+  {id:'spt',t:0,n:0,l:'SPT Masa PPN Lebih Bayar disampaikan (memilih restitusi)',tglL:'Tanggal SPT lengkap diterima',noL:'Nomor BPE / SPT',
+    d:'PKP menyampaikan SPT Masa PPN lebih bayar dan memilih dikembalikan (bukan dikompensasikan). Sejak SPT lengkap diterima berjalan batas 12 bulan: DJP wajib menerbitkan ketetapan; bila terlambat permohonan dianggap dikabulkan dan berhak imbalan bunga.',
+    docs:['SPT Masa PPN Lebih Bayar','Bukti Penerimaan Elektronik (BPE)']},
+  {id:'sp2',t:1,n:1,l:'SP2 — Surat Perintah Pemeriksaan diterbitkan',tglL:'Tanggal SP2',noL:'Nomor SP2',
+    d:'Diterbitkan Kepala KPP/Kanwil sebagai dokumen internal yang menugaskan tim pemeriksa. Jangan tertukar dengan SP2D (pencairan dana KPPN) di tahap akhir.',
+    docs:['SP2 (Surat Perintah Pemeriksaan)']},
+  {id:'spp',t:1,n:2,l:'Surat Pemberitahuan Pemeriksaan diterima',tglL:'Tanggal surat diterima',noL:'Nomor surat',tipe:true,
+    d:'Umumnya masuk lewat portal/akun Coretax. Tanggal diterima adalah titik awal jangka waktu pengujian. Pastikan tipe pemeriksaan jelas karena menentukan batas waktu.',
+    docs:['Surat Pemberitahuan Pemeriksaan']},
+  {id:'awal',t:1,n:3,l:'Pertemuan awal dengan tim pemeriksa',tglL:'Tanggal pertemuan',
+    d:'Tim pemeriksa memperkenalkan diri, menjelaskan alasan & ruang lingkup pemeriksaan, serta hak dan kewajiban WP.',
+    docs:['Berita Acara / Notulen Pertemuan Awal','Daftar Hadir','Surat Tugas Tim Pemeriksa']},
+  {id:'pinjam',t:2,n:4,l:'Surat permintaan peminjaman buku, catatan & dokumen',tglL:'Tanggal surat permintaan',noL:'Nomor surat',tgl2L:'Tanggal dokumen diserahkan',
+    d:'Wajib dipenuhi dalam 1 bulan; dokumen yang diserahkan sesudahnya dianggap tidak diberikan (kecuali dokumen dari pihak ketiga). Umumnya diminta: FP Keluaran & Masukan, bukti bayar, kontrak/SPK, BAST/termin, rekening koran, buku besar, rekonsiliasi PPN–omzet, bukti pungut PPN pemungut (WAPU/BUMN/instansi).',
+    docs:['Surat Permintaan Peminjaman Dokumen','Berita Acara Peminjaman / Penyerahan Dokumen','Daftar Dokumen yang Diserahkan','Faktur Pajak Keluaran & Masukan','Kontrak / SPK / BAST / Invoice','Bukti Pembayaran / Rekening Koran','Buku Besar & Rekonsiliasi PPN','Bukti Pungut PPN (WAPU)']},
+  {id:'uji',t:2,n:5,l:'Pengujian oleh pemeriksa',tglL:'Tanggal mulai pengujian',
+    d:'Ekualisasi, uji arus uang & barang, konfirmasi Faktur Pajak Masukan ke lawan transaksi, klarifikasi ke pihak ketiga. PM yang tidak terkonfirmasi atau tidak memenuhi syarat formal/material biasanya menjadi koreksi utama.',
+    docs:['Permintaan Klarifikasi / Konfirmasi','Jawaban Klarifikasi','Hasil Konfirmasi Faktur Pajak']},
+  {id:'temuan',t:2,n:6,l:'Pembahasan temuan sementara (pra-SPHP)',tglL:'Tanggal pembahasan',opt:1,
+    d:'Kesempatan meluruskan temuan sebelum SPHP terbit. Dokumen tambahan masih dapat diserahkan paling lambat sebelum berita acara PAHP.',
+    docs:['Notulen Pembahasan Temuan Sementara','Dokumen Tambahan']},
+  {id:'sphp',t:3,n:7,l:'SPHP — Surat Pemberitahuan Hasil Pemeriksaan terbit',tglL:'Tanggal SPHP diterima',noL:'Nomor SPHP',nilaiL:'Lebih bayar menurut SPHP',
+    d:'Berisi daftar koreksi dan perhitungan sementara lebih bayar menurut pemeriksa. Batas pengujian (sejak Surat Pemberitahuan): Lengkap 5 bulan, Terfokus 3 bulan, Spesifik 1 bulan.',
+    docs:['SPHP (Pemberitahuan Hasil Pemeriksaan)','Lampiran Daftar Koreksi']},
+  {id:'tanggap',t:3,n:8,l:'Tanggapan tertulis atas SPHP',tglL:'Tanggal tanggapan disampaikan',noL:'Nomor surat tanggapan',
+    d:'Maksimal 5 hari kerja sejak SPHP diterima (aturan lama 7 hari kerja). Siapkan tanggapan per pos koreksi beserta bukti. Terlambat menanggapi menghilangkan hak pembahasan QA.',
+    docs:['Surat Tanggapan atas SPHP','Bukti Pendukung Tanggapan']},
+  {id:'pahp',t:3,n:9,l:'PAHP — Pembahasan Akhir Hasil Pemeriksaan',tglL:'Tanggal risalah / BA PAHP',
+    d:'Hasilnya dituangkan dalam risalah pembahasan dan berita acara: koreksi mana yang disetujui dan tidak disetujui.',
+    docs:['Risalah Pembahasan','Berita Acara PAHP','Daftar Hadir PAHP']},
+  {id:'qa',t:3,n:10,l:'Pembahasan Tim Quality Assurance (opsional)',tglL:'Tanggal permohonan QA',opt:1,
+    d:'Bila masih beda pendapat soal dasar hukum koreksi. Permohonan tertulis paling lama 3 hari kerja sejak risalah ditandatangani; syarat: tanggapan SPHP tepat waktu, hadir PAHP, dan menyatakan akan mengajukan QA.',
+    docs:['Surat Permohonan Pembahasan QA','Risalah Pembahasan QA']},
+  {id:'lhp',t:3,n:11,l:'LHP — Laporan Hasil Pemeriksaan disusun',tglL:'Tanggal LHP',noL:'Nomor LHP',
+    d:'PAHP dan pelaporan maksimal ±30 hari sejak tanggal SPHP (cek bunyi Pasal 6 PMK 15/2025: hari kalender atau hari kerja).',
+    docs:['LHP (Laporan Hasil Pemeriksaan)']},
+  {id:'skp',t:4,n:12,l:'Ketetapan pajak terbit (SKPLB / SKPN / SKPKB)',tglL:'Tanggal ketetapan',noL:'Nomor ketetapan',nilaiL:'Lebih bayar ditetapkan',ketetapan:true,
+    d:'Harus terbit dalam 12 bulan sejak SPT lengkap diterima. SKPLB menjadi dasar pencairan. Bila tidak setuju, keberatan paling lambat 3 bulan sejak ketetapan terbit — pencairan atas jumlah SKPLB tetap berjalan.',
+    docs:['SKPLB','SKPN / SKPKB','Surat Keberatan']},
+  {id:'komp',t:5,n:13,l:'Kompensasi ke utang pajak',tglL:'Tanggal kompensasi',nilaiL:'Nilai dikompensasi',opt:1,
+    d:'Kelebihan bayar dipakai lebih dulu untuk melunasi utang pajak WP (STP, SKPKB, dll.) sesuai Pasal 154 PMK 81/2024, sehingga jumlah yang diterima berkurang.',
+    docs:['Bukti Pemindahbukuan / Kompensasi']},
+  {id:'spkkp',t:5,n:14,l:'SPKKP — Surat Permintaan Konfirmasi Kelebihan Pajak',tglL:'Tanggal SPKKP diterima',noL:'Nomor SPKKP',tgl2L:'Tanggal jawaban dikirim',opt:1,
+    d:'Bila ada: tawaran memakai sisa lebih bayar untuk utang pajak WP lain atau deposit pajak. Jawab paling lama 7 hari (atau H-1 jatuh tempo SKPKPP); tidak menjawab = sisa dikembalikan ke WP tanpa sanksi.',
+    docs:['SPKKP','Surat Jawaban Konfirmasi']},
+  {id:'skpkpp',t:5,n:15,l:'SKPKPP — Surat Keputusan Pengembalian Kelebihan Pembayaran Pajak',tglL:'Tanggal SKPKPP',noL:'Nomor SKPKPP',
+    d:'Untuk PPN wajib terbit maksimal 1 bulan sejak penerbitan SKPLB.',docs:['SKPKPP']},
+  {id:'spmkp',t:5,n:16,l:'SPMKP — Surat Perintah Membayar Kelebihan Pajak',tglL:'Tanggal SPMKP',noL:'Nomor SPMKP',
+    d:'Diterbitkan Kepala KPP berdasarkan SKPKPP maksimal 1 bulan sejak SKPKPP terbit, lalu dikirim ke KPPN.',docs:['SPMKP']},
+  {id:'sp2d',t:5,n:17,l:'SP2D KPPN & dana masuk rekening',tglL:'Tanggal dana diterima',noL:'Nomor SP2D',nilaiL:'Nilai diterima / cair',
+    d:'KPPN menguji SPMKP, menerbitkan SP2D, lalu dana ditransfer ke rekening WP yang terdaftar di Coretax. Nama rekening harus sama persis dengan nama NPWP (Pasal 155 PMK 81/2024).',
+    docs:['SP2D','Rekening Koran / Bukti Dana Masuk']},
+  {id:'lain',t:9,n:'+',l:'Dokumen pendukung lainnya',docOnly:1,d:'Dokumen lain yang terkait dengan proses restitusi masa ini.',docs:['Lainnya']}];
+const ALUR_MAP=Object.fromEntries(ALUR.map(s=>[s.id,s]));
+const TIPE_PERIKSA={lengkap:{l:'Lengkap — seluruh pos SPT',b:5},terfokus:{l:'Terfokus — pos-pos tertentu',b:3},spesifik:{l:'Spesifik — satu/beberapa pos sederhana',b:1}};
+const ALUR_ST={belum:['Belum','b-muted'],proses:['Berjalan','b-warning'],selesai:['Selesai','b-success'],na:['Tidak berlaku','b-muted']};
+const LEGACY_DOC={'SPT Masa PPN Lebih Bayar':'spt','Bukti Penerimaan Elektronik (BPE)':'spt','SP2 (Surat Perintah Pemeriksaan)':'sp2','SPHP (Pemberitahuan Hasil Pemeriksaan)':'sphp',
+  'Risalah / Berita Acara Pembahasan':'pahp','LHP (Laporan Hasil Pemeriksaan)':'lhp','SKPLB':'skp','SPMKP':'spmkp','Bukti Pencairan / Rekening Koran':'sp2d'};
+function addDaysIso(iso,n){ if(!iso) return ''; const [y,m,d]=iso.split('-').map(Number); return isoDate(new Date(y,m-1,d+n)); }
+function addWorkdays(iso,n){ if(!iso) return ''; const [y,m,d]=iso.split('-').map(Number); const t=new Date(y,m-1,d); let k=0; while(k<n){ t.setDate(t.getDate()+1); const w=t.getDay(); if(w&&w!==6) k++; } return isoDate(t); }
+const alurOwn=(a,id)=>{ const s=(a&&a[id])||{}, d=ALUR_MAP[id]; if(s.st) return s.st; if(d&&d.tgl2L) return s.tgl2?'selesai':s.tgl?'proses':'belum'; return s.tgl?'selesai':'belum'; };
+/* langkah sebelum langkah yang sudah selesai dianggap sudah dilalui (opsional = tidak berlaku) */
+const alurEff=(a,id)=>{ const s=(a&&a[id])||{}, own=alurOwn(a,id), d=ALUR_MAP[id]; if(s.st||own!=='belum'||!d||d.docOnly) return own;
+  return ALUR.some(x=>!x.docOnly&&x.n>d.n&&alurOwn(a,x.id)==='selesai')?(d.opt?'na':'selesai'):own; };
+const alurDone=(a,id)=>['selesai','na'].includes(alurEff(a,id));
+/* dibangun dari data lama bila alur belum pernah diisi */
+function alurFromLegacy(r){
+  const a={_tipe:'lengkap'}, put=(id,o)=>{ if(Object.values(o).some(v=>hasVal(v))) a[id]=o; };
+  put('spt',{tgl:r.tglAjukan||'',no:r.noSpt||''}); put('sp2',{tgl:r.sp2Tgl||'',no:r.sp2No||''}); put('spp',{tgl:r.periksaMulai||''});
+  put('skp',{tgl:r.periksaSelesai||'',no:r.skplbNo||'',jenis:'SKPLB'}); put('spmkp',{no:r.spmkpNo||''});
+  if(r.status==='cair') put('sp2d',{tgl:r.cairTgl||'',nilai:hasVal(r.cairNilai)?r.cairNilai:'',st:'selesai'});
+  if(r.status==='selesai'&&a.skp) a.skp.st='selesai';
+  if(a.spmkp&&!a.spmkp.tgl) a.spmkp.st=r.status==='cair'?'selesai':'proses';
+  (r.docs||[]).forEach(d=>{ const id=LEGACY_DOC[d.jenis]||'lain'; (a[id]=a[id]||{}); (a[id].docs=a[id].docs||[]).push(d); });
+  return a;
+}
+function alurStatus(a){
+  if(alurEff(a,'sp2d')==='selesai') return 'cair';
+  if(alurEff(a,'skp')==='selesai') return 'selesai';
+  if(ALUR.some(s=>s.t>=1&&s.t<=3&&['selesai','proses'].includes(alurEff(a,s.id)))) return 'periksa';
+  return 'sp2';
+}
+function alurNext(a){ return ALUR.find(s=>!s.docOnly&&!alurDone(a,s.id))||null; }
+/* tenggat per langkah: {target, due, rule, doneDate} */
+function alurDeadlines(a){
+  const T=id=>((a&&a[id])||{}).tgl||'', tp=TIPE_PERIKSA[(a&&a._tipe)||'lengkap']||TIPE_PERIKSA.lengkap, out=[];
+  const add=(target,due,rule,doneDate)=>{ if(due) out.push({target,due,rule,doneDate,own:!!ALUR_MAP[target].tgl2L}); };
+  add('skp',T('spt')&&addMonths(T('spt'),12),'Ketetapan maks. 12 bulan sejak SPT lengkap (Pasal 17B UU KUP)');
+  add('sphp',T('spp')&&addMonths(T('spp'),tp.b),`Pengujian ${(a._tipe||'lengkap')} maks. ${tp.b} bulan sejak Surat Pemberitahuan Pemeriksaan`);
+  add('pinjam',T('pinjam')&&addMonths(T('pinjam'),1),'Dokumen diserahkan maks. 1 bulan sejak surat permintaan',((a||{}).pinjam||{}).tgl2);
+  add('tanggap',T('sphp')&&addWorkdays(T('sphp'),5),'Tanggapan SPHP maks. 5 hari kerja');
+  add('qa',T('pahp')&&addWorkdays(T('pahp'),3),'Permohonan QA maks. 3 hari kerja sejak risalah PAHP');
+  add('lhp',T('sphp')&&addDaysIso(T('sphp'),30),'PAHP & LHP ±30 hari sejak SPHP');
+  add('spkkp',T('spkkp')&&addDaysIso(T('spkkp'),7),'Jawaban SPKKP maks. 7 hari',((a||{}).spkkp||{}).tgl2);
+  add('skpkpp',T('skp')&&addMonths(T('skp'),1),'SKPKPP maks. 1 bulan sejak SKPLB');
+  add('spmkp',T('skpkpp')&&addMonths(T('skpkpp'),1),'SPMKP maks. 1 bulan sejak SKPKPP');
+  return out;
+}
+function dlState(a,dl){
+  const st=alurEff(a,dl.target); if(st==='na') return null; if(st==='selesai'&&alurOwn(a,dl.target)==='belum') return null;
+  const doneDate=dl.own?(dl.doneDate||''):(dl.doneDate||(st==='selesai'?(a[dl.target]||{}).tgl:''));
+  if(doneDate||(!dl.own&&st==='selesai')){ const late=doneDate&&doneDate>dl.due; return {cls:late?'b-danger':'b-success',txt:late?`Lewat batas (${fmtDate(dl.due)})`:'Tepat waktu',done:true}; }
+  const days=daysBetween(todayISO(),dl.due);
+  return {cls:days<0?'b-danger':days<=7?'b-warning':'b-muted',txt:days<0?`Lewat ${-days} hari · ${fmtDate(dl.due)}`:days===0?`Hari ini · ${fmtDate(dl.due)}`:`${days} hari lagi · ${fmtDate(dl.due)}`,done:false,days};
+}
+/* daftar tenggat aktif seluruh masa (untuk halaman Proses Restitusi) */
+function alurUpcoming(list){
+  const out=[];
+  list.forEach(x=>{ const a=x.rec.alur; if(!a) return; alurDeadlines(a).forEach(dl=>{ const s=dlState(a,dl); if(s&&!s.done) out.push({x,dl,s,step:ALUR_MAP[dl.target]}); }); });
+  return out.sort((p,q)=>p.dl.due.localeCompare(q.dl.due));
+}
+
+/* ---------- Form alur (di dalam modal Kelola Restitusi) ---------- */
+function alurFormHTML(){
+  const a=REST_ED.alur, nx=alurNext(a);
+  return `<div id="alurHead"></div>
+  <div class="al-tipe"><label>Tipe pemeriksaan</label><div class="seg sm">${Object.entries(TIPE_PERIKSA).map(([k,o])=>`<label title="${o.l}"><input type="radio" name="a__tipe" value="${k}" ${(a._tipe||'lengkap')===k?'checked':''} onchange="REST_ED.alur._tipe=this.value;alurRefresh()">${k[0].toUpperCase()+k.slice(1)} · ${o.b} bln</label>`).join('')}</div></div>
+  ${[...ALUR_TAHAP,{t:9,l:'Dokumen Lainnya',c:'#64748b'}].map(T=>`<div class="al-tahap" style="--c:${T.c}"><div class="al-th">${esc(T.l)}</div>
+    ${ALUR.filter(s=>s.t===T.t).map(s=>alurStepHTML(s,nx&&nx.id===s.id)).join('')}</div>`).join('')}`;
+}
+function alurStepHTML(s,open){
+  const v=(REST_ED.alur[s.id]||{}), nm=f=>`a_${s.id}_${f}`, val=f=>esc(v[f]??'');
+  const fields=s.docOnly?'':`<div class="form-grid al-f">
+      <div class="field"><label>Status langkah</label><select class="select" name="${nm('st')}" onchange="alurRefresh()">
+        <option value="">Otomatis (${s.tgl2L?'selesai bila '+s.tgl2L.toLowerCase()+' diisi':'selesai bila tanggal diisi'})</option>${Object.entries(ALUR_ST).filter(([k])=>k!=='na'||s.opt).map(([k,o])=>`<option value="${k}" ${v.st===k?'selected':''}>${o[0]}</option>`).join('')}</select></div>
+      <div class="field"><label>${s.tglL}</label><input class="input" type="date" name="${nm('tgl')}" value="${val('tgl')}" onchange="alurRefresh()"></div>
+      ${s.noL?`<div class="field"><label>${s.noL}</label><input class="input" name="${nm('no')}" value="${val('no')}"></div>`:''}
+      ${s.tgl2L?`<div class="field"><label>${s.tgl2L}</label><input class="input" type="date" name="${nm('tgl2')}" value="${val('tgl2')}" onchange="alurRefresh()"></div>`:''}
+      ${s.ketetapan?`<div class="field"><label>Jenis ketetapan</label><select class="select" name="${nm('jenis')}">${['SKPLB','SKPN','SKPKB'].map(o=>`<option ${(v.jenis||'SKPLB')===o?'selected':''}>${o}</option>`).join('')}</select></div>`:''}
+      ${s.nilaiL?`<div class="field"><label>${s.nilaiL}</label><input class="input" name="${nm('nilai')}" inputmode="decimal" value="${hasVal(v.nilai)?fmt(v.nilai):''}" placeholder="Rp"></div>`:''}
+      <div class="field full"><label>Catatan</label><input class="input" name="${nm('ket')}" value="${val('ket')}" placeholder="Catatan singkat (opsional)"></div></div>`;
+  return `<details class="al-step" id="as-${s.id}" ${open?'open':''}><summary>
+      <span class="al-n">${s.n}</span><span class="al-h"><b>${esc(s.l)}</b><small id="asm-${s.id}"></small></span>
+      <span class="al-chips" id="asc-${s.id}"></span>${icon('chev','i chev')}</summary>
+    <div class="al-b"><p class="al-d">${esc(s.d)}</p>${fields}
+      <div class="al-docs"><div class="al-dh"><b>Dokumen pendukung</b><span class="sub-t">${s.docs.map(esc).join(' · ')}</span></div><div id="ad-${s.id}"></div>
+        <label class="btn btn-outline btn-sm al-add">${icon('upload')} Upload dokumen<input type="file" accept="application/pdf,.pdf,image/*" multiple hidden onchange="alurDocAdd('${s.id}',this.files);this.value=''"></label></div></div></details>`;
+}
+function alurReadForm(){
+  const f=$('#restForm'); if(!f) return REST_ED.alur; const a=REST_ED.alur, fd=new FormData(f);
+  ALUR.forEach(s=>{ if(s.docOnly) return; const o=a[s.id]||{};
+    ['st','tgl','no','tgl2','jenis','ket'].forEach(k=>{ const v=fd.get(`a_${s.id}_${k}`); if(v!==null) o[k]=String(v).trim(); });
+    const nv=fd.get(`a_${s.id}_nilai`); if(nv!==null) o.nilai=String(nv).trim()?toNum(nv):'';
+    a[s.id]=o; });
+  return a;
+}
+function alurRefresh(){
+  if(!REST_ED) return; const a=alurReadForm(), dls=alurDeadlines(a);
+  ALUR.forEach(s=>{ const st=s.docOnly?null:alurEff(a,s.id), v=a[s.id]||{}, nd=(REST_ED.alurDocs[s.id]||[]).length, el=$('#as-'+s.id); if(!el) return;
+    el.className='al-step'+(st?' st-'+st:'');
+    const sm=$('#asm-'+s.id); if(sm) sm.textContent=s.docOnly?'':[v.tgl?fmtDate(v.tgl):'',v.no||'',s.id==='skp'&&v.jenis?v.jenis:''].filter(Boolean).join(' · ');
+    const dl=dls.find(d=>d.target===s.id), ds=dl?dlState(a,dl):null;
+    const sc=$('#asc-'+s.id); if(sc) sc.innerHTML=(ds?`<span class="badge ${ds.cls}" title="${esc(dl.rule)}">${icon('clock')} ${esc(ds.txt)}</span>`:'')
+      +(nd?`<span class="badge b-primary">${icon('file')} ${nd}</span>`:'')+(st?`<span class="badge ${ALUR_ST[st][1]}">${ALUR_ST[st][0]}</span>`:'');
+  });
+  const steps=ALUR.filter(s=>!s.docOnly), done=steps.filter(s=>alurDone(a,s.id)).length, nx=alurNext(a), st=alurStatus(a);
+  const pend=dls.map(d=>({d,s:dlState(a,d)})).filter(o=>o.s&&!o.s.done).sort((p,q)=>p.d.due.localeCompare(q.d.due))[0];
+  const h=$('#alurHead'); if(h) h.innerHTML=`<div class="al-head">
+    <div><small>Kemajuan alur</small><b>${done} / ${steps.length} langkah</b><div class="progress"><span style="width:${done/steps.length*100}%;background:var(--success)"></span></div></div>
+    <div><small>Tahap proses (otomatis)</small><b>${stBadge(st)}</b></div>
+    <div><small>Langkah berikutnya</small><b>${nx?`${nx.n}. ${esc(nx.l)}`:'Semua langkah selesai ✓'}</b></div>
+    <div><small>Tenggat terdekat</small><b>${pend?`<span class="badge ${pend.s.cls}">${esc(pend.s.txt)}</span><span class="sub-t" style="display:block;margin-top:4px">${esc(pend.d.rule)}</span>`:'—'}</b></div></div>`;
+}
+function alurDocsRender(id){
+  const el=$('#ad-'+id); if(!el) return; const s=ALUR_MAP[id], list=REST_ED.alurDocs[id]||[];
+  el.innerHTML=list.length?list.map((d,i)=>`<div class="al-doc">
+      <select class="select" onchange="REST_ED.alurDocs['${id}'][${i}].jenis=this.value">${[...new Set([...s.docs,d.jenis])].filter(Boolean).map(o=>`<option ${d.jenis===o?'selected':''}>${esc(o)}</option>`).join('')}</select>
+      ${d.existing?`<span class="file-pill" onclick="openStoredFile('${d.id}','${esc(d.name)}')" title="${esc(d.name)}">${icon('file')}<span>${esc(d.name)}</span></span>`
+        :`<span class="file-pill new" title="${esc(d.file.name)}">${icon('upload')}<span>${esc(d.file.name)}</span></span>`}
+      <span class="sub-t">${fmtSize(d.size||(d.file&&d.file.size)||0)}</span>
+      <button type="button" class="icon-btn xs" title="Hapus dokumen" onclick="alurDocDel('${id}',${i})">${icon('trash')}</button></div>`).join('')
+    :`<div class="sub-t" style="padding:4px 0">Belum ada dokumen.</div>`;
+}
+function alurDocAdd(id,files){
+  const s=ALUR_MAP[id], arr=REST_ED.alurDocs[id]||(REST_ED.alurDocs[id]=[]);
+  [...(files||[])].forEach(f=>{ if(!/pdf$|^image\//i.test(f.type)&&!/\.(pdf|png|jpe?g)$/i.test(f.name)){ toast(`${f.name}: hanya PDF atau gambar`,'error'); return; }
+    if(f.size>50*1024*1024){ toast(`${f.name}: melebihi 50 MB`,'error'); return; }
+    arr.push({file:f,jenis:s.docs[Math.min(arr.length,s.docs.length-1)]}); });
+  alurDocsRender(id); alurRefresh();
+}
+function alurDocDel(id,i){ const d=REST_ED.alurDocs[id][i]; if(d.existing) REST_ED.del.push(d.id); REST_ED.alurDocs[id].splice(i,1); alurDocsRender(id); alurRefresh(); }
+function alurGuideHTML(){
+  return `<details class="card mb al-guide"><summary class="card-h"><div><h3>Alur Pemeriksaan Restitusi PPN Lebih Bayar</h3><p>Dari SPT lebih bayar sampai dana masuk rekening · acuan Pasal 17B UU KUP, PMK 15/2025 &amp; PMK 81/2024 · klik untuk membuka</p></div>${icon('chev','i chev')}</summary>
+    <div class="card-b"><div class="al-gt">${ALUR_TAHAP.map(T=>`<div class="al-gc" style="--c:${T.c}"><b>${esc(T.l)}</b><ol start="${ALUR.find(s=>s.t===T.t).n}">${ALUR.filter(s=>s.t===T.t).map(s=>`<li>${esc(s.l)}</li>`).join('')}</ol></div>`).join('')}</div>
+    <div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>Tahap</th><th>Batas waktu</th></tr></thead><tbody>
+      ${[['SPT lengkap sampai ketetapan (SKPLB/SKPN/SKPKB)','12 bulan (Pasal 17B UU KUP)'],['Pemenuhan permintaan dokumen','1 bulan sejak surat permintaan'],
+         ['Pengujian (Surat Pemberitahuan Pemeriksaan sampai SPHP)','Lengkap 5 bulan · Terfokus 3 bulan · Spesifik 1 bulan'],['Tanggapan SPHP','5 hari kerja'],['Permohonan QA','3 hari kerja sejak risalah PAHP'],
+         ['PAHP dan LHP','±30 hari sejak SPHP'],['Konfirmasi SPKKP','7 hari, atau H-1 jatuh tempo SKPKPP'],['SKPLB sampai SKPKPP','Maks. 1 bulan'],['SKPKPP sampai SPMKP','Maks. 1 bulan'],
+         ['SPMKP, SP2D, transfer','Proses KPPN, biasanya beberapa hari kerja'],['Keberatan atas SKPLB','3 bulan sejak SKPLB terbit']].map(([a,b])=>`<tr><td style="white-space:normal">${a}</td><td style="white-space:normal"><b>${b}</b></td></tr>`).join('')}</tbody></table></div>
+    <div class="note" style="margin:14px 0 0">${icon('alert')} Gambaran umum prosedur. Untuk kasus konkret, cek bunyi pasal di PMK 15/2025 dan PMK 81/2024 atau konsultasikan dengan konsultan pajak. Jalur tanpa pemeriksaan penuh (pengembalian pendahuluan) diatur dalam PMK 28/2026.</div></div></details>`;
+}
+
 function restItem(k){
   const [y,mm]=k.split('-').map(Number), m=mm-1, rec=DB.restitusi[k]||{}, cfg=DB.settings.restCfg||{periksaBulan:12,cairBulan:1};
   const pm=pmSum(y,m), pengajuan=hasVal(rec.nilai)?+rec.nilai:pm;
   const korBy={biaya:0,sanksi:0,tanpa:0}; (rec.koreksi||[]).forEach(c=>{ korBy[c.kat]=(korBy[c.kat]||0)+(+c.nilai||0); });
-  const koreksi=korBy.biaya+korBy.sanksi+korBy.tanpa, disetujui=Math.max(0,pengajuan-koreksi), status=ST_MAP[rec.status]?rec.status:'sp2';
+  const koreksi=korBy.biaya+korBy.sanksi+korBy.tanpa, disetujui=Math.max(0,pengajuan-koreksi), status=rec.alur?alurStatus(rec.alur):ST_MAP[rec.status]?rec.status:'sp2';
   const cair=status==='cair'?(hasVal(rec.cairNilai)?+rec.cairNilai:disetujui):0, belum=status==='cair'?0:disetujui;
   const tglAjukan=rec.tglAjukan||isoDate(new Date(y,m+2,0));
   let estPeriksa='', estCair='';
@@ -2330,8 +2577,11 @@ function renderRest(){
   </div>
   <div class="pipe">${REST_ST.map((s,i)=>{ const o=S.st[s.k]; return `<div class="pipe-step ${f===s.k?'on':''}" style="--c:${s.c}" onclick="state.f.rest='${f===s.k?'all':s.k}';render()" title="Klik untuk menyaring daftar">
     <div class="pipe-n">${i+1}</div><div style="min-width:0"><b>${s.l}</b><small>${s.d}</small><div class="pipe-v">${rp(o.amt)}</div><span>${o.n} masa${o.next&&s.k!=='cair'?` · est. cair ${fmtDate(o.next)}`:''}</span></div></div>`; }).join('')}</div>
+  ${alurGuideHTML()}
+  ${(()=>{ const up=alurUpcoming(list).slice(0,8); return up.length?`<div class="card mb"><div class="card-h"><div><h3>Tenggat Alur Pemeriksaan Terdekat</h3><p>Batas waktu yang masih berjalan dari seluruh masa · klik untuk membuka</p></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Masa Pajak</th><th>Langkah</th><th>Ketentuan</th><th>Batas Waktu</th></tr></thead><tbody>${up.map(o=>`<tr class="clickable" onclick="openRestForm('${o.x.k}')"><td><b>${o.x.label}</b></td><td style="white-space:normal">${o.step.n}. ${esc(o.step.l)}</td><td style="white-space:normal" class="sub-t">${esc(o.dl.rule)}</td><td><span class="badge ${o.s.cls}">${esc(o.s.txt)}</span></td></tr>`).join('')}</tbody></table></div></div>`:''; })()}
   <div class="card mb">
-    <div class="card-h"><div><h3>Daftar Pengajuan Restitusi — ${scope}</h3><p>Masa dengan PPN Masukan otomatis tercatat sebagai pengajuan. Klik <b>Kelola</b> untuk memperbarui SP2, pemeriksaan, koreksi, pencairan, dan dokumen.</p></div>
+    <div class="card-h"><div><h3>Daftar Pengajuan Restitusi — ${scope}</h3><p>Masa dengan PPN Masukan otomatis tercatat sebagai pengajuan. Klik <b>Kelola</b> untuk mengisi alur pemeriksaan (SP2 sampai SP2D), dokumen pendukung tiap langkah, dan koreksi.</p></div>
       <div class="toolbar">
         <button class="btn btn-outline" onclick="openRestCfg()" title="Pengaturan estimasi">${icon('gear')}<span class="hide-sm">Estimasi</span></button>
         <button class="btn btn-outline" onclick="openRestNew()">${icon('plus')}<span class="hide-sm">Tambah Masa</span></button>
@@ -2353,12 +2603,14 @@ function renderRestTable(){
   const list=restList().filter(x=>(f==='all'||x.status===f)&&(!q||x.label.toLowerCase().includes(q)));
   const T=k=>list.reduce((a,x)=>a+x[k],0);
   area.innerHTML=list.length?`<div class="table-wrap" style="margin-top:16px"><table>
-   <thead><tr><th>Masa Pajak</th><th class="num">Pengajuan</th><th>Tahap</th><th>SP2</th><th>Pemeriksaan</th><th class="num">Koreksi</th><th class="num">Disetujui</th><th>Estimasi / Tgl Cair</th><th class="num">Nilai Cair</th><th>Dok</th><th></th></tr></thead>
+   <thead><tr><th>Masa Pajak</th><th class="num">Pengajuan</th><th>Tahap</th><th>Alur Pemeriksaan</th><th>Tenggat Berikutnya</th><th class="num">Koreksi</th><th class="num">Disetujui</th><th>Estimasi / Tgl Cair</th><th class="num">Nilai Cair</th><th>Dok</th><th></th></tr></thead>
    <tbody>${list.map(x=>{ const r=x.rec; return `<tr>
      <td><b>${x.label}</b><div class="sub-t">Diajukan ${fmtDate(x.tglAjukan)}${r.tglAjukan?'':' (perkiraan)'}</div></td>
      <td class="num"><b>${fmt(x.pengajuan)}</b>${hasVal(r.nilai)&&x.pm&&+r.nilai!==x.pm?`<div class="sub-t">PM: ${fmt(x.pm)}</div>`:''}</td><td>${stBadge(x.status)}</td>
-     <td>${r.sp2No||r.sp2Tgl?`${esc(r.sp2No||'-')}<div class="sub-t">${fmtDate(r.sp2Tgl)}</div>`:'<span class="sub-t">—</span>'}</td>
-     <td>${r.periksaMulai||r.periksaSelesai?`${r.periksaMulai?fmtDate(r.periksaMulai):'…'} – ${r.periksaSelesai?fmtDate(r.periksaSelesai):'…'}${r.skplbNo?`<div class="sub-t">SKPLB ${esc(r.skplbNo)}</div>`:''}`:'<span class="sub-t">—</span>'}</td>
+     ${(()=>{ const a=r.alur||alurFromLegacy(r), st=ALUR.filter(s=>!s.docOnly), dn=st.filter(s=>alurDone(a,s.id)).length, nx=alurNext(a);
+        const up=alurDeadlines(a).map(d=>({d,s:dlState(a,d)})).filter(o=>o.s&&!o.s.done).sort((p,q)=>p.d.due.localeCompare(q.d.due))[0];
+        return `<td style="min-width:200px;white-space:normal"><div class="progress" style="margin-bottom:5px"><span style="width:${dn/st.length*100}%;background:var(--success)"></span></div><b style="font-size:12.5px">${dn}/${st.length} langkah</b><div class="sub-t">${nx?'Berikutnya: '+esc(nx.l):'Semua langkah selesai'}</div></td>
+          <td style="min-width:150px;white-space:normal">${up?`<span class="badge ${up.s.cls}">${esc(up.s.txt)}</span><div class="sub-t">${esc(ALUR_MAP[up.d.target].l)}</div>`:'<span class="sub-t">—</span>'}</td>`; })()}
      <td class="num" style="color:${x.koreksi?'var(--danger)':'inherit'}">${fmt(x.koreksi)}${(r.koreksi||[]).length?`<div class="sub-t">${r.koreksi.length} item</div>`:''}</td>
      <td class="num">${fmt(x.disetujui)}</td>
      <td>${x.status==='cair'?`<span class="badge b-success">Cair ${fmtDate(r.cairTgl)}</span>`:`<span class="badge ${x.overdue?'b-danger':'b-muted'}">${x.overdue?'Lewat est. ':'Est. '}${fmtDate(x.estCair)}</span>${x.status!=='selesai'?`<div class="sub-t">Est. SKPLB ${fmtDate(x.estPeriksa)}</div>`:''}`}</td>
@@ -2380,38 +2632,29 @@ let REST_ED=null;
 function openRestForm(k){
   const x=restItem(k), r=x.rec, [yy,mm]=k.split('-').map(Number);
   const pmRows=yy>=START_YEAR?getRows('PM',yy,mm-1).filter(f=>!isCanceled(f)):[];
-  REST_ED={k,pm:x.pm,koreksi:(r.koreksi||[]).map(c=>({...c})),docs:(r.docs||[]).map(d=>({...d,existing:true})),del:[]};
+  const al=JSON.parse(JSON.stringify(r.alur||alurFromLegacy(r))), alDocs={};
+  ALUR.forEach(s=>{ alDocs[s.id]=((al[s.id]||{}).docs||[]).map(d=>({...d,existing:true})); if(al[s.id]) delete al[s.id].docs; });
+  REST_ED={k,pm:x.pm,koreksi:(r.koreksi||[]).map(c=>({...c})),docs:[],del:[],alur:al,alurDocs:alDocs};
   const v=f=>esc(r[f]??''), d=f=>`<input class="input" type="date" name="${f}" value="${esc(r[f]||'')}">`, cfg=DB.settings.restCfg;
   openModal(`
    <div class="modal-h"><div><h3>Kelola Restitusi — ${x.label}</h3><p>PPN Masukan tercatat: ${rp(x.pm)} · ${pmRows.length} faktur</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
    <form id="restForm" onsubmit="saveRest(event)"><div class="modal-b">
     <datalist id="pmFaktur">${pmRows.slice(0,3000).map(f=>`<option value="${esc(f.nofaktur)}">${esc(f.nama)} · PPN ${fmt(f.ppn)} · ${f.bayar?'sudah dibayar':'belum dibayar'}</option>`).join('')}</datalist>
-    <div class="sec-t">1 · Pengajuan &amp; Tahap Proses</div>
+    <div class="sec-t">1 · Pengajuan</div>
     <div class="form-grid">
       <div class="field"><label>Nilai Pengajuan Restitusi</label><input class="input" name="nilai" inputmode="decimal" value="${hasVal(r.nilai)?fmt(r.nilai):''}" placeholder="${fmt(x.pm)} (otomatis dari PPN Masukan)" oninput="renderKorTot()"></div>
-      <div class="field"><label>Tahap Proses Saat Ini</label><select class="select" name="status">${REST_ST.map(s=>`<option value="${s.k}" ${x.status===s.k?'selected':''}>${s.l}</option>`).join('')}</select></div>
-      <div class="field"><label>Tanggal Pengajuan (lapor SPT LB)</label>${d('tglAjukan')}</div>
-      <div class="field"><label>Nomor SPT / BPE</label><input class="input" name="noSpt" value="${v('noSpt')}"></div>
+      <div class="field"><label>Estimasi Pencairan (opsional, manual)</label>${d('estCair')}</div>
     </div>
-    <div class="sec-t">2 · Surat Perintah Pemeriksaan (SP2)</div>
-    <div class="form-grid"><div class="field"><label>Nomor SP2</label><input class="input" name="sp2No" value="${v('sp2No')}"></div><div class="field"><label>Tanggal Terbit SP2</label>${d('sp2Tgl')}</div></div>
-    <div class="sec-t">3 · Pemeriksaan</div>
-    <div class="form-grid"><div class="field"><label>Tanggal Mulai Pemeriksaan</label>${d('periksaMulai')}</div><div class="field"><label>Tanggal Selesai / Terbit SKPLB</label>${d('periksaSelesai')}</div>
-      <div class="field full"><label>Nomor SKPLB</label><input class="input" name="skplbNo" value="${v('skplbNo')}"></div></div>
-    <div class="sec-t">4 · Pencairan</div>
-    <div class="form-grid"><div class="field"><label>Nomor SPMKP</label><input class="input" name="spmkpNo" value="${v('spmkpNo')}"></div><div class="field"><label>Tanggal Cair</label>${d('cairTgl')}</div>
-      <div class="field"><label>Nilai Diterima / Cair</label><input class="input" name="cairNilai" inputmode="decimal" value="${hasVal(r.cairNilai)?fmt(r.cairNilai):''}" placeholder="Kosongkan = nilai disetujui"></div>
-      <div class="field"><label>Estimasi Pencairan (opsional, manual)</label>${d('estCair')}</div></div>
-    <div class="note" style="margin:0">${icon('clock')} Estimasi otomatis: SKPLB paling lambat <b>${cfg.periksaBulan} bulan</b> sejak pengajuan, dana cair <b>±${cfg.cairBulan} bulan</b> setelah SKPLB terbit. Estimasi cair saat ini: <b>${fmtDate(x.estCair)}</b>.</div>
-    <div class="sec-t">5 · Pajak Masukan Terkoreksi <span class="toolbar" style="gap:6px"><button type="button" class="btn btn-outline btn-sm" onclick="korAdd('faktur')">${icon('plus')} Dari faktur</button><button type="button" class="btn btn-outline btn-sm" onclick="korAdd('sanksi')">${icon('plus')} Sanksi / bunga</button></span></div>
+    <div class="note" style="margin:0">${icon('clock')} Tahap proses ditentukan otomatis dari alur di bawah. Estimasi cair saat ini: <b>${fmtDate(x.estCair)}</b> (SKPLB paling lambat ${cfg.periksaBulan} bulan sejak pengajuan, cair ±${cfg.cairBulan} bulan setelah SKPLB).</div>
+    <div class="sec-t">2 · Alur Pemeriksaan &amp; Dokumen Pendukung <span class="sub-t" style="font-weight:600;text-transform:none;letter-spacing:0">klik tiap langkah untuk mengisi tanggal, nomor surat &amp; upload dokumen</span></div>
+    ${alurFormHTML()}
+    <div class="sec-t">3 · Pajak Masukan Terkoreksi <span class="toolbar" style="gap:6px"><button type="button" class="btn btn-outline btn-sm" onclick="korAdd('faktur')">${icon('plus')} Dari faktur</button><button type="button" class="btn btn-outline btn-sm" onclick="korAdd('sanksi')">${icon('plus')} Sanksi / bunga</button></span></div>
     <div id="korTot"></div><div id="korList"></div>
-    <div class="sec-t">6 · Dokumen Pendukung (PDF) <button type="button" class="btn btn-outline btn-sm" onclick="docAdd()">${icon('plus')} Tambah dokumen</button></div>
-    <div id="docList"></div>
     <div class="field" style="margin-top:14px"><label>Keterangan</label><textarea class="textarea" name="ket">${v('ket')}</textarea></div>
    </div>
    <div class="modal-f">${DB.restitusi[k]?`<button type="button" class="btn btn-danger" style="margin-right:auto" onclick="resetRest('${k}')">${icon('trash')}<span class="hide-sm">Hapus data proses</span></button>`:''}
      <button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit" id="restSave">${icon('check')} Simpan</button></div></form>`,'xl');
-  renderKor(); renderDocs();
+  renderKor(); ALUR.forEach(s=>alurDocsRender(s.id)); alurRefresh();
   if(!isAdmin()) restReadonly();
 }
 function restReadonly(){
@@ -2466,16 +2709,20 @@ async function saveRest(e){
   if((nilai===''?REST_ED.pm:nilai)<=0){ toast('Nilai pengajuan wajib diisi (tidak ada PPN Masukan pada masa ini)','error'); return; }
   btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…';
   try{
-    const docs=[];
-    for(const d of REST_ED.docs){
-      if(d.existing) docs.push({id:d.id,name:d.name,size:d.size,jenis:d.jenis,at:d.at});
-      else if(d.file){ const id=uid(); await putFile(id,d.file); docs.push({id,name:d.file.name,size:d.file.size,jenis:d.jenis,at:new Date().toISOString()}); }
+    const a=alurReadForm(), docs=[];
+    for(const st of ALUR){ const out=[];
+      for(const d of (REST_ED.alurDocs[st.id]||[])){
+        if(d.existing) out.push({id:d.id,name:d.name,size:d.size,jenis:d.jenis,at:d.at});
+        else if(d.file){ const id=uid(); await putFile(id,d.file); out.push({id,name:d.file.name,size:d.file.size,jenis:d.jenis,at:new Date().toISOString()}); }
+      }
+      if(out.length){ (a[st.id]=a[st.id]||{}).docs=out; out.forEach(d=>docs.push({...d,step:st.id,jenis:d.jenis||st.l})); } else if(a[st.id]) delete a[st.id].docs;
     }
     for(const id of REST_ED.del) await delFile(id);
-    const cn=g('cairNilai');
-    DB.restitusi[k]={nilai,status:g('status')||'sp2',tglAjukan:g('tglAjukan'),noSpt:g('noSpt'),sp2No:g('sp2No'),sp2Tgl:g('sp2Tgl'),
-      periksaMulai:g('periksaMulai'),periksaSelesai:g('periksaSelesai'),skplbNo:g('skplbNo'),spmkpNo:g('spmkpNo'),cairTgl:g('cairTgl'),
-      cairNilai:cn?toNum(cn):'',estCair:g('estCair'),koreksi:REST_ED.koreksi.filter(c=>(+c.nilai||0)>0||c.nofaktur),docs,ket:g('ket'),updated:new Date().toISOString()};
+    Object.keys(a).forEach(id=>{ if(id[0]==='_') return; const o=a[id]; Object.keys(o).forEach(f=>{ if(o[f]===''||o[f]==null) delete o[f]; }); if(!Object.keys(o).length) delete a[id]; });
+    const A=id=>a[id]||{}, sk=A('skp');
+    DB.restitusi[k]={nilai,status:alurStatus(a),alur:a,tglAjukan:A('spt').tgl||'',noSpt:A('spt').no||'',sp2No:A('sp2').no||'',sp2Tgl:A('sp2').tgl||'',
+      periksaMulai:A('spp').tgl||A('sp2').tgl||'',periksaSelesai:sk.tgl||A('lhp').tgl||'',skplbNo:sk.no||'',spmkpNo:A('spmkp').no||'',cairTgl:A('sp2d').tgl||'',
+      cairNilai:hasVal(A('sp2d').nilai)?A('sp2d').nilai:'',estCair:g('estCair'),koreksi:REST_ED.koreksi.filter(c=>(+c.nilai||0)>0||c.nofaktur),docs,ket:g('ket'),updated:new Date().toISOString()};
     if(await save()){ closeModal(); REST_ED=null; toast('Data restitusi disimpan','success'); render(); }
   }catch(err){ console.error(err); toast('Gagal menyimpan: '+err.message,'error'); btn.disabled=false; btn.innerHTML=icon('check')+' Simpan'; }
 }
