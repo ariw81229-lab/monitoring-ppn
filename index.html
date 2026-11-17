@@ -3157,7 +3157,6 @@ function pdfTools(doc,logos){
   const footer=()=>{ if(!once('f')) return;
     doc.setDrawColor(226,232,240); doc.setLineWidth(.2); doc.line(M,H-10,W-M,H-10);
     doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(100,116,139);
-    doc.text(PDF_SAFE('Monitoring Data Pajak '+brandProyek()+' | '+T.title),M,H-6);
     doc.text(`Halaman ${doc.internal.getCurrentPageInfo().pageNumber} dari ${TOTAL}`,W-M,H-6,{align:'right'});
   };
   return {W,H,M,LH,brand,T,TOTAL,header,footer,top:M+LH+7};
@@ -4194,7 +4193,6 @@ async function pdfKop(judul,periode){
     doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(PDF_SAFE(periode),W/2,M+4+3*5.6,{align:'center'});
     doc.setDrawColor(0); doc.setLineWidth(.3); doc.line(M,M+25,W-M,M+25);
     doc.setFontSize(7.5); doc.setTextColor(100);
-    doc.text(PDF_SAFE(`${judul.charAt(0)+judul.slice(1).toLowerCase()} · ${brandProyek()} · dicetak ${dmy(new Date())}`),M,H-6);
     doc.text(`Halaman ${doc.internal.getCurrentPageInfo().pageNumber} dari ${TOTAL}`,W-M,H-6,{align:'right'});
   };
   const base={startY:M+28,margin:{left:M,right:M,top:M+28,bottom:12},theme:'grid',showFoot:'lastPage',showHead:'everyPage',
