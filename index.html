@@ -3596,7 +3596,7 @@ const masaEnd=k=>new Date(+k.slice(0,4),+k.slice(5),0);
 function rpmDefault(){
   const ks=[...Object.keys(DB.data.PM||{}),...Object.keys(DB.data.PP||{})].filter(k=>(DB.data.PM[k]||[]).length||((DB.data.PP||{})[k]||[]).length).sort();
   const nm=nowMasa(), last=ks.filter(k=>k<=nm).pop()||ks.pop()||nm;
-  return {from:last,to:last,acc:'year',hideZero:true,q:''};
+  return {from:last,to:last,acc:'year',q:''};
 }
 function rpmOpts(){ if(!state.rpm) state.rpm=rpmDefault(); if(state.rpm.to<state.rpm.from) state.rpm.to=state.rpm.from; return state.rpm; }
 function rpmCompute(o){
@@ -3605,9 +3605,9 @@ function rpmCompute(o){
   for(const [m,rows] of Object.entries(DB.data.PM||{})){ if(m<acc||m>to) continue;
     for(const r of rows){ if(isCanceled(r)) continue; const v=vend(r), x=+r.ppn||0; if(m<from) v.lalu+=x; else v.d+=x; } }
   for(const [m,rows] of Object.entries(DB.data.PP||{})){ if(m<acc||m>to) continue;
-    for(const r of rows){ if(!ppOpen(r)) continue; const v=vend(r), x=+r.ppn||0; if(m<from) v.lalu-=x; else v.k+=x; } }
+    for(const r of rows){ if(!ppOpen(r)) continue; if(m<from) continue; /* akumulasi lalu = PM yang sudah dilapor saja */ const v=vend(r); v.k+=+r.ppn||0; } }
   let list=Object.values(V).map(v=>({...v,acc:'PPN '+v.nama.toUpperCase(),ini:v.lalu+v.d-v.k}));
-  if(o.hideZero) list=list.filter(v=>v.lalu||v.d||v.k||v.ini);
+  list=list.filter(v=>v.lalu||v.d||v.k);
   list.sort((a,b)=>a.nama.localeCompare(b.nama,'id'));
   const T={lalu:0,d:0,k:0,ini:0}; list.forEach(v=>{ T.lalu+=v.lalu; T.d+=v.d; T.k+=v.k; T.ini+=v.ini; });
   const s=dmy(masaStart(from)), e=dmy(masaEnd(to));
@@ -3633,7 +3633,6 @@ function renderRpm(){
         <div class="field"><label>s.d.</label><select class="select" onchange="setRpm('to',this.value)">${rpmMasaOptions(o.to)}</select></div>
         <div class="field"><label>Akumulasi periode lalu dihitung sejak</label><select class="select" onchange="setRpm('acc',this.value)">
           <option value="year" ${o.acc!=='all'?'selected':''}>Januari tahun berjalan</option><option value="all" ${o.acc==='all'?'selected':''}>Awal data (Januari ${START_YEAR})</option></select></div>
-        <label class="dash-opt" style="align-self:end;margin-bottom:6px"><input type="checkbox" ${o.hideZero?'checked':''} onchange="setRpm('hideZero',this.checked)">Sembunyikan vendor bernilai nol</label>
       </div>
       ${kso?'':`<div class="note" style="margin:6px 0 0">${icon('alert')} <b>Nama KSO</b> belum diisi${isAdmin()?` — <a class="link" onclick="go('settings')">isi di Pengaturan → Identitas Proyek</a>`:' — hubungi admin'}. Baris Nama KSO di hasil export akan kosong.</div>`}
     </div></div>
@@ -3715,10 +3714,13 @@ async function rpmXlsx(R){
   // rumus akumulasi periode ini = lalu + debet − kredit
   for(let i=first;i<=lastD&&R.list.length;i++) ws.getCell(i,7).value={formula:`D${i}+E${i}-F${i}`,result:R.list[i-first].ini};
   // logo
-  const px=W.map(w=>Math.round(w*7+5)), colAt=x=>{ let acc=0; for(let i=0;i<px.length;i++){ if(x<acc+px[i]) return i+(x-acc)/px[i]; acc+=px[i]; } return px.length; };
-  let x=8; const H0=52;
-  for(const l of await logoImagesForPdf()){ const w=Math.round(Math.min(150,H0*l.w/l.h)); const id=wb.addImage({base64:l.data,extension:'png'});
-    ws.addImage(id,{tl:{col:colAt(x),row:1.15},ext:{width:w,height:H0},editAs:'oneCell'}); x+=w+18; }
+  /* posisi logo dihitung langsung dalam EMU (1 px = 9525 EMU) agar sejajar & berjarak sama berapa pun jumlah logonya */
+  const EMU=9525, px=W.map(w=>Math.trunc(((256*w+Math.trunc(128/7))/256)*7)), H0=44, GAP=14, rowsPx=[15.6,15.6,15.6,15].reduce((a,h)=>a+h*96/72,0);
+  const at=x=>{ let acc=0; for(let i=0;i<px.length;i++){ if(x<acc+px[i]) return {nativeCol:i,nativeColOff:Math.round((x-acc)*EMU)}; acc+=px[i]; } return {nativeCol:px.length-1,nativeColOff:0}; };
+  const top=Math.round((rowsPx-H0)/2), rowAt=(()=>{ const hs=[15.6,15.6,15.6,15].map(h=>h*96/72); let y=top,i=0; while(i<hs.length-1&&y>=hs[i]){ y-=hs[i]; i++; } return {nativeRow:1+i,nativeRowOff:Math.round(y*EMU)}; })();
+  let x=8;
+  for(const l of await logoImagesForPdf()){ const w=Math.round(Math.min(110,H0*l.w/l.h)); const id=wb.addImage({base64:l.data,extension:'png'});
+    ws.addImage(id,{tl:{...at(x),...rowAt},ext:{width:w,height:H0},editAs:'oneCell'}); x+=w+GAP; }
   const buf=await wb.xlsx.writeBuffer();
   saveBytes(new Uint8Array(buf),R.file+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
