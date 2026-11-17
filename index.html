@@ -4219,7 +4219,9 @@ function rpmDetail(o){
   return out;
 }
 async function rpmXlsx(R){
-  const W=[10.78,30.44,30.44,21.33,23.44,21.11,22.44,17,24,21,15,40], col=i=>String.fromCharCode(65+i);
+  /* lebar kolom menyesuaikan isi agar tidak ada teks yang terlipat (wrap) */
+  const maxAcc=Math.max(0,...R.list.map(v=>v.acc.length)), half=Math.max(30.44,Math.ceil(maxAcc*1.18/2)+2);
+  const W=[10.78,half,half,21.33,23.44,21.11,22.44,17,24,21,15,48], col=i=>String.fromCharCode(65+i);
   const {wb,ws,S,headStyle,totalStyle,finish}=await xlsxKop('Rincian PM '+R.e.slice(3).replace(/\//g,'-'),W,'RINCIAN PAJAK MASUKAN',R.periode,3);
   const H=(r1,c1,r2,c2,txt)=>{ if(r1!==r2||c1!==c2) ws.mergeCells(r1,c1,r2,c2); ws.getCell(r1,c1).value=txt; };
   H(7,1,9,1,'NOMOR'); H(7,2,9,3,'ACCOUNT NAME'); H(7,4,9,4,'AKUMULASI S/D PERIODE LALU'); H(7,5,8,6,R.mutasi);
@@ -4234,13 +4236,13 @@ async function rpmXlsx(R){
   R.list.forEach((v,i)=>{
     ws.mergeCells(r,2,r,3);
     [i+1,v.acc,null,v.lalu,v.d,v.k,v.ini].forEach((val,j)=>{ if(j===2) return; const c=ws.getCell(r,j+1); c.value=val; c.font=S.fB;
-      c.alignment={horizontal:j<=1?'left':'right',vertical:'bottom',wrapText:j===1}; if(j>=3) c.numFmt='#,##0;-#,##0;0'; c.border={left:S.thin,right:S.thin}; });
+      c.alignment={horizontal:j<=1?'left':'right',vertical:'middle'}; if(j>=3) c.numFmt='#,##0;-#,##0;0'; c.border={left:S.thin,right:S.thin}; });
     ws.getCell(r,3).border={right:S.thin};
     ws.getCell(r,7).value={formula:`D${r}+E${r}-F${r}`,result:v.ini};
     for(let c=8;c<=12;c++){ const z=ws.getCell(r,c); z.font=S.fB; z.border={left:S.thin,right:S.thin,bottom:{style:'hair',color:{argb:'FFBFBFBF'}}}; }
     [8,9,12].forEach(c=>ws.getCell(r,c).fill=input);
     ws.getCell(r,9).numFmt='#,##0;-#,##0;0'; ws.getCell(r,9).alignment={horizontal:'right'};
-    ws.getCell(r,12).alignment={wrapText:true,vertical:'top'};
+    ws.getCell(r,12).alignment={vertical:'middle',shrinkToFit:false};
     r++;
   });
   if(!R.list.length){ ws.mergeCells(r,2,r,3); ws.getCell(r,2).value='(tidak ada data pada periode ini)'; ws.getCell(r,2).font={...S.fB,italic:true}; r++; }
@@ -4248,7 +4250,7 @@ async function rpmXlsx(R){
   for(let i=first;i<=last&&has;i++){
     ws.getCell(i,10).value={formula:`IF(I${i}="","",I${i}-G${i})`}; ws.getCell(i,10).numFmt='#,##0;-#,##0;0'; ws.getCell(i,10).alignment={horizontal:'right'};
     ws.getCell(i,11).value={formula:`IF(I${i}="","Belum diisi",IF(ABS(J${i})<=${TOL},"Sesuai","Selisih"))`,result:'Belum diisi'}; ws.getCell(i,11).alignment={horizontal:'center'};
-    ws.getRow(i).height=R.list[i-first].acc.length>34?31.2:15.6;
+    ws.getRow(i).height=15.6;
   }
   // total
   ws.mergeCells(tot,1,tot,3); ws.getCell(tot,1).value='TOTAL';
@@ -4279,13 +4281,14 @@ async function rpmXlsx(R){
    '2. Kolom DEVIASI dan STATUS terhitung otomatis: Sesuai bila selisih ≤ toleransi, Selisih bila melebihi toleransi.',
    '3. Telusuri vendor berstatus Selisih melalui sheet "Detail Faktur" (filter kolom Account Name), lalu tulis hasilnya di kolom KETERANGAN.',
    '4. Vendor yang hanya ada di buku besar dapat ditambahkan di baris kosong di bawah tabel sebelum baris TOTAL (sisipkan baris).']
-   .forEach(t=>{ ws.mergeCells(y,2,y,12); const c=ws.getCell(y,2); c.value=t; c.font={...S.fB,size:11}; c.alignment={wrapText:true,vertical:'top'}; ws.getRow(y).height=18; y++; });
+   .forEach(t=>{ ws.mergeCells(y,2,y,12); const c=ws.getCell(y,2); c.value=t; c.font={...S.fB,size:11}; c.alignment={vertical:'middle'}; ws.getRow(y).height=16; y++; });
   ws.views=[{state:'frozen',xSplit:3,ySplit:9,showGridLines:false,activeCell:'I10'}];
 
   // sheet detail faktur
   const D=rpmDetail(rpmOpts()), wd=wb.addWorksheet('Detail Faktur',{views:[{state:'frozen',ySplit:4,showGridLines:false}],
     pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,printTitlesRow:'4:4'}});
-  wd.columns=[7,26,16,13,22,20,34,38,18,18,14].map(w=>({width:w}));
+  const fit=(arr,min,max)=>Math.min(max,Math.max(min,Math.ceil(Math.max(0,...arr.map(v=>String(v||'').length))*1.15)+3));
+  wd.columns=[7,fit(D.map(x=>x.src),26,40),16,14,fit(D.map(x=>x.r.nofaktur),20,30),fit(D.map(x=>x.r.npwp),18,26),fit(D.map(x=>x.r.nama),26,70),fit(D.map(x=>'PPN '+(x.r.nama||'')),30,75),18,18,fit(D.map(x=>x.r.status),12,20)].map(w=>({width:w}));
   wd.mergeCells(1,1,1,11); wd.getCell(1,1).value=`DETAIL FAKTUR PEMBENTUK RINCIAN PAJAK MASUKAN — ${brandProyek().toUpperCase()}`; wd.getCell(1,1).font=S.fH;
   wd.mergeCells(2,1,2,11); wd.getCell(2,1).value=`${R.periode} · Akumulasi periode lalu: ${R.laluTxt}`; wd.getCell(2,1).font=S.fB;
   const hd=['NO','SUMBER','MASA PAJAK','TANGGAL FAKTUR','NOMOR FAKTUR','NPWP','NAMA VENDOR','ACCOUNT NAME','DPP','PPN','STATUS'];
@@ -4295,7 +4298,7 @@ async function rpmXlsx(R){
   const srcFill={'Akumulasi periode lalu':'FFF2F2F2','Debet · PM sudah dilapor':'FFE2EFDA','Kredit · PM belum dilapor':'FFFCE4D6'};
   D.forEach((x,i)=>{ const rr=5+i, r0=x.r, tg=/^\d{4}-\d{2}-\d{2}$/.test(r0.tanggal||'')?new Date(Date.UTC(+r0.tanggal.slice(0,4),+r0.tanggal.slice(5,7)-1,+r0.tanggal.slice(8,10))):(r0.tanggal||'');
     [i+1,x.src,masaLabel(x.m),tg,r0.nofaktur||'',r0.npwp||'',r0.nama||'','PPN '+String(r0.nama||'-').trim().toUpperCase(),+r0.dpp||0,+r0.ppn||0,r0.status||''].forEach((v,c)=>{
-      const z=wd.getCell(rr,c+1); z.value=v; z.font={...S.fB,size:11}; z.border={left:S.thin,right:S.thin,bottom:{style:'hair',color:{argb:'FFBFBFBF'}}};
+      const z=wd.getCell(rr,c+1); z.value=v; z.font={...S.fB,size:11}; z.alignment={vertical:'middle',horizontal:c===0||c===2||c===3?'center':c>=8&&c<=9?'right':'left'}; z.border={left:S.thin,right:S.thin,bottom:{style:'hair',color:{argb:'FFBFBFBF'}}};
       if(c===3&&v instanceof Date) z.numFmt='dd/mm/yyyy'; if(c>=8&&c<=9) z.numFmt='#,##0;-#,##0;0'; });
     wd.getCell(rr,2).fill={type:'pattern',pattern:'solid',fgColor:{argb:srcFill[x.src]}};
   });
