@@ -804,8 +804,8 @@ const START_YEAR = 2026;
 /* ================== KONFIGURASI SERVER (SUPABASE) ==================
    Isi dua baris di bawah ini dengan data dari Supabase → Project Settings → API,
    lalu unggah file ini ke hosting. Kosongkan untuk memakai penyimpanan browser saja. */
-const SUPABASE_URL      = 'https://usvbqxvapontbixvsphp.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_0v5T11gNs13nhFPvOHbmNQ_GKmB1V_k';
+const SUPABASE_URL      = 'https://dlgnonsvjayzlrlnfmme.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_mvl0RoHKR7wWDAMc9RATHg_pqz_a4BK';
 /* =================================================================== */
 const CLOUD_CFG_KEY='monitoring_cloud_cfg';
 const CLOUD=(()=>{ let c={url:SUPABASE_URL.trim(),key:SUPABASE_ANON_KEY.trim()};
@@ -3490,7 +3490,7 @@ function renderSettings(){
       <div class="card-h"><div><h3>Akun Admin</h3><p>Ubah nama, username dan password login</p></div></div>
       <form class="card-b" onsubmit="saveAccount(event)">
         <div class="field"><label>Nama tampilan</label><input class="input" id="sName" value="${esc(u.name||'')}" required></div>
-        <div class="field"><label>Username</label><input class="input" id="sUser" value="${esc(u.username)}" required ${CLOUD_ON?'readonly title="Username akun server tidak dapat diubah"':''}></div>
+        <div class="field"><label>Username</label><input class="input" id="sUser" value="${esc(u.username)}" required autocomplete="off" title="3–32 karakter: huruf, angka, titik, _ atau -"></div>
         <div class="row2">
           <div class="field"><label>Password lama</label><input class="input" id="sOld" type="password" required></div>
           <div class="field"><label>Password baru (opsional)</label><input class="input" id="sNew" type="password" minlength="8" placeholder="min. 8 karakter, huruf & angka"></div>
@@ -3578,7 +3578,7 @@ function openUserForm(i){
       <label class="fmt"><input type="radio" name="role" value="admin" ${u&&u.role!=='user'?'checked':''}><span>${icon('shield')}<b>Admin</b><small>Melihat, menambah, mengubah data &amp; mengelola akun</small></span></label></div></div>
     <div class="form-grid">
       <div class="field"><label>Nama Tampilan</label><input class="input" name="name" required value="${esc(u?u.name||'':'')}"></div>
-      <div class="field"><label>Username</label><input class="input" name="username" required value="${esc(u?u.username:'')}" autocomplete="off" ${u&&CLOUD_ON?'readonly':''}></div>
+      <div class="field"><label>Username</label><input class="input" name="username" required value="${esc(u?u.username:'')}" autocomplete="off"></div>
       <div class="field full"><label>${u?'Password Baru (kosongkan bila tidak diubah)':'Password'}</label>
         <div style="display:flex;gap:8px"><input class="input" name="password" id="ufPass" ${u?'':'required'} minlength="8" autocomplete="new-password" placeholder="min. 8 karakter, huruf & angka"><button type="button" class="btn btn-outline btn-sm" onclick="$('#ufPass').value=genPass()">Buat otomatis</button></div></div>
     </div></div>
@@ -3594,7 +3594,8 @@ async function saveUser(e,i){
     const u=DB.users[i];
     if(u.role!=='user'&&role==='user'&&u.active!==false&&adminCount()<=1){ toast('Minimal harus ada 1 admin aktif','error'); return; }
     if(CLOUD_ON) return cloudSaveUser(i,{name,un,pw,role});
-    u.name=name||un; u.username=un; u.role=role; if(pw) u.password=pw;
+    const self=u===currentUser(); u.name=name||un; u.username=un; u.role=role; if(pw) u.password=pw;
+    if(self){ const rem=(()=>{ try{ return !!localStorage.getItem('ppn_user_r'); }catch(_){ return false; } })(); session.clear(); session.set(un,rem); }
   } else if(CLOUD_ON) return cloudSaveUser(null,{name,un,pw,role});
   else DB.users.push({username:un,password:pw,name:name||un,role,active:true,recovery:genCode(),created:new Date().toISOString()});
   await save(); render();
@@ -3946,17 +3947,39 @@ async function cloudGetFile(id){
 async function cloudDelFile(id){ delete MEMFILES[id]; const {error}=await SB.storage.from(CLOUD.bucket).remove(['f/'+id]); if(error) console.warn(error); }
 /* ---------- Manajemen akun (admin) ---------- */
 function cloudTmpClient(){ return window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:'ppn-tmp-'+Date.now()}}); }
+const RENAME_SQL="-- =====================================================================\n--  GANTI USERNAME AKUN \u2014 MONITORING DATA PAJAK DUSEM SEGMEN-1\n--  Jalankan SEKALI di Supabase \u2192 SQL Editor (aman dijalankan ulang).\n--  Menambahkan fungsi admin_rename_user agar admin dapat mengganti\n--  username akun (pengunjung, admin lain, maupun akun admin sendiri) dari menu\n--  Pengaturan \u2192 Manajemen Akun \u2192 Ubah.\n-- =====================================================================\ncreate or replace function public.admin_rename_user(uid uuid, new_username text) returns void\nlanguage plpgsql security definer set search_path = public, extensions, auth as $$\ndeclare\n  v_user text := lower(trim(coalesce(new_username,'')));\n  v_mail text := v_user || '@dusem-segmen1.id';\nbegin\n  if not public.is_admin() then raise exception 'Hanya admin yang dapat mengganti username'; end if;\n  if v_user !~ '^[a-z0-9._-]{3,32}$' then raise exception 'Username 3\u201332 karakter: huruf, angka, titik, _ atau -'; end if;\n  if not exists(select 1 from public.profiles where id = uid) then raise exception 'Akun tidak ditemukan'; end if;\n  if exists(select 1 from public.profiles where username = v_user and id <> uid)\n     or exists(select 1 from auth.users where lower(email) = v_mail and id <> uid) then\n    raise exception 'Username sudah dipakai';\n  end if;\n\n  update auth.users\n     set email = v_mail,\n         raw_user_meta_data = coalesce(raw_user_meta_data,'{}'::jsonb) || jsonb_build_object('username', v_user),\n         email_confirmed_at = coalesce(email_confirmed_at, now()),\n         updated_at = now()\n   where id = uid;\n\n  update auth.identities\n     set identity_data = coalesce(identity_data,'{}'::jsonb) || jsonb_build_object('email', v_mail),\n         updated_at = now()\n   where user_id = uid and provider = 'email';\n\n  update public.profiles set username = v_user where id = uid;\nend $$;\n\nrevoke all on function public.admin_rename_user(uuid, text) from public, anon;\ngrant execute on function public.admin_rename_user(uuid, text) to authenticated;\nnotify pgrst, 'reload schema';\n";
+function renameSqlModal(){
+  openModal(`<div class="modal-h"><div><h3>Aktifkan Fitur Ganti Username</h3><p>Perlu dijalankan sekali di Supabase</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Server Supabase Anda belum memiliki fungsi <b>admin_rename_user</b>. Buka <b>Supabase → SQL Editor → New query</b>, tempel kode di bawah, klik <b>Run</b>, lalu ulangi ganti username.</div>
+      <textarea class="input" readonly style="width:100%;height:220px;font-family:monospace;font-size:11.5px;white-space:pre">${esc(RENAME_SQL)}</textarea></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Tutup</button><button class="btn btn-primary" onclick="(navigator.clipboard?navigator.clipboard.writeText(RENAME_SQL):Promise.reject()).then(()=>toast('Kode SQL disalin','success'),()=>toast('Salin manual dari kotak di atas'))">${icon('download')} Salin Kode SQL</button></div>`);
+}
+/* Ganti username di server (auth email + profil). Mengembalikan false bila fungsi SQL belum dipasang. */
+async function cloudRename(u,nu){
+  const old=u.username, self=u===currentUser();
+  const rr=await SB.rpc('admin_rename_user',{uid:u.id,new_username:nu});
+  if(rr.error){ if(/PGRST202|could not find the function|schema cache/i.test((rr.error.code||'')+' '+(rr.error.message||''))){ renameSqlModal(); return false; } throw new Error(cloudErr(rr.error)); }
+  try{ const t=localStorage.getItem('ppn_theme_'+old); if(t){ localStorage.setItem('ppn_theme_'+nu,t); localStorage.removeItem('ppn_theme_'+old); } }catch(e){}
+  u.username=nu;
+  if(self){ const rem=(()=>{ try{ return !!localStorage.getItem('ppn_user_r'); }catch(_){ return false; } })(); session.clear(); session.set(nu,rem);
+    try{ await SB.auth.refreshSession(); }catch(e){} }
+  return true;
+}
 async function cloudSaveUser(i,{name,un,pw,role}){
   const btn=document.querySelector('#userForm button[type=submit]'); if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…'; }
   try{
     if(i!=null){
-      const u=DB.users[i];
+      const u=DB.users[i], nu=un.toLowerCase(), old=u.username, ren=nu!==old;
+      if(ren){
+        if(!await cloudRename(u,nu)){ if(btn){ btn.disabled=false; btn.innerHTML=icon('check')+' Simpan'; } return; }
+      }
       const {data,error}=await SB.from('profiles').update({name:name||u.username,role}).eq('id',u.id).select('id');
       if(error) throw new Error(cloudErr(error)); if(!data||!data.length) throw new Error('Akun tidak ditemukan atau akses ditolak');
       if(pw){ const r=await SB.rpc('admin_set_password',{uid:u.id,new_password:pw}); if(r.error) throw new Error(cloudErr(r.error)); }
-      audit('ubah akun',`${u.username}${pw?' · password direset':''} · ${role==='admin'?'Admin':'Pengunjung'}`);
-      await cloudLoadUsers(); render();
-      if(pw) showCred(u.username,pw,role); else { closeModal(); toast('Akun diperbarui','success'); }
+      audit('ubah akun',`${ren?old+' → ':''}${u.username}${pw?' · password direset':''} · ${role==='admin'?'Admin':'Pengunjung'}`);
+      await cloudLoadUsers(); if(u.id===CLOUD.uid) showApp(); else render();
+      if(pw||ren) showCred(u.username,pw||'(tidak berubah)',role); else { closeModal(); toast('Akun diperbarui','success'); }
+      if(ren) toast(u.id===CLOUD.uid?`Username Anda diganti: ${old} → ${u.username}. Gunakan username baru saat login berikutnya.`:`Username diganti: ${old} → ${u.username}. Pengguna wajib login ulang dengan username baru.`,'success');
       return;
     }
     if(!pw) throw new Error('Password wajib diisi');
@@ -3994,13 +4017,16 @@ async function cloudVerifyPass(username,pw){
 }
 async function cloudSaveAccount(e){
   e.preventDefault();
-  const u=currentUser(), nw=$('#sNew').value, nm=$('#sName').value.trim()||u.username;
+  const u=currentUser(), nw=$('#sNew').value, nm=$('#sName').value.trim()||u.username, nu=$('#sUser').value.trim().toLowerCase(), old=u.username;
+  if(!/^[a-z0-9._-]{3,32}$/.test(nu)){ toast('Username 3–32 karakter: huruf, angka, titik, _ atau -','error'); return; }
+  if(nu!==old&&DB.users.some(x=>x!==u&&x.username.toLowerCase()===nu)){ toast('Username sudah dipakai','error'); return; }
   if(nw&&pwCheck(nw)){ toast(pwCheck(nw),'error'); return; }
   if(!await cloudVerifyPass(u.username,$('#sOld').value)){ toast('Password lama salah','error'); return; }
+  if(nu!==old){ try{ if(!await cloudRename(u,nu)) return; }catch(err){ toast(err.message,'error'); return; } audit('ubah akun',`${old} → ${nu} (akun sendiri)`); }
   const {error}=await SB.from('profiles').update({name:nm}).eq('id',u.id);
   if(error){ toast(cloudErr(error),'error'); return; }
   if(nw){ const r=await SB.auth.updateUser({password:nw}); if(r.error){ toast(cloudErr(r.error),'error'); return; } }
-  u.name=nm; showApp(); toast('Akun berhasil diperbarui','success');
+  u.name=nm; await cloudLoadUsers(); showApp(); toast(nu!==old?`Akun diperbarui · username baru: ${nu}`:'Akun berhasil diperbarui','success');
 }
 async function saveMyPass(e){
   e.preventDefault(); if(!isAdmin()) return;
