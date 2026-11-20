@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
 <script>
 /* Memuat library dengan CDN cadangan: jika satu server lambat/diblokir, otomatis coba server lain */
 window.LIB_SRC={};
@@ -675,6 +675,103 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .fg-help b{font-size:14.5px}
 .fg-ok{background:#16a34a;color:#fff;border-color:#16a34a;min-width:110px}.fg-ok:hover{background:#15803d;color:#fff}
 .fg-help p{margin:5px 0 0;font-size:13px;line-height:1.6;color:var(--muted)}
+
+/* ---------- LOGIN · desain "Faktur Emerald" ---------- */
+#login{--gold:#c9a96a;--gold-2:#e6cf9a;--cream:#fbf7ec;--ink:#10251c;--serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  background:radial-gradient(1100px 700px at 18% 12%,rgba(var(--primary-rgb),.30),transparent 60%),radial-gradient(900px 700px at 85% 90%,rgba(0,0,0,.35),transparent 65%),linear-gradient(150deg,var(--primary-deep) 0%,#06140f 100%);color:#fff}
+#login .lg-hero{background:transparent}
+#login .lg-hero::before{background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px)}
+#login .orb,#login .ring{display:none}
+.guil{position:absolute;pointer-events:none;fill:none;stroke:var(--gold);stroke-width:.55}
+.guil .g2{stroke-width:.45;opacity:.8}
+.guil.gh1{width:560px;height:560px;left:-170px;bottom:-200px;opacity:.20;animation:spin 240s linear infinite}
+.guil.gh2{width:300px;height:300px;right:-70px;top:-90px;opacity:.10;animation:spin 300s linear infinite reverse}
+.guil.gp{width:520px;height:520px;right:-190px;top:-170px;opacity:.10}
+#login .lg-hero>.guil,#login .lg-panel>.guil{position:absolute;z-index:0}
+#login .hero-title{font-family:var(--serif);font-weight:500;letter-spacing:.005em;line-height:1.08;font-size:clamp(40px,4.5vw,66px);margin-top:0;color:#f6efe0;max-width:none}
+#login .hero-title span{font-style:italic;font-weight:500;background:linear-gradient(90deg,#b8935a 0%,var(--gold-2) 55%,#d9bc83 100%);-webkit-background-clip:text;background-clip:text;color:transparent;margin-top:2px;padding-right:.08em}
+/* Ilustrasi kertas faktur */
+.hero-art{position:relative;height:230px;width:470px;max-width:100%;margin:0 0 34px 10px}
+.ha-bp,.ha-fp{position:absolute;border-radius:3px;box-shadow:0 22px 40px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.2)}
+.ha-bp{left:0;top:38px;width:240px;height:150px;background:#c9d3c6;transform:rotate(-8deg);padding:22px 22px;animation:haFloat 9s ease-in-out infinite}
+.ha-bp b{display:block;font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:.04em;color:#1f5a3c;border-bottom:1.5px solid #1f5a3c;padding-bottom:6px;margin-bottom:14px;white-space:nowrap}
+.ha-bp i{display:block;height:7px;border-radius:4px;background:#a9b6a6;margin-bottom:9px}.ha-bp i.s{width:60%}
+.ha-fp{left:140px;top:0;width:320px;min-height:214px;background:#faf5e8;color:#2b2a24;transform:rotate(3deg);padding:20px 22px 16px;animation:haFloat 9s ease-in-out -4.5s infinite;
+  background-image:linear-gradient(transparent 0,transparent),repeating-linear-gradient(0deg,transparent 0 26px,rgba(0,0,0,.015) 26px 27px)}
+.ha-h{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #1f5a3c;padding-bottom:8px;margin-bottom:8px}
+.ha-h b{font-family:var(--serif);font-weight:700;font-size:21px;letter-spacing:.05em;color:#1f5a3c}
+.ha-h small{font-family:var(--serif);font-size:9.5px;line-height:1.25;text-align:right;color:#6d6a5c;letter-spacing:.04em}
+.ha-l,.ha-t{display:flex;justify-content:space-between;font-family:var(--serif);font-size:12px;padding:5px 0;border-bottom:1px dashed #d8d0bb;color:#3b3a32}
+.ha-l em,.ha-t em{font-style:normal;color:#77735f}
+.ha-t{border-bottom:0;border-top:1.5px solid #2b2a24;margin-top:4px;font-weight:700;font-size:12.5px;letter-spacing:.03em;color:#1c1b17}
+.ha-stamp{position:absolute;right:16px;top:58px;width:104px;height:104px;transform:rotate(-14deg);color:#b4372f;opacity:.82;mix-blend-mode:multiply}
+.ha-stamp svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2.6}
+.ha-stamp svg .th{stroke-width:1}
+.ha-stamp .arc{fill:currentColor;stroke:none;font-family:var(--serif);font-size:9.5px;font-weight:700;letter-spacing:.14em}
+.ha-stamp b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-6deg);font-family:var(--serif);font-weight:700;font-size:12.5px;letter-spacing:.08em;border-top:1.5px solid;border-bottom:1.5px solid;padding:1px 3px;background:rgba(250,245,232,.6);white-space:nowrap}
+@keyframes haFloat{0%,100%{translate:0 0}50%{translate:0 -6px}}
+@media (max-height:820px){.hero-art{height:190px;margin-bottom:22px;transform:scale(.85);transform-origin:left top}}
+@media (max-width:1240px){.hero-art{transform:scale(.82);transform-origin:left top;height:196px;margin-bottom:20px}}
+.hero-sys{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-top:22px;padding-left:16px;border-left:2px solid rgba(201,169,106,.55)}
+#login .hero-chip{background:transparent;border:0;padding:0;backdrop-filter:none;font-size:11.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.hero-desc{font-size:14.5px;line-height:1.65;color:rgba(255,255,255,.72);max-width:560px}
+#login .hero-mods{margin-top:26px}
+#login .hero-mods span{background:rgba(255,255,255,.04);border-color:rgba(201,169,106,.28);color:rgba(255,255,255,.86);backdrop-filter:none}
+#login .hero-mods svg.i{color:var(--gold)}
+#login .hero-foot .copy{opacity:.6}
+#login .hero-clock b{font-family:var(--serif);font-weight:600;font-size:30px;color:var(--gold-2);letter-spacing:.03em;font-variant-numeric:lining-nums tabular-nums}
+#login .lg-panel{overflow:hidden;color:var(--ink)}
+#login .lg-tools .icon-btn{color:rgba(255,255,255,.8)}
+#login .lg-tools .icon-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+#login .lg-tools .popover{color:var(--text)}
+#login .lg-box{position:relative;z-index:1;max-width:450px;background:var(--cream);padding:38px 40px 30px;border-radius:4px;box-shadow:0 30px 70px rgba(0,0,0,.45),0 0 0 1px rgba(201,169,106,.25)}
+#login .lg-box::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,#9c7a3c,var(--gold-2) 50%,#9c7a3c)}
+.lg-brand{display:flex;align-items:center;gap:16px;margin-bottom:24px;min-height:44px}
+.lg-brand .logos{flex-wrap:nowrap;gap:8px;flex:none}
+#login .lg-brand .logos{margin:0}
+.lg-brand .logo-box.sm{height:44px}
+.lg-brand .logo-box.sm img{max-width:82px}
+.lg-kso{flex:1;min-width:0;padding-left:16px;border-left:1.5px solid rgba(156,122,60,.45);font-family:var(--serif);font-weight:700;font-size:21px;line-height:1.1;letter-spacing:.06em;color:var(--ink);text-wrap:balance}
+.lg-kso[hidden]{display:none}
+.lg-kso .nw{white-space:nowrap}
+.lg-kso>span:first-child{display:inline-block}
+.lg-brand:has(.logo-box:nth-child(3)) .lg-kso{padding-left:12px}
+.lg-brand:has(.logo-box:nth-child(3)){gap:12px}
+.lg-brand:has(.logo-box:nth-child(3)) .logos{gap:6px}
+.lg-brand:has(.logo-box:nth-child(3)) .logo-box.sm{height:36px}
+.lg-brand:has(.logo-box:nth-child(3)) .logo-box.sm.boxed{padding:4px 7px}
+.lg-brand:has(.logo-box:nth-child(3)) .logo-box.sm img{max-width:54px}
+#login .lg-kicker{background:transparent;border:1px solid rgba(var(--primary-rgb),.35);color:var(--primary-deep);font-size:10.5px;letter-spacing:.2em;padding:6px 13px;margin-bottom:16px}
+#login .lg-box h2{font-family:var(--serif);font-weight:600;font-size:38px;letter-spacing:0;color:var(--ink);line-height:1.1}
+#login .lg-box .sub{color:#6b6a5f;margin:6px 0 26px}
+#login .lg-box .field label{color:var(--ink);font-weight:700}
+#login .input-ic .input{background:#fff;border:1px solid #ddd5c2;border-radius:4px;height:50px;color:var(--ink)}
+#login .input-ic .input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.14)}
+#login .input-ic>svg.i,#login .input-ic .eye{color:#8a8676}
+#login .lg-row label{color:#5d5c52}
+#login .lg-row .link{color:var(--primary-deep)}
+#login .btn-lg{background:var(--primary-deep);color:#f6efe0;border-radius:4px;letter-spacing:.06em;font-weight:700;box-shadow:inset 0 -3px 0 var(--gold),0 14px 28px rgba(0,0,0,.18)}
+#login .btn-lg:hover{background:var(--ink);filter:none}
+#login .secure{color:#7d7b6e}
+#login .secure svg.i{color:#9c7a3c}
+#login .lg-box .link{color:var(--primary-deep)}
+#login .login-err{border-radius:4px}
+#login .lg-foot{color:rgba(255,255,255,.45)}
+[data-mode="dark"] #login .lg-box{background:#0f1c17;color:#e9e3d3;box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 0 1px rgba(201,169,106,.3)}
+[data-mode="dark"] #login .lg-box h2,[data-mode="dark"] #login .lg-kso,[data-mode="dark"] #login .lg-box .field label{color:#f1ead9}
+[data-mode="dark"] #login .lg-kicker{color:var(--gold-2);border-color:rgba(201,169,106,.4)}
+[data-mode="dark"] #login .lg-box .sub,[data-mode="dark"] #login .lg-row label,[data-mode="dark"] #login .secure{color:#a9a493}
+[data-mode="dark"] #login .input-ic .input{background:#13241d;border-color:#2a3d34;color:#f1ead9}
+[data-mode="dark"] #login .lg-row .link,[data-mode="dark"] #login .lg-box .link{color:var(--gold-2)}
+[data-mode="dark"] #login .btn-lg{background:#0a1712;border:1px solid rgba(201,169,106,.35)}
+@media (max-width:960px){
+  .hero-art{display:none}
+  #login .lg-box{padding:30px 22px 24px}
+  .lg-brand .logos{display:flex!important}
+  .lg-kso{font-size:18px}
+  .guil.gp{display:none}
+}
+@media (max-width:420px){ .lg-brand{flex-wrap:wrap} .lg-kso{border-left:0;padding-left:0;flex-basis:100%} }
 </style>
 </head>
 <body>
@@ -684,9 +781,22 @@ tfoot td{font-weight:800;background:var(--surface-2)}
   <div class="lg-hero">
     <i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><i class="ring r1"></i><i class="ring r2"></i>
     <div class="logos" data-logos=""></div>
+    <svg class="guil gh1" viewBox="0 0 600 600" aria-hidden="true"><g class="g1"><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(0 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(5 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(10 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(15 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(20 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(25 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(30 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(35 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(40 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(45 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(50 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(55 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(60 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(65 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(70 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(75 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(80 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(85 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(90 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(95 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(100 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(105 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(110 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(115 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(120 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(125 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(130 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(135 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(140 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(145 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(150 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(155 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(160 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(165 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(170 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(175 300 300)"/></g><g class="g2"><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(3.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(10.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(18.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(25.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(33.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(40.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(48.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(55.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(63.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(70.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(78.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(85.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(93.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(100.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(108.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(115.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(123.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(130.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(138.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(145.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(153.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(160.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(168.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(175.5 300 300)"/></g><circle cx="300" cy="300" r="290"/><circle cx="300" cy="300" r="282"/></svg><svg class="guil gh2" viewBox="0 0 600 600" aria-hidden="true"><g class="g1"><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(0 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(5 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(10 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(15 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(20 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(25 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(30 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(35 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(40 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(45 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(50 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(55 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(60 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(65 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(70 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(75 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(80 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(85 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(90 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(95 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(100 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(105 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(110 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(115 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(120 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(125 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(130 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(135 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(140 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(145 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(150 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(155 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(160 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(165 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(170 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(175 300 300)"/></g><g class="g2"><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(3.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(10.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(18.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(25.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(33.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(40.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(48.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(55.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(63.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(70.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(78.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(85.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(93.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(100.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(108.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(115.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(123.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(130.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(138.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(145.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(153.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(160.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(168.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(175.5 300 300)"/></g><circle cx="300" cy="300" r="290"/><circle cx="300" cy="300" r="282"/></svg>
     <div>
-      <span class="hero-chip"><i class="live"></i> Sistem Monitoring Pajak Proyek</span>
-      <h1 class="hero-title">MONITORING DATA PAJAK<span data-brand="proyek">PROYEK DUSEM SEGMEN-1</span></h1><div class="hero-kso" data-brand="kso" hidden></div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="ha-bp"><b>BUKTI POTONG</b><i></i><i></i><i></i><i class="s"></i></div>
+        <div class="ha-fp">
+          <div class="ha-h"><b>FAKTUR PAJAK</b><small>KODE 010<br><span id="haPeriod">NOVEMBER 2026</span></small></div>
+          <div class="ha-l"><span>Dasar Pengenaan Pajak</span><em>Rp ••••••</em></div>
+          <div class="ha-l"><span>PPN Keluaran</span><em>Rp ••••••</em></div>
+          <div class="ha-l"><span>PPN Masukan</span><em>Rp ••••••</em></div>
+          <div class="ha-l"><span>PPh 21 Karyawan</span><em>Rp ••••••</em></div>
+          <div class="ha-t"><span>TOTAL KEWAJIBAN</span><em>Rp ••••••</em></div>
+          <div class="ha-stamp"><svg viewBox="0 0 120 120"><defs><path id="haArc" d="M60,60 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0"/></defs><circle cx="60" cy="60" r="54"/><circle cx="60" cy="60" r="48" class="th"/><text class="arc"><textPath href="#haArc" startOffset="2%">✦ DUSEM SEGMEN-1 ✦ DUSEM SEGMEN-1</textPath></text></svg><b>TERVERIFIKASI</b></div>
+        </div>
+      </div>
+      <h1 class="hero-title">Monitoring Data Pajak<span data-brand="proyek-cap">Proyek Dusem Segmen-1</span></h1>
+      <div class="hero-sys"><span class="hero-chip"><i class="live"></i> Sistem Monitoring Pajak Proyek</span><p class="hero-desc">Seluruh dokumen perpajakan proyek tersusun rapi dalam satu tempat.</p></div>
       <div class="hero-mods">
         <span><svg class="i"><use href="#i-in"/></svg>PPN Masukan &amp; Keluaran</span>
         <span><svg class="i"><use href="#i-users"/></svg>PPh 21</span>
@@ -699,7 +809,7 @@ tfoot td{font-weight:800;background:var(--surface-2)}
       <div class="hero-clock" id="heroClock"></div>
     </div>
   </div>
-  <div class="lg-panel">
+  <div class="lg-panel"><svg class="guil gp" viewBox="0 0 600 600" aria-hidden="true"><g class="g1"><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(0 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(5 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(10 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(15 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(20 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(25 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(30 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(35 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(40 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(45 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(50 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(55 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(60 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(65 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(70 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(75 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(80 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(85 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(90 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(95 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(100 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(105 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(110 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(115 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(120 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(125 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(130 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(135 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(140 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(145 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(150 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(155 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(160 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(165 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(170 300 300)"/><ellipse cx="300" cy="300" rx="280" ry="96" transform="rotate(175 300 300)"/></g><g class="g2"><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(3.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(10.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(18.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(25.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(33.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(40.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(48.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(55.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(63.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(70.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(78.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(85.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(93.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(100.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(108.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(115.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(123.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(130.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(138.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(145.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(153.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(160.5 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(168.0 300 300)"/><ellipse cx="300" cy="300" rx="190" ry="60" transform="rotate(175.5 300 300)"/></g><circle cx="300" cy="300" r="290"/><circle cx="300" cy="300" r="282"/></svg>
     <div class="lg-tools">
       <div style="position:relative">
         <button class="icon-btn" title="Tema warna" onclick="togglePop(event,'loginPop')"><svg class="i"><use href="#i-palette"/></svg></button>
@@ -708,10 +818,10 @@ tfoot td{font-weight:800;background:var(--surface-2)}
       <button class="icon-btn" title="Mode terang/gelap" onclick="setMode(themeOf().mode==='dark'?'light':'dark')"><svg class="i"><use href="#i-moon"/></svg></button>
     </div>
     <form class="lg-box" id="loginForm" autocomplete="off" novalidate>
-      <div class="logos" data-logos="sm"></div>
-      <div class="lg-kicker"><svg class="i" style="width:14px;height:14px"><use href="#i-shield"/></svg> AREA ADMINISTRATOR</div>
+      <div class="lg-brand"><div class="logos" data-logos="sm"></div><div class="lg-kso" data-brand="kso" hidden></div></div>
+      <div class="lg-kicker"><svg class="i" style="width:13px;height:13px"><use href="#i-shield"/></svg> TAX GOVERNANCE PORTAL</div>
       <h2>Selamat datang kembali</h2>
-      <p class="sub">Masuk untuk mengelola data pajak proyek.</p>
+      <p class="sub">Silahkan Masuk untuk mengelola data pajak proyek.</p>
       <div class="login-err" id="loginErr" hidden></div>
       <div class="field"><label for="lu">Username</label>
         <div class="input-ic"><svg class="i"><use href="#i-user"/></svg><input class="input" id="lu" placeholder="Masukkan username" autocomplete="username"></div></div>
@@ -1474,7 +1584,7 @@ async function doReset(e){
   toast('Password berhasil diatur ulang. Silakan masuk dengan password baru.','success');
 }
 function currentUser(){ const u=session.get(); return DB.users.find(x=>x.username===u); }
-function logout(){ try{ const t=themeOf(); if(!$('#app').hidden){ LOGIN_THEME={...t}; localStorage.setItem(THEME_KEY,JSON.stringify(t)); } }catch(e){} if(CLOUD_ON&&CLOUD.uid) cloudLogout(); session.clear(); $('#app').hidden=true; $('#login').hidden=false; document.body.classList.remove('ro'); closeSidebar(); applyTheme(); tickClock(); }
+function logout(){ setTimeout(fitKso,60); try{ const t=themeOf(); if(!$('#app').hidden){ LOGIN_THEME={...t}; localStorage.setItem(THEME_KEY,JSON.stringify(t)); } }catch(e){} if(CLOUD_ON&&CLOUD.uid) cloudLogout(); session.clear(); $('#app').hidden=true; $('#login').hidden=false; document.body.classList.remove('ro'); closeSidebar(); applyTheme(); tickClock(); }
 function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 function showApp(){
   const u=currentUser(); if(!u){ logout(); return; }
@@ -1490,6 +1600,7 @@ function tickClock(){
   let t; try{ t=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',timeZoneName:'short'}); }catch(_){ t=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
   el.innerHTML=`<b>${t}</b>${d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}`;
   $('#yearNow').textContent=d.getFullYear();
+  { const hp=$('#haPeriod'); if(hp) hp.textContent=d.toLocaleDateString('id-ID',{month:'long',year:'numeric'}).toUpperCase(); }
 }
 setInterval(tickClock,15000);
 
@@ -4077,13 +4188,20 @@ function cloudDisconnect(){
 const DEF_PROYEK='PROYEK DUSEM SEGMEN-1';
 const brandProyek=()=>String((DB.settings||{}).proyek||'').trim()||DEF_PROYEK;
 const brandKso=()=>String((DB.settings||{}).kso||'').trim();
+/* Teks KSO di samping logo login: ukuran otomatis menyesuaikan lebar (2 atau 3 logo) agar tetap sejajar & tidak terpotong */
+function fitKso(){ document.querySelectorAll('.lg-kso').forEach(el=>{ if(el.hidden||!el.offsetParent) return; let f=21; el.style.fontSize=f+'px';
+  while(f>12 && el.scrollWidth>el.clientWidth+1){ f-=.5; el.style.fontSize=f+'px'; } }); }
+window.addEventListener('resize',()=>{ clearTimeout(window.__fk); window.__fk=setTimeout(fitKso,120); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>fitKso());
 function applyBrand(){
   const p=brandProyek(), k=brandKso(), cap=s=>s.toLowerCase().replace(/(^|[\s\-(])\S/g,c=>c.toUpperCase());
   APP_KICKER='MONITORING DATA PAJAK '+p.toUpperCase();
   document.title='Monitoring Data Pajak — '+cap(p);
   document.querySelectorAll('[data-brand="proyek"]').forEach(el=>el.textContent=p.toUpperCase());
   document.querySelectorAll('[data-brand="proyek-cap"]').forEach(el=>el.textContent=cap(p));
-  document.querySelectorAll('[data-brand="kso"]').forEach(el=>{ el.textContent=k.toUpperCase(); el.hidden=!k; });
+  document.querySelectorAll('[data-brand="kso"]').forEach(el=>{ const K=k.toUpperCase(); el.hidden=!k;
+    if(el.classList.contains('lg-kso')){ const m=K.match(/^(\S+)\s+(.+)$/); el.innerHTML=m?`<span>${esc(m[1])}</span> <span class="nw">${esc(m[2])}</span>`:esc(K); } else el.textContent=K; });
+  requestAnimationFrame(fitKso);
 }
 async function saveIdentity(e){
   e.preventDefault();
@@ -4704,11 +4822,11 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>960) closeSidebar();
   if(CLOUD_ON){
     const pk=$('#pkgLink'); if(pk) pk.hidden=true;
     const back=!!(await cloudResume());
-    if(back) showApp(); else { $('#login').hidden=false; tickClock(); cloudBranding(); }
+    if(back) showApp(); else { $('#login').hidden=false; tickClock(); setTimeout(fitKso,30); cloudBranding(); }
     return;
   }
   { const pk=$('#pkgLink'); if(pk) pk.insertAdjacentHTML('afterend','<div class="secure" style="margin-top:6px"><a class="link" onclick="openCloudSetup()">Hubungkan ke server (Supabase)</a></div>'); }
-  if(currentUser()) showApp(); else { $('#login').hidden=false; tickClock(); }
+  if(currentUser()) showApp(); else { $('#login').hidden=false; tickClock(); setTimeout(fitKso,30); }
   if(STORAGE_MODE==='memory') toast('Penyimpanan browser diblokir — data hanya sementara. Buka file langsung di Chrome/Edge.','error');
 })();
 </script>
