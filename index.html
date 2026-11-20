@@ -669,6 +669,12 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .al-gc ol{margin:8px 0 0;padding-left:22px;font-size:12.5px;line-height:1.6}
 @media(max-width:900px){.al-head{grid-template-columns:1fr 1fr}.al-gt{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.al-head{grid-template-columns:1fr}.al-gt{grid-template-columns:1fr}.al-b{padding-left:14px}.al-chips{display:none}}
+.fg-help{display:flex;gap:14px;align-items:flex-start;padding:16px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(135deg,rgba(var(--primary-rgb),.07),transparent 70%)}
+.fg-ic{flex:0 0 42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(var(--primary-rgb),.12);color:var(--primary)}
+.fg-ic svg.i{width:20px;height:20px}
+.fg-help b{font-size:14.5px}
+.fg-ok{background:#16a34a;color:#fff;border-color:#16a34a;min-width:110px}.fg-ok:hover{background:#15803d;color:#fff}
+.fg-help p{margin:5px 0 0;font-size:13px;line-height:1.6;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -798,7 +804,7 @@ const START_YEAR = 2026;
 /* ================== KONFIGURASI SERVER (SUPABASE) ==================
    Isi dua baris di bawah ini dengan data dari Supabase → Project Settings → API,
    lalu unggah file ini ke hosting. Kosongkan untuk memakai penyimpanan browser saja. */
-const SUPABASE_URL      = 'https://usvbqxvapontbixvsphp.supabase.co';
+const SUPABASE_URL      = 'https://usvbqxvapontbixvsphp.supabase.cohttps://usvbqxvapontbixvsphp.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_0v5T11gNs13nhFPvOHbmNQ_GKmB1V_k';
 /* =================================================================== */
 const CLOUD_CFG_KEY='monitoring_cloud_cfg';
@@ -1076,10 +1082,9 @@ async function loadDB(){
   }
 }
 let DB=defaultDB();
-try{ const t=JSON.parse(localStorage.getItem(THEME_KEY)||'null'); if(t) Object.assign(DB.settings,t); }catch(e){}
+let LOGIN_THEME={}; try{ LOGIN_THEME=JSON.parse(localStorage.getItem(THEME_KEY)||'null')||{}; }catch(e){}
 let saveChain=Promise.resolve(true);
 function save(){
-  try{ localStorage.setItem(THEME_KEY,JSON.stringify({color:DB.settings.color,mode:DB.settings.mode})); }catch(e){}
   saveChain=saveChain.then(async()=>{
     if(STORAGE_MODE==='cloud') return await cloudSave();
     if(STORAGE_MODE==='idb') await idbPut('db',DB);
@@ -1281,14 +1286,23 @@ function applyTheme(){
   r.dataset.mode=th.mode;
   document.querySelector('meta[name=theme-color]').content=c;
 }
+/* Tema per akun: setiap akun (admin maupun pengunjung) punya tema sendiri, tidak saling memengaruhi */
+const THEME_DEF={color:THEMES[0].color,mode:'light'};
+function themeUser(){ return (typeof session!=='undefined'&&!$('#app').hidden)?currentUser():null; }
+function userTheme(u){ if(!u) return null; if(u.theme&&(u.theme.color||u.theme.mode)) return u.theme;
+  try{ const t=JSON.parse(localStorage.getItem('ppn_theme_'+u.username)||'null'); if(t){ u.theme=t; return t; } }catch(e){} return null; }
+function setUserTheme(u,patch){ u.theme={...themeOf(),...patch}; try{ localStorage.setItem('ppn_theme_'+u.username,JSON.stringify(u.theme)); }catch(e){} }
 function setColor(c){
   if(!/^#[0-9a-f]{6}$/i.test(c)){ toast('Kode warna tidak valid (contoh: #2563EB)','error'); return; }
-  const u=$('#app').hidden?null:currentUser();
-  if(u&&u.role==='user') u.theme={...themeOf(),color:c.toLowerCase()}; else DB.settings.color=c.toLowerCase();
-  save(); applyTheme(); refreshThemeUI();
+  const u=themeUser();
+  if(u) setUserTheme(u,{color:c.toLowerCase()}); else LOGIN_THEME.color=c.toLowerCase();
+  saveTheme(u); applyTheme(); refreshThemeUI();
 }
-function setMode(m){ const u=$('#app').hidden?null:currentUser(); if(u&&u.role==='user') u.theme={...themeOf(),mode:m}; else DB.settings.mode=m; save(); applyTheme(); refreshThemeUI(); }
-function themeOf(){ const u=(typeof session!=='undefined'&&!$('#app').hidden)?currentUser():null, t=(u&&u.role==='user'&&u.theme)||{}; return {color:t.color||DB.settings.color, mode:t.mode||DB.settings.mode}; }
+function setMode(m){ const u=themeUser(); if(u) setUserTheme(u,{mode:m}); else LOGIN_THEME.mode=m; saveTheme(u); applyTheme(); refreshThemeUI(); }
+function saveTheme(u){ try{ localStorage.setItem(THEME_KEY,JSON.stringify(themeOf())); }catch(e){} if(u&&!CLOUD_ON) save(); }
+function themeOf(){ const u=themeUser();
+  if(u){ const t=userTheme(u)||{}, d=u.role==='user'?THEME_DEF:{color:DB.settings.color||THEME_DEF.color,mode:DB.settings.mode||THEME_DEF.mode}; return {color:t.color||d.color, mode:t.mode||d.mode}; }
+  return {color:LOGIN_THEME.color||THEME_DEF.color, mode:LOGIN_THEME.mode||THEME_DEF.mode}; }
 function refreshThemeUI(){
   ['themePop','loginPop'].forEach(id=>{ const p=document.getElementById(id); if(p && !p.hidden) renderThemePop(id); });
   if(!$('#app').hidden) render();
@@ -1427,8 +1441,11 @@ $('#loginForm').addEventListener('submit',async e=>{
 });
 function openForgot(){
   if(CLOUD_ON){ openModal(`<div class="modal-h"><div><h3>Lupa Password</h3><p>Atur ulang password akun</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
-    <div class="modal-b"><div class="note" style="margin:0">${icon('key')} Hubungi <b>admin</b> proyek. Admin dapat membuat password baru untuk akun Anda melalui menu <b>Pengaturan → Manajemen Akun → Ubah</b>. Setelah masuk, Anda dapat menggantinya sendiri di menu <b>Tema</b>.</div></div>
-    <div class="modal-f"><button class="btn btn-primary" onclick="closeModal()">Mengerti</button></div>`,'sm'); return; }
+    <div class="modal-b"><div class="fg-help">
+      <div class="fg-ic">${icon('key')}</div>
+      <div><b>Butuh bantuan?</b><p>Silakan hubungi Admin Proyek untuk meminta pengaturan ulang kata sandi. Admin akan membantu memulihkan akses ke akun Anda.</p></div>
+    </div></div>
+    <div class="modal-f"><button class="btn fg-ok" onclick="closeModal()">Mengerti</button></div>`,'sm'); return; }
   openModal(`
     <div class="modal-h"><div><h3>Lupa Password</h3><p>Atur ulang password menggunakan kode pemulihan</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <form class="modal-b" id="fgForm" onsubmit="doReset(event)">
@@ -1457,7 +1474,7 @@ async function doReset(e){
   toast('Password berhasil diatur ulang. Silakan masuk dengan password baru.','success');
 }
 function currentUser(){ const u=session.get(); return DB.users.find(x=>x.username===u); }
-function logout(){ if(CLOUD_ON&&CLOUD.uid) cloudLogout(); session.clear(); $('#app').hidden=true; $('#login').hidden=false; document.body.classList.remove('ro'); closeSidebar(); applyTheme(); tickClock(); }
+function logout(){ try{ const t=themeOf(); if(!$('#app').hidden){ LOGIN_THEME={...t}; localStorage.setItem(THEME_KEY,JSON.stringify(t)); } }catch(e){} if(CLOUD_ON&&CLOUD.uid) cloudLogout(); session.clear(); $('#app').hidden=true; $('#login').hidden=false; document.body.classList.remove('ro'); closeSidebar(); applyTheme(); tickClock(); }
 function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 function showApp(){
   const u=currentUser(); if(!u){ logout(); return; }
@@ -3507,7 +3524,7 @@ function renderSettings(){
 function themeCard(){
   const cur=themeOf().color, md=themeOf().mode;
   return `<div class="card mb">
-    <div class="card-h"><div><h3>Tema Warna</h3><p>${THEMES.length} pilihan warna siap pakai, atau tentukan warna sendiri · Aktif: <b>${esc(themeName(cur))}</b>${isAdmin()?' · tema ini juga menjadi tampilan bawaan halaman login':''}</p></div>
+    <div class="card-h"><div><h3>Tema Warna</h3><p>${THEMES.length} pilihan warna siap pakai, atau tentukan warna sendiri · Aktif: <b>${esc(themeName(cur))}</b> · hanya berlaku untuk akun Anda</p></div>
       <div class="mode-toggle" style="width:220px"><button class="${md==='light'?'active':''}" onclick="setMode('light')">☀️ Terang</button><button class="${md==='dark'?'active':''}" onclick="setMode('dark')">🌙 Gelap</button></div></div>
     <div class="card-b theme-side">
       <div>${THEME_GROUPS.map(g=>`<div class="pal-group"><h4>${g.g}</h4><div class="swatches">${g.c.map(([n,c])=>`
@@ -3531,7 +3548,7 @@ function renderTema(){
   <div class="card mb"><div class="card-b" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
     <span class="ico" style="width:44px;height:44px">${icon('eye')}</span>
     <div style="flex:1;min-width:220px"><b style="font-size:15px">Halo, ${esc(u.name||u.username)}</b>
-      <div style="color:var(--muted);font-size:13px">Anda masuk sebagai <b>Pengunjung</b>: dapat melihat seluruh data dan mengunduh laporan (PDF/Excel) serta dokumen, tetapi tidak dapat menambah, mengubah, atau menghapus data. Pilihan tema di bawah hanya berlaku untuk akun Anda.</div></div>
+      <div style="color:var(--muted);font-size:13px">Anda masuk sebagai <b>Pengunjung</b>: dapat melihat seluruh data dan mengunduh laporan (PDF/Excel) serta dokumen, tetapi tidak dapat menambah, mengubah, atau menghapus data. Tema warna (ikon palet di kanan atas) hanya berlaku untuk akun Anda dan tidak memengaruhi akun lain.</div></div>
   </div></div>
   ${CLOUD_ON?cloudUserCards():syncCard()}`;
 }
@@ -3808,10 +3825,7 @@ function cloudBuild(rows){
 async function cloudSave(){
   if(!SB||!CLOUD.uid||!CLOUD.loaded) return true;
   const me=currentUser();
-  if(!me||me.role==='user'){ /* pengunjung: hanya tema pribadi, disimpan di perangkat ini */
-    if(me){ try{ localStorage.setItem('ppn_theme_'+me.username,JSON.stringify(me.theme||{})); }catch(e){} }
-    return true;
-  }
+  if(!me||me.role==='user') return true; /* pengunjung tidak menyimpan apa pun ke server */
   const cur=cloudSerialize(), ups=[];
   for(const [k,x] of cur){ const h=hashStr(x.s); if(CLOUD_SYNCED.get(k)!==h) ups.push({k,v:x.v,h,len:x.s.length}); }
   const dels=[...CLOUD_SYNCED.keys()].filter(k=>!cur.has(k));
@@ -3877,7 +3891,6 @@ async function cloudResume(){
 async function cloudBranding(){
   try{ await cloudReady(); const {data}=await SB.from('app_state').select('value').eq('key','settings').maybeSingle();
     if(data&&data.value&&$('#app').hidden){ DB.settings=normalizeDB({users:[{username:'_'}],settings:data.value}).settings;
-      try{ localStorage.setItem(THEME_KEY,JSON.stringify({color:DB.settings.color,mode:DB.settings.mode})); }catch(e){}
       applyTheme(); applyLogos(); } }catch(e){ console.warn('branding',e); }
 }
 function cloudReset(){
@@ -3990,7 +4003,7 @@ async function cloudSaveAccount(e){
   u.name=nm; showApp(); toast('Akun berhasil diperbarui','success');
 }
 async function saveMyPass(e){
-  e.preventDefault();
+  e.preventDefault(); if(!isAdmin()) return;
   const u=currentUser(), o=$('#mpOld').value, n1=$('#mpNew').value, n2=$('#mpNew2').value;
   if(pwCheck(n1)){ toast(pwCheck(n1),'error'); return; }
   if(n1!==n2){ toast('Konfirmasi password tidak sama','error'); return; }
@@ -4011,13 +4024,7 @@ function cloudAdminCard(){
 function cloudUserCards(){
   return `<div class="card mb"><div class="card-h"><div><h3>Data Online</h3><p id="cloudStat">${cloudStatusText()}</p></div>
       <button class="btn btn-primary btn-sm" onclick="cloudReload(true)">${icon('upload')} Muat Ulang Data</button></div>
-    <div class="card-b" style="padding-top:0"><div class="note" style="margin:0">${icon('alert')} Data diambil langsung dari server dan diperbarui otomatis setiap kali admin menyimpan perubahan. Anda bisa masuk dari komputer atau HP mana saja dengan akun ini.</div></div></div>
-  <div class="card mb"><div class="card-h"><div><h3>Ganti Password</h3><p>Ganti password login akun Anda</p></div></div>
-    <form class="card-b" id="mpForm" onsubmit="saveMyPass(event)" style="max-width:640px">
-      <div class="field"><label>Password lama</label><input class="input" id="mpOld" type="password" required autocomplete="current-password"></div>
-      <div class="row2"><div class="field"><label>Password baru</label><input class="input" id="mpNew" type="password" minlength="8" required autocomplete="new-password"></div>
-        <div class="field"><label>Ulangi password baru</label><input class="input" id="mpNew2" type="password" minlength="8" required autocomplete="new-password"></div></div>
-      <button class="btn btn-primary" type="submit">${icon('key')} Ganti Password</button></form></div>`;
+    <div class="card-b" style="padding-top:0"><div class="note" style="margin:0">${icon('alert')} Data diambil langsung dari server dan diperbarui otomatis setiap kali admin menyimpan perubahan. Anda bisa masuk dari komputer atau HP mana saja dengan akun ini.</div></div></div>`;
 }
 function openCloudSetup(){
   openModal(`<div class="modal-h"><div><h3>Hubungkan ke Server Supabase</h3><p>Isi dari Supabase → Project Settings → API</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
