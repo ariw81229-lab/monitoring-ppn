@@ -964,6 +964,7 @@ table.kal tbody th svg.i{width:15px;height:15px;color:var(--muted);vertical-alig
 .dpop-grip{color:var(--muted);font-size:11px;letter-spacing:-2px;text-align:center}.dpop-no{font-size:11px;font-weight:800;color:var(--primary);text-align:center}
 .dpop-list .icon-btn[disabled]{opacity:.3;pointer-events:none}
 .dash-bar .popover{width:420px;max-width:calc(100vw - 32px)}
+.dash-ro{display:inline-flex;align-items:center;gap:6px;margin-right:auto;font-size:12px}.dash-ro svg.i{width:14px;height:14px}
 @media (max-width:1280px){.pq-top{grid-template-columns:1fr 1fr}.pq-tiles{grid-column:1/-1;grid-template-columns:repeat(4,1fr)}.pq-mid{grid-template-columns:1fr 1fr}.pq-mid>.pq-box:last-child{grid-column:1/-1}
   .ch-grid{grid-template-columns:1fr}.ch-main{border-right:0;border-bottom:1px solid var(--border)}.ch-stats{grid-template-columns:repeat(2,1fr)}.ch-s:nth-child(2){border-right:0}.ch-s:nth-child(-n+2){border-bottom:1px solid var(--border)}}
 @media (max-width:700px){.pq-top,.pq-mid{grid-template-columns:1fr}.pq-tiles{grid-template-columns:1fr 1fr}.ch-stats{grid-template-columns:1fr}.ch-s{border-right:0;border-bottom:1px solid var(--border)}.ch-box{height:280px}}
@@ -2272,12 +2273,15 @@ function dashFlow(S,list,yl){
 const DASH_SEC=[['kpi','Ringkasan Utama'],['comp','Kalender Kepatuhan Pelaporan'],['rest','Pengajuan & Proses Restitusi'],['chart','Analitik & Grafik PPN'],
   ['pay','Status Pembayaran Pajak Masukan'],['pp','Pajak Masukan Belum Dikreditkan (Prepopulated)'],['pph','Ringkasan PPh, SPT Rekanan & Bukti Potong ESDM'],['rekap','Rekap PPN per Masa Pajak']];
 const dashKey=()=>'ppn_dash_'+((currentUser()||{}).username||'');
+/* Urutan & bagian yang ditampilkan diatur admin dan disimpan di pengaturan bersama (berlaku untuk semua akun).
+   Status buka/tutup tiap bagian tetap tersimpan per akun di browser masing-masing. */
 function dashPref(){ const ids=DASH_SEC.map(x=>x[0]); let p=null; try{ p=JSON.parse(localStorage.getItem(dashKey())||'null'); }catch(e){}
-  const ord=((p&&p.order)||[]).filter(x=>ids.includes(x)); ids.forEach(x=>{ if(!ord.includes(x)) ord.push(x); });
-  return {hidden:((p&&p.hidden)||[]).filter(x=>ids.includes(x)),closed:((p&&p.closed)||[]).filter(x=>ids.includes(x)),order:ord}; }
+  const g=(DB.settings&&DB.settings.dash)||(isAdmin()&&p&&p.order?p:null)||{};
+  const ord=(g.order||[]).filter(x=>ids.includes(x)); ids.forEach(x=>{ if(!ord.includes(x)) ord.push(x); });
+  return {hidden:(g.hidden||[]).filter(x=>ids.includes(x)),closed:((p&&p.closed)||[]).filter(x=>ids.includes(x)),order:ord}; }
 const dashTitle=id=>(DASH_SEC.find(x=>x[0]===id)||[])[1]||id;
 function dashPopHTML(p){
-  return `<h4>Susun &amp; tampilkan bagian dashboard</h4><p class="dpop-sub">Centang untuk menampilkan · gunakan panah atau seret untuk mengubah urutan</p>
+  return `<h4>Susun &amp; tampilkan bagian dashboard</h4><p class="dpop-sub">Berlaku untuk semua akun, termasuk pengunjung · centang untuk menampilkan, gunakan panah atau seret untuk mengubah urutan</p>
     <ol class="dpop-list">${p.order.map((id,i)=>`<li draggable="true" data-id="${id}" ondragstart="dashDrag(event,'${id}')" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dashDrop(event,'${id}')">
       <span class="dpop-grip" title="Seret untuk memindahkan">⋮⋮</span><span class="dpop-no">${i+1}</span>
       <label><input type="checkbox" ${p.hidden.includes(id)?'':'checked'} onchange="setDashShow('${id}',this.checked)"><span>${dashTitle(id)}</span></label>
@@ -2293,9 +2297,15 @@ let DASH_DRAG=null;
 function dashDrag(e,id){ DASH_DRAG=id; try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',id); }catch(_){} }
 function dashDrop(e,id){ e.preventDefault(); const from=DASH_DRAG; DASH_DRAG=null; if(!from||from===id) return; const p=dashPref();
   p.order.splice(p.order.indexOf(from),1); p.order.splice(p.order.indexOf(id),0,from); setDashPref(p); dashApplyOrder(p); const pop=$('#dashPop'); if(pop) pop.innerHTML=dashPopHTML(p); }
-function setDashPref(p){ try{ localStorage.setItem(dashKey(),JSON.stringify(p)); }catch(e){} }
+function setDashPref(p){
+  try{ localStorage.setItem(dashKey(),JSON.stringify({closed:p.closed||[]})); }catch(e){}
+  if(!isAdmin()) return;
+  const cur=DB.settings.dash||{}, nx={order:p.order&&p.order.length?p.order:[],hidden:p.hidden||[]};
+  if(JSON.stringify({order:cur.order||[],hidden:cur.hidden||[]})!==JSON.stringify(nx)){ DB.settings.dash=nx; save(); }
+}
 function dashSections(){
-  const v=$('#view'), p=dashPref();
+  const v=$('#view'), p=dashPref(), adm=isAdmin();
+  if(adm&&!DB.settings.dash) setDashPref(p); /* simpan susunan admin (termasuk dari versi lama) agar dipakai semua akun */
   DASH_SEC.forEach(([id,title])=>{
     const el=v.querySelector(`:scope>[data-sec="${id}"]`); if(!el) return;
     if(id==='alert' && !el.innerHTML.trim()){ el.remove(); return; }
@@ -2308,8 +2318,9 @@ function dashSections(){
   const hero=v.querySelector(':scope>.dh-hero'); (hero||v).insertAdjacentHTML(hero?'afterend':'afterbegin',`<div class="dash-bar">
     <button class="btn btn-outline btn-sm" onclick="dashAll(false)" title="Buka semua bagian">${icon('chev')} Buka semua</button>
     <button class="btn btn-outline btn-sm" onclick="dashAll(true)" title="Ringkas semua bagian">Tutup semua</button>
-    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();const p=$('#dashPop'),o=p.hidden;document.querySelectorAll('.popover').forEach(x=>x.hidden=true);p.hidden=!o">${icon('grid')} Atur &amp; Susun Tampilan${nHide?` (${DASH_SEC.length-nHide}/${DASH_SEC.length})`:''} ${icon('chev')}</button>
-    <div class="popover" id="dashPop" hidden onclick="event.stopPropagation()">${dashPopHTML(p)}</div>
+    ${adm?'':`<span class="sub-t dash-ro">${icon('grid')} Susunan dashboard diatur oleh admin</span>`}
+    <button class="btn btn-primary btn-sm adm" onclick="event.stopPropagation();const p=$('#dashPop'),o=p.hidden;document.querySelectorAll('.popover').forEach(x=>x.hidden=true);p.hidden=!o">${icon('grid')} Atur &amp; Susun Tampilan${nHide?` (${DASH_SEC.length-nHide}/${DASH_SEC.length})`:''} ${icon('chev')}</button>
+    ${adm?`<div class="popover" id="dashPop" hidden onclick="event.stopPropagation()">${dashPopHTML(p)}</div>`:''}
   </div>`);
   dashApplyOrder(p);
 }
@@ -3519,7 +3530,7 @@ function renderFlow(){
   const list=restList(), S=restSummary(list), scope=state.restComb?'Gabungan Semua Tahun':`Tahun ${state.year}`;
   $('#view').innerHTML=`
   <div class="card mb"><div class="card-h"><div><h3>Flowchart Restitusi PPN — ${scope}</h3><p>Terhubung otomatis dengan Pajak Masukan &amp; menu Alur Proses Restitusi · klik kotak untuk membuka rinciannya</p></div>
-    <div class="toolbar"><button class="btn btn-outline" onclick="goRest('all')">${icon('refund')}<span class="hide-sm">Alur Proses Restitusi</span></button><button class="btn btn-primary" onclick="openRestExport()">${icon('download')} Unduh PDF</button></div></div>
+    <div class="toolbar"><button class="btn btn-outline" onclick="goRest('all')">${icon('refund')}<span class="hide-sm">Alur Proses Restitusi</span></button><button class="btn btn-primary" onclick="openRestExport(true)">${icon('download')} Unduh PDF</button></div></div>
     <div class="card-b">${list.length?`<div class="flow-wrap flow2-wrap">${flowSVG2(S)}</div>`:`<div class="empty">${icon('flow')}<b>Belum ada data restitusi</b>Import Pajak Masukan atau tambahkan masa pengajuan di menu Alur Proses Restitusi.<br><br><button class="btn btn-primary" onclick="go('rest')">Buka Alur Proses Restitusi</button></div>`}</div></div>
   ${list.length?`
   <div class="card mb"><div class="card-h"><div><h3>Informasi Detail</h3><p>Ringkasan angka penting proses restitusi · ${scope}</p></div></div><div class="card-b"><div class="detail-grid">${restDetails(S).map(d=>`<div class="det"><small>${d.l}</small><b>${d.v}</b><span>${esc(d.s||'')}</span></div>`).join('')}</div></div></div>
@@ -3538,12 +3549,12 @@ function renderFlow(){
 }
 
 /* ---------- Unduh PDF (flowchart + lampiran) & Excel ---------- */
-function openRestExport(){
+function openRestExport(pdfOnly){
   const list=restList(), nDocs=list.reduce((a,x)=>a+restDocs(x).length,0);
   openModal(`<div class="modal-h"><div><h3>Unduh Laporan Restitusi</h3><p>${state.restComb?'Gabungan semua tahun':'Tahun '+state.year} · ${list.length} masa pajak</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
    <div class="modal-b"><div class="field"><label>Format file</label><div class="fmt-opts">
      <label class="fmt"><input type="radio" name="rfmt" value="pdf" checked><span>${icon('flow')}<b>PDF Lengkap</b><small>Flowchart + Lampiran (ringkasan, daftar pengajuan, rincian koreksi${nDocs?', dokumen':''})</small></span></label>
-     <label class="fmt"><input type="radio" name="rfmt" value="xlsx"><span>${icon('grid')}<b>Excel (.xlsx)</b><small>Sheet ringkasan, pengajuan, koreksi, dokumen</small></span></label></div></div>
+     ${pdfOnly?'':`<label class="fmt"><input type="radio" name="rfmt" value="xlsx"><span>${icon('grid')}<b>Excel (.xlsx)</b><small>Sheet ringkasan, pengajuan, koreksi, dokumen</small></span></label>`}</div></div>
     <label class="check" style="${nDocs?'':'opacity:.55;pointer-events:none'}"><input type="checkbox" id="rDocs" ${nDocs?'checked':''}><span><b>Gabungkan dokumen pendukung ke PDF</b><small>${nDocs?`${nDocs} file PDF (SP2, SKPLB, SPMKP, dll.) ditambahkan setelah lampiran`:'Belum ada dokumen yang diunggah di menu Alur Proses Restitusi'}</small></span></label>
     ${list.length?'':'<div class="note warn">Belum ada data restitusi untuk diunduh.</div>'}</div>
    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="rGo" ${list.length?'':'disabled'} onclick="doRestExport()">${icon('download')} Unduh</button></div>`,'sm');
@@ -5189,52 +5200,69 @@ async function glExport(fmtX){
   catch(e){ console.error(e); toast('Export gagal: '+(e.message||e),'error'); }
 }
 async function glXlsx(R){
-  const maxAcc=Math.max(30,...R.list.map(v=>v.acc.length+4));
-  const W=[12,16,Math.min(70,maxAcc),44,20,20,22], file=`Buku Besar Restitusi PM ${R.s.replace(/\//g,'-')} sd ${R.e.replace(/\//g,'-')}`;
+  const W=[13,17,25,44,19,19,21], file=`Buku Besar Restitusi PM ${R.s.replace(/\//g,'-')} sd ${R.e.replace(/\//g,'-')}`;
   const {wb,ws,S,headStyle,totalStyle,finish}=await xlsxKop('Buku Besar',W,'BUKU BESAR RESTITUSI PAJAK MASUKAN',R.periode,1);
-  ['TANGGAL','MASA','NO. FAKTUR / ACCOUNT','KETERANGAN','DEBET','KREDIT','SALDO'].forEach((t,i)=>ws.getCell(7,i+1).value=t); headStyle(7,7); ws.getRow(7).height=30;
-  const NF='#,##0;-#,##0;0', B=(c)=>{ c.border={left:S.thin,right:S.thin,bottom:{style:'hair',color:{argb:'FF999999'}}}; };
+  ['TANGGAL','MASA PAJAK','NO. FAKTUR PAJAK','KETERANGAN','DEBET','KREDIT','SALDO'].forEach((t,i)=>ws.getCell(7,i+1).value=t); headStyle(7,7); ws.getRow(7).height=30;
+  ws.views=[{state:'frozen',ySplit:7,showGridLines:false}];
+  const NF='#,##0;(#,##0);"-"', TH={style:'thin',color:{argb:'FF000000'}}, HAIR={style:'hair',color:{argb:'FF8C8C8C'}};
+  const fill=c=>({type:'pattern',pattern:'solid',fgColor:{argb:c}});
+  const cellSet=(r,c,v,o={})=>{ const z=ws.getCell(r,c); if(v!==undefined) z.value=v; z.font={...S.fB,size:11,...(o.font||{})}; z.alignment={vertical:'middle',horizontal:o.h||'left',indent:o.ind||0};
+    z.border={left:TH,right:TH,top:o.top||HAIR,bottom:o.bot||HAIR}; if(o.nf) z.numFmt=NF; if(o.fill) z.fill=fill(o.fill); return z; };
   let r=8; const sub=[];
   R.list.forEach((v,i)=>{
-    ws.mergeCells(r,1,r,7); const h=ws.getCell(r,1); h.value=`${i+1}. ${v.acc}${v.npwp?'  ·  NPWP '+v.npwp:''}`; h.font={...S.fH,size:11}; h.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE7E2D3'}}; h.border={top:S.thin,left:S.thin,right:S.thin,bottom:S.thin}; r++;
-    const r0=r; ws.getCell(r,4).value='Saldo awal (akumulasi s/d periode lalu)'; ws.getCell(r,7).value=v.lalu;
-    for(let c=1;c<=7;c++){ const z=ws.getCell(r,c); z.font={...S.fB,italic:true}; B(z); if(c>=5) z.numFmt=NF; } r++;
-    v.entries.forEach(e=>{ const vals=[e.tgl?fmtDate(e.tgl):'',masaLabel(e.m),e.no,e.ket,e.d||null,e.k||null];
-      vals.forEach((x,c)=>{ const z=ws.getCell(r,c+1); z.value=x; z.font=S.fB; B(z); if(c>=4) z.numFmt=NF; z.alignment={horizontal:c>=4?'right':c<2?'center':'left'}; });
-      const g=ws.getCell(r,7); g.value={formula:`G${r-1}+E${r}-F${r}`,result:0}; g.numFmt=NF; g.font=S.fB; B(g); r++; });
-    ws.getCell(r,4).value='Saldo akhir'; ws.getCell(r,5).value={formula:`SUM(E${r0}:E${r-1})`,result:v.d}; ws.getCell(r,6).value={formula:`SUM(F${r0}:F${r-1})`,result:v.k}; ws.getCell(r,7).value={formula:`G${r0}+E${r}-F${r}`,result:v.ini};
-    for(let c=1;c<=7;c++){ const z=ws.getCell(r,c); z.font={...S.fB,bold:true}; z.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF3F0E6'}}; z.border={top:S.thin,bottom:S.thin,left:S.thin,right:S.thin}; if(c>=5) z.numFmt=NF; }
-    sub.push(r); r+=2;
+    /* judul akun vendor */
+    ws.mergeCells(r,1,r,7); cellSet(r,1,`${i+1}.  ${v.acc}${v.npwp?'   ·   NPWP '+v.npwp:''}`,{font:{bold:true,size:11.5},fill:'FFE7E2D3',top:TH,bot:TH}); for(let c=2;c<=7;c++) cellSet(r,c,undefined,{fill:'FFE7E2D3',top:TH,bot:TH}); ws.getRow(r).height=21; r++;
+    /* saldo awal */
+    const r0=r; ws.mergeCells(r,1,r,6); cellSet(r,1,'Saldo awal  (akumulasi s/d periode lalu)',{font:{italic:true},ind:1}); for(let c=2;c<=6;c++) cellSet(r,c);
+    cellSet(r,7,v.lalu,{h:'right',nf:1,font:{italic:true,bold:true}}); ws.getRow(r).height=18; r++;
+    let bal=v.lalu;
+    v.entries.forEach(e=>{ bal+=e.d-e.k;
+      cellSet(r,1,e.tgl?fmtDate(e.tgl):'—',{h:'center'}); cellSet(r,2,masaLabel(e.m),{h:'center'}); cellSet(r,3,e.no||'—',{h:'center'}); cellSet(r,4,e.ket,{ind:1});
+      cellSet(r,5,e.d||null,{h:'right',nf:1}); cellSet(r,6,e.k||null,{h:'right',nf:1});
+      cellSet(r,7,{formula:`G${r-1}+N(E${r})-N(F${r})`,result:bal},{h:'right',nf:1}); ws.getRow(r).height=18; r++; });
+    if(!v.entries.length){ ws.mergeCells(r,1,r,7); cellSet(r,1,'Tidak ada mutasi pada periode ini',{font:{italic:true,color:{argb:'FF777777'}},h:'center'}); for(let c=2;c<=7;c++) cellSet(r,c); ws.getRow(r).height=18; r++; }
+    /* saldo akhir */
+    ws.mergeCells(r,1,r,4); cellSet(r,1,`Saldo akhir  ·  ${v.acc}`,{font:{bold:true},fill:'FFF3F0E6',top:TH,bot:TH,ind:1}); for(let c=2;c<=4;c++) cellSet(r,c,undefined,{fill:'FFF3F0E6',top:TH,bot:TH});
+    cellSet(r,5,{formula:`SUM(E${r0}:E${r-1})`,result:v.d},{h:'right',nf:1,font:{bold:true},fill:'FFF3F0E6',top:TH,bot:TH});
+    cellSet(r,6,{formula:`SUM(F${r0}:F${r-1})`,result:v.k},{h:'right',nf:1,font:{bold:true},fill:'FFF3F0E6',top:TH,bot:TH});
+    cellSet(r,7,{formula:`G${r0}+E${r}-F${r}`,result:v.ini},{h:'right',nf:1,font:{bold:true},fill:'FFF3F0E6',top:TH,bot:TH});
+    ws.getRow(r).height=20; sub.push(r); r+=2;
   });
   ws.mergeCells(r,1,r,4); ws.getCell(r,1).value=`TOTAL ${R.list.length} VENDOR`;
-  ws.getCell(r,5).value={formula:sub.length?sub.map(x=>`E${x}`).join('+'):'0',result:R.T.d}; ws.getCell(r,6).value={formula:sub.length?sub.map(x=>`F${x}`).join('+'):'0',result:R.T.k}; ws.getCell(r,7).value={formula:sub.length?sub.map(x=>`G${x}`).join('+'):'0',result:R.T.ini};
-  totalStyle(r,4); [5,6,7].forEach(c=>ws.getCell(r,c).numFmt=NF);
-  /* sheet ringkasan */
-  const w2=wb.addWorksheet('Ringkasan',{views:[{showGridLines:false}],pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0}});
-  w2.columns=[10,Math.min(70,maxAcc),24,22,22,22,24].map(w=>({width:w}));
-  w2.mergeCells(1,1,1,7); w2.getCell(1,1).value=`RINGKASAN SALDO PER VENDOR — BUKU BESAR RESTITUSI PAJAK MASUKAN`; w2.getCell(1,1).font=S.fH;
-  w2.mergeCells(2,1,2,7); w2.getCell(2,1).value=`${brandProyek().toUpperCase()} · ${R.periode}`; w2.getCell(2,1).font=S.fB;
-  ['NOMOR','ACCOUNT NAME','NPWP','SALDO AWAL','DEBET','KREDIT','SALDO AKHIR'].forEach((t,i)=>{ const z=w2.getCell(4,i+1); z.value=t; z.font=S.fH; z.alignment={horizontal:'center',vertical:'middle'}; z.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF969696'}}; z.border={top:S.thin,bottom:S.thin,left:S.thin,right:S.thin}; });
-  R.list.forEach((v,i)=>{ const rr=5+i; [i+1,v.acc,v.npwp,v.lalu,v.d,v.k].forEach((x,c)=>{ const z=w2.getCell(rr,c+1); z.value=x; z.font=S.fB; z.border={left:S.thin,right:S.thin,bottom:{style:'hair',color:{argb:'FF999999'}}}; if(c>=3) z.numFmt=NF; if(c===0) z.alignment={horizontal:'center'}; });
-    const g=w2.getCell(rr,7); g.value={formula:`D${rr}+E${rr}-F${rr}`,result:v.ini}; g.numFmt=NF; g.font={...S.fB,bold:true}; g.border={left:S.thin,right:S.thin,bottom:{style:'hair',color:{argb:'FF999999'}}}; });
-  const tr=5+R.list.length; w2.mergeCells(tr,1,tr,3); w2.getCell(tr,1).value='TOTAL';
-  ['D','E','F','G'].forEach((cl,i)=>{ const z=w2.getCell(tr,4+i); z.value={formula:`SUM(${cl}5:${cl}${tr-1})`,result:[R.T.lalu,R.T.d,R.T.k,R.T.ini][i]}; z.numFmt=NF; });
-  for(let c=1;c<=7;c++){ const z=w2.getCell(tr,c); z.font={...S.fB,bold:true}; z.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC0C0C0'}}; z.border={top:S.med,bottom:S.med,left:S.thin,right:S.thin}; if(c<=3) z.alignment={horizontal:'center'}; }
+  const sf=c=>sub.length?sub.map(x=>`${c}${x}`).join('+'):'0';
+  ws.getCell(r,5).value={formula:sf('E'),result:R.T.d}; ws.getCell(r,6).value={formula:sf('F'),result:R.T.k}; ws.getCell(r,7).value={formula:sf('G'),result:R.T.ini};
+  totalStyle(r,4); [5,6,7].forEach(c=>ws.getCell(r,c).numFmt=NF); ws.getRow(r).height=22;
+  /* sheet ringkasan saldo */
+  const w2=wb.addWorksheet('Ringkasan per Vendor',{views:[{state:'frozen',ySplit:5,showGridLines:false}],pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.4,right:.4,top:.5,bottom:.5,header:.3,footer:.3}}});
+  const maxAcc=Math.min(60,Math.max(34,...R.list.map(v=>v.acc.length+3)));
+  w2.columns=[9,maxAcc,22,21,21,21,22].map(w=>({width:w}));
+  [[1,'RINGKASAN SALDO PER VENDOR'],[2,`BUKU BESAR RESTITUSI PAJAK MASUKAN · ${brandProyek().toUpperCase()}`],[3,R.periode]].forEach(([rr,t],i)=>{ w2.mergeCells(rr,1,rr,7); const z=w2.getCell(rr,1); z.value=t; z.font=i<2?{...S.fH}:{...S.fB}; z.alignment={horizontal:'center'}; });
+  ['NOMOR','ACCOUNT NAME','NPWP','SALDO AWAL','DEBET','KREDIT','SALDO AKHIR'].forEach((t,i)=>{ const z=w2.getCell(5,i+1); z.value=t; z.font={...S.fH,size:11}; z.alignment={horizontal:'center',vertical:'middle'}; z.fill=fill('FF969696'); z.border={top:TH,bottom:TH,left:TH,right:TH}; });
+  w2.getRow(5).height=24;
+  R.list.forEach((v,i)=>{ const rr=6+i; [i+1,v.acc,v.npwp||'—',v.lalu,v.d,v.k].forEach((x,c)=>{ const z=w2.getCell(rr,c+1); z.value=x; z.font={...S.fB,size:11}; z.border={left:TH,right:TH,top:HAIR,bottom:HAIR}; z.alignment={vertical:'middle',horizontal:c===0||c===2?'center':c>=3?'right':'left'}; if(c>=3) z.numFmt=NF; });
+    const g=w2.getCell(rr,7); g.value={formula:`D${rr}+E${rr}-F${rr}`,result:v.ini}; g.numFmt=NF; g.font={...S.fB,size:11,bold:true}; g.alignment={horizontal:'right',vertical:'middle'}; g.border={left:TH,right:TH,top:HAIR,bottom:HAIR}; w2.getRow(rr).height=18; });
+  const tr=6+R.list.length; w2.mergeCells(tr,1,tr,3); w2.getCell(tr,1).value='TOTAL';
+  ['D','E','F','G'].forEach((cl,i)=>{ const z=w2.getCell(tr,4+i); z.value={formula:R.list.length?`SUM(${cl}6:${cl}${tr-1})`:'0',result:[R.T.lalu,R.T.d,R.T.k,R.T.ini][i]}; z.numFmt=NF; });
+  for(let c=1;c<=7;c++){ const z=w2.getCell(tr,c); z.font={...S.fB,size:11,bold:true}; z.fill=fill('FFC0C0C0'); z.border={top:S.med,bottom:S.med,left:TH,right:TH}; z.alignment={horizontal:c<=3?'center':'right',vertical:'middle'}; }
+  w2.getRow(tr).height=22;
   await finish(file);
 }
 async function glPdf(R){
   const {doc,base,finish}=await pdfKop('BUKU BESAR RESTITUSI PAJAK MASUKAN',R.periode), N=v=>v?fmt(v):'';
-  const body=[];
+  const L=(content,st={})=>({content,styles:{halign:'left',...st}}), Rt=(content,st={})=>({content,styles:{halign:'right',...st}});
+  const VH=[231,226,211], VF=[243,240,230], body=[];
   R.list.forEach((v,i)=>{ let bal=v.lalu;
-    body.push([{content:`${i+1}. ${PDF_SAFE(v.acc)}${v.npwp?'  -  NPWP '+v.npwp:''}`,colSpan:7,styles:{fontStyle:'bold',fillColor:[231,226,211]}}]);
-    body.push([{content:'Saldo awal (akumulasi s/d periode lalu)',colSpan:6,styles:{fontStyle:'italic'}},{content:fmt(bal),styles:{halign:'right',fontStyle:'italic'}}]);
+    body.push([{...L(`${i+1}.  ${PDF_SAFE(v.acc)}${v.npwp?'     NPWP '+v.npwp:''}`,{fontStyle:'bold',fillColor:VH,fontSize:9}),colSpan:7}]);
+    body.push([{...L('Saldo awal  (akumulasi s/d periode lalu)',{fontStyle:'italic'}),colSpan:6},Rt(fmt(bal),{fontStyle:'bolditalic'})]);
     v.entries.forEach(e=>{ bal+=e.d-e.k; body.push([e.tgl?fmtDate(e.tgl):'-',masaLabel(e.m),e.no||'-',PDF_SAFE(e.ket),N(e.d),N(e.k),fmt(bal)]); });
-    body.push([{content:'Saldo akhir',colSpan:4,styles:{fontStyle:'bold'}},...[v.d,v.k,v.ini].map(x=>({content:fmt(x),styles:{halign:'right',fontStyle:'bold'}}))].map(c=>({...c,styles:{...(c.styles||{}),fillColor:[243,240,230]}})));
+    if(!v.entries.length) body.push([{content:'Tidak ada mutasi pada periode ini',colSpan:7,styles:{halign:'center',fontStyle:'italic',textColor:[110,110,110]}}]);
+    body.push([{...L(`Saldo akhir  -  ${PDF_SAFE(v.acc)}`,{fontStyle:'bold',fillColor:VF}),colSpan:4},...[v.d,v.k,v.ini].map(x=>Rt(fmt(x),{fontStyle:'bold',fillColor:VF}))]);
   });
-  doc.autoTable({...base,head:[['Tanggal','Masa','No. Faktur','Keterangan','Debet','Kredit','Saldo']],
+  doc.autoTable({...base,head:[['Tanggal','Masa Pajak','No. Faktur Pajak','Keterangan','Debet','Kredit','Saldo']],
     body:body.length?body:[[{content:'Tidak ada data pajak masukan pada periode ini',colSpan:7,styles:{halign:'center',fontStyle:'italic'}}]],
     foot:[[{content:`TOTAL ${R.list.length} VENDOR`,colSpan:4,styles:{halign:'center'}},...[R.T.d,R.T.k,R.T.ini].map(v=>({content:fmt(v),styles:{halign:'right'}}))]],
-    columnStyles:{0:{halign:'center',cellWidth:22},1:{halign:'center',cellWidth:30},2:{cellWidth:46},3:{cellWidth:'auto'},4:{halign:'right',cellWidth:32},5:{halign:'right',cellWidth:32},6:{halign:'right',cellWidth:34}}});
+    rowPageBreak:'avoid',
+    columnStyles:{0:{halign:'center',cellWidth:22},1:{halign:'center',cellWidth:28},2:{halign:'center',cellWidth:42},3:{cellWidth:'auto'},4:{halign:'right',cellWidth:32},5:{halign:'right',cellWidth:32},6:{halign:'right',cellWidth:34}}});
   finish(`Buku Besar Restitusi PM ${R.s.replace(/\//g,'-')} sd ${R.e.replace(/\//g,'-')}`);
 }
 
