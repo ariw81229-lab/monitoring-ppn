@@ -1084,6 +1084,11 @@ table.kx-t td{padding:5px 3px;border-bottom:1px dashed var(--border)}
 .kx.k-late-done{height:auto;min-height:38px;padding:3px 4px}
 .kal-leg .kx-lt{display:inline;margin:0 0 0 2px}
 .kx-late-box{margin:12px 18px 0;padding:12px 14px;border-radius:12px;border:1px solid rgba(202,138,4,.35);background:rgba(202,138,4,.08)}
+.kx-lb-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.kx-lb-tot{text-align:right}.kx-lb-tot small{display:block;font-size:11px;color:var(--muted)}.kx-lb-tot b{font-size:20px;color:#b45309}.kx-lb-tot span{display:block;font-size:11px;color:var(--muted)}
+[data-mode="dark"] .kx-lb-tot b{color:#fbbf24}
+.kx-sk{font-size:12.5px}.kx-sk th{font-size:11px}.kx-sk tr{cursor:pointer}.kx-sk td{vertical-align:top}.kx-sk td:nth-child(6),.kx-sk td:nth-child(5){white-space:normal;min-width:200px}
+.kx-late-box a{color:var(--primary);font-weight:700}
 .kx-late-box h4{margin:0 0 6px;font-size:13px;display:flex;align-items:center;gap:6px;color:#a16207}.kx-late-box h4 svg{width:15px;height:15px}
 .kx-late-box ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.6}.kx-late-box li{cursor:pointer}.kx-late-box li:hover{text-decoration:underline}
 .kx-late-box .lt{color:#b45309;font-weight:800}.kx-late-box p{margin:6px 0 0;font-size:11.5px;color:var(--muted)}
@@ -2456,6 +2461,31 @@ function shiftWhy(due,eff){ const out=[], d=new Date(due); while(d<eff){ const k
   const lib=[...new Set(out.filter(x=>!/^(Sabtu|Minggu)$/.test(x)))]; return lib.length?`libur ${lib.join(', ')}`:'akhir pekan'; }
 const today0=()=>{ const t=new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()); };
 const dDiff=(a,b)=>Math.round((a-b)/864e5);
+/* ---- Sanksi administrasi keterlambatan (UU KUP) ----
+   Bunga Pasal 9 ayat (2a)/(2b): pokok pajak × tarif bunga per bulan × jumlah bulan (bagian bulan dihitung penuh, maks. 24 bulan).
+   Tarif bunga per bulan ditetapkan Menteri Keuangan setiap bulan (KMK) — sumber: fiskal.kemenkeu.go.id/informasi-publik/tarif-bunga.
+   Tarif yang dipakai = tarif yang berlaku pada saat dimulainya penghitungan sanksi (hari setelah jatuh tempo).
+   Denda Pasal 7 ayat (1): SPT Masa PPN Rp500.000 · SPT Masa lainnya Rp100.000 · SPT Tahunan PPh Badan Rp1.000.000. */
+const TARIF_BUNGA_URL='https://fiskal.kemenkeu.go.id/informasi-publik/tarif-bunga';
+const TARIF_BUNGA={ /* 'yyyy-mm': [tarif % per bulan untuk Pasal 8(2), 8(2a), 9(2a), 9(2b), 14(3), nomor KMK] */
+  '2025-12':[0.93,'KMK 9/MK/EF/2025'],'2026-01':[0.93,'KMK 10/MK/EF/2025'],'2026-02':[0.92,'KMK 2/MK/EF/2026'],'2026-03':[0.95,'KMK 9/MK/EF.2/2026'],
+  '2026-04':[0.98,'KMK 14/MK/EF.2/2026'],'2026-05':[0.97,'KMK 19/MK/EF.2/2026'],'2026-06':[0.98,'KMK 24/MK/EF.2/2026'],'2026-07':[1.00,'KMK 29/MK/EF.2/2026'],
+  '2026-08':[1.02,'KMK 35/MK/EF.2/2026'],'2026-09':[1.02,'KMK 40/MK/EF.2/2026'],'2026-10':[1.01,'KMK 47/MK/EF.2/2026'],'2026-11':[1.02,'KMK 52/MK/EF.2/2026']};
+const ymOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+function tarifBunga(ym){ const o=((DB.settings||{}).tarifBunga||{})[ym]; if(o&&+o.r) return {r:+o.r,kmk:o.kmk||'',src:'admin'}; const t=TARIF_BUNGA[ym]; return t?{r:t[0],kmk:t[1],src:'ref'}:null; }
+/* jumlah bulan keterlambatan, bagian dari bulan dihitung satu bulan penuh */
+function lateMonths(due,paid){ const a=new Date(due), b=new Date(paid); if(b<=a) return 0; let n=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth()); if(b.getDate()>a.getDate()) n++; return Math.min(24,Math.max(1,n)); }
+const DENDA_LAPOR={ppn:500000,p21:100000,pu:100000,thn:1000000};
+function sanksiOf(R){
+  if(R.st!=='late-done') return null;
+  if(R.kind==='lapor'){ const v=DENDA_LAPOR[R.o.id]||100000; return {jenis:'Denda telat lapor',dasar:'Pasal 7 ayat (1) UU KUP',nilai:v,
+    rumus:`Denda tetap ${R.o.id==='ppn'?'SPT Masa PPN':R.o.id==='thn'?'SPT Tahunan PPh Badan':'SPT Masa PPh'} = ${rp(v)}`}; }
+  const start=new Date(R.eff); start.setDate(start.getDate()+1); const ym=ymOf(start), T=tarifBunga(ym), n=lateMonths(R.eff,new Date(R.doneAt)), pk=+R.pokok||0;
+  const S={jenis:'Bunga telat setor',dasar:`Pasal 9 ayat (${R.o.id==='thn'?'2b':'2a'}) UU KUP`,bulan:n,pokok:pk,ym,T};
+  if(!T){ S.nilai=null; S.rumus=`Tarif bunga ${MONTHS[start.getMonth()]} ${start.getFullYear()} belum tersedia — ${isAdmin()?'tambahkan lewat "Kelola tarif bunga"':'hubungi admin'}.`; return S; }
+  if(!pk){ S.nilai=null; S.rumus=`Pokok pajak yang disetor belum diisi — ${R.o.id==='ppn'?'isi "Jumlah PPN Kurang Bayar Disetor" di Rekap PPN':R.o.id==='thn'?'isi "Jumlah PPh Pasal 29 Disetor" pada SPT Tahunan':'isi "Jumlah Disetor" pada Status Laporan'}.`; return S; }
+  S.nilai=Math.round(pk*T.r/100*n);
+  S.rumus=`${rp(pk)} × ${String(T.r.toFixed(2)).replace('.',',')}% × ${n} bulan = ${rp(S.nilai)}`; return S; }
 /* status satu kewajiban: done | late-done | over | today | soon (≤7 hari) | near (≤30) | wait | fut | none | lb */
 function oblStatus(o,y,i,kind){
   const due=oblDue(o,y,i,kind), eff=effDue(due), t=today0(), ended=new Date(y,i+1,1)<=t, diff=dDiff(eff,t);
@@ -2465,10 +2495,10 @@ function oblStatus(o,y,i,kind){
        Status lapor mengikuti Rekap PPN per Masa Pajak: lengkap = sudah lapor, 'Lapor Nihil' = nihil, selain itu belum dilapor. */
     const r=ppnRep(y,i)||{}, c=ppnLapor(ppnRep(y,i)), pm=pmSum(y,i), rk=pmStatus(y,i,pm); R.rekap=rk;
     if(kind==='lapor'){ doneAt=c.ok?r.tglLapor:''; R.partial=!c.ok&&c.n?c.n:0; if(!doneAt&&rk==='Lapor Nihil'&&!R.partial) na='nihil'; }
-    else { doneAt=r.tglSetor||''; if(doneAt) R.kbSetor=true; else if(ended) na=rk==='Lapor Nihil'?'nihil':'lb'; } }
+    else { doneAt=r.tglSetor||''; R.pokok=+r.jmlSetor||0; if(doneAt) R.kbSetor=true; else if(ended) na=rk==='Lapor Nihil'?'nihil':'lb'; } }
   else { const r=repOf(o.g,y,i)||{}, n=groupCount(o.g,y,i);
     if(kind==='setor') doneAt=r.setor==='Sudah'?(r.tglSetor||'ada'):''; else doneAt=r.lapor==='Sudah'?(r.tglLapor||'ada'):'';
-    has=n>0||!!repOf(o.g,y,i); R.n=n; }
+    has=n>0||!!repOf(o.g,y,i); R.n=n; R.pokok=r.jmlSetor!=null&&r.jmlSetor!==''?+r.jmlSetor:groupPph(o.g,y,i); }
   R.doneAt=doneAt;
   if(doneAt){ R.st='done'; if(/^\d{4}-\d{2}-\d{2}$/.test(doneAt)){ const late=dDiff(new Date(doneAt),eff); if(late>0){ R.st='late-done'; R.late=late; } } return R; }
   if(na){ R.st=R.kind==='lapor'?'nihil':'lb'; R.na=na; return R; }
@@ -2488,7 +2518,7 @@ function oblOpen(id,y,i){ const o=OBL.find(x=>x.id===id); state.month=i; state.y
 /* SPT Tahunan PPh Badan */
 const tahunanRep=ty=>((DB.reports||{}).TAHUNAN||{})[ty]||null;
 function tahunanStatus(ty){ const r=tahunanRep(ty)||{}, due=new Date(ty+1,3,30), eff=effDue(due), t=today0(), diff=dDiff(eff,t), o={id:'thn',l:'SPT Tahunan PPh Badan'};
-  const mk=(kind,doneAt)=>{ const R={o,kind,due,eff,diff,shifted:eff.getTime()!==due.getTime(),doneAt,y:ty,i:11};
+  const mk=(kind,doneAt)=>{ const R={o,kind,due,eff,diff,shifted:eff.getTime()!==due.getTime(),doneAt,y:ty,i:11,pokok:+r.jml29||0};
     if(doneAt){ R.st='done'; const l=dDiff(new Date(doneAt),eff); if(l>0){ R.st='late-done'; R.late=l; } } else R.st=t<new Date(ty+1,0,1)?'fut':diff<0?'over':diff===0?'today':diff<=7?'soon':diff<=30?'near':'wait'; return R; };
   return {setor:mk('setor',r.tglSetor||''),lapor:mk('lapor',r.tglLapor||''),r}; }
 function openTahunan(ty){
@@ -2496,15 +2526,33 @@ function openTahunan(ty){
   openModal(`<div class="modal-h"><div><h3>SPT Tahunan PPh Badan — Tahun Pajak ${ty}</h3><p>Batas setor &amp; lapor 30 April ${ty+1}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
    <form id="thnForm" onsubmit="saveTahunan(event,${ty})"><div class="modal-b"><div class="form-grid">
      <div class="field"><label>Tanggal Setor (PPh Pasal 29)</label><input class="input" type="date" name="tglSetor" value="${esc(r.tglSetor||'')}"></div>
+     <div class="field"><label>Jumlah PPh Pasal 29 Disetor</label><input class="input" name="jml29" inputmode="decimal" value="${r.jml29?fmt(r.jml29):''}" placeholder="untuk hitung bunga bila terlambat"></div>
      <div class="field"><label>Tanggal Lapor</label><input class="input" type="date" name="tglLapor" value="${esc(r.tglLapor||'')}"></div>
      <div class="field"><label>Nomor BPE</label><input class="input" name="bpe" value="${esc(r.bpe||'')}"></div>
      <div class="field full"><label>Keterangan</label><textarea class="textarea" name="ket" placeholder="Mis. nihil / tidak ada PPh kurang bayar">${esc(r.ket||'')}</textarea></div></div></div>
    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`);
 }
 async function saveTahunan(e,ty){ e.preventDefault(); const fd=new FormData($('#thnForm')), g=n=>(fd.get(n)||'').toString().trim();
-  const rec={tglSetor:g('tglSetor'),ntpn:(tahunanRep(ty)||{}).ntpn||'',tglLapor:g('tglLapor'),bpe:g('bpe'),ket:g('ket')};
+  const rec={tglSetor:g('tglSetor'),jml29:g('jml29')?roundPph(toNum(g('jml29'))):'',ntpn:(tahunanRep(ty)||{}).ntpn||'',tglLapor:g('tglLapor'),bpe:g('bpe'),ket:g('ket')};
   DB.reports.TAHUNAN=DB.reports.TAHUNAN||{}; if(Object.values(rec).some(Boolean)) DB.reports.TAHUNAN[ty]=rec; else delete DB.reports.TAHUNAN[ty];
   if(await save()){ closeModal(); toast('SPT Tahunan disimpan','success'); render(); } }
+function openTarifBunga(){
+  if(!isAdmin()) return; const ov=(DB.settings||{}).tarifBunga||{}, keys=[...new Set([...Object.keys(TARIF_BUNGA),...Object.keys(ov)])].sort().reverse();
+  openModal(`<div class="modal-h"><div><h3>Tarif Bunga Sanksi Administrasi</h3><p>Tarif per bulan untuk Pasal 8(2), 8(2a), 9(2a), 9(2b), 14(3) UU KUP · sumber resmi: <a href="${TARIF_BUNGA_URL}" target="_blank" rel="noopener">fiskal.kemenkeu.go.id</a></p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form id="tbForm" onsubmit="saveTarifBunga(event)"><div class="modal-b">
+      <div class="note" style="margin:0 0 12px">${icon('alert')} Tarif bawaan sudah diisi dari KMK resmi. Tambahkan bulan yang belum ada (mis. bulan baru atau bulan lama) sesuai KMK di situs Kemenkeu. Isian admin menggantikan tarif bawaan pada bulan yang sama.</div>
+      <div class="form-grid"><div class="field"><label>Bulan</label><input class="input" type="month" name="ym" required></div><div class="field"><label>Tarif per bulan (%)</label><input class="input" name="r" inputmode="decimal" placeholder="mis. 1,02" required></div>
+      <div class="field full"><label>Nomor KMK</label><input class="input" name="kmk" placeholder="mis. KMK 52/MK/EF.2/2026"></div></div>
+      <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Bulan</th><th class="num">Tarif/bulan</th><th>KMK</th><th></th></tr></thead><tbody>
+      ${keys.map(k=>{ const T=tarifBunga(k); return `<tr><td>${MONTHS[+k.slice(5)-1]} ${k.slice(0,4)}</td><td class="num">${String(T.r.toFixed(2)).replace('.',',')}%</td><td>${esc(T.kmk)}${T.src==='admin'?' <span class="lock-tag">admin</span>':''}</td><td>${ov[k]?`<button type="button" class="btn btn-outline btn-sm" onclick="delTarifBunga('${k}')">Hapus</button>`:''}</td></tr>`; }).join('')}
+      </tbody></table></div></div>
+    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Tutup</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan tarif</button></div></form>`,'lg');
+}
+async function saveTarifBunga(e){ e.preventDefault(); const fd=new FormData($('#tbForm')), ym=fd.get('ym'), r=parseFloat(String(fd.get('r')).replace(',','.'));
+  if(!ym||!(r>0&&r<10)){ toast('Isi bulan dan tarif yang valid','error'); return; }
+  DB.settings.tarifBunga={...(DB.settings.tarifBunga||{}),[ym]:{r,kmk:(fd.get('kmk')||'').trim()}};
+  if(await save()){ toast('Tarif bunga disimpan','success'); openTarifBunga(); render(); } }
+async function delTarifBunga(ym){ const o={...(DB.settings.tarifBunga||{})}; delete o[ym]; DB.settings.tarifBunga=o; if(await save()){ openTarifBunga(); render(); } }
 function oblCell(R,click){
   const [t]=oblChip(R), dd=String(R.eff.getDate()).padStart(2,'0')+'/'+String(R.eff.getMonth()+1).padStart(2,'0');
   return `<td><button type="button" class="kx k-${R.st}" title="${esc(oblTip(R))}" ${click?`onclick="${click}"`:''}><b>${t||dd}</b>${t&&R.st!=='none'&&R.st!=='lb'&&R.st!=='nihil'?`<small>${R.st==='done'||R.st==='late-done'?(R.doneAt&&R.doneAt!=='ada'?fmtDate(R.doneAt).slice(0,5):'✓'):dd}</small>${R.st==='late-done'?`<i class="kx-lt">telat ${R.late} hr</i>`:''}`:R.st==='lb'?`<small>${R.na==='lb'?'tanpa setor':'nihil'}</small>`:R.st==='nihil'?'<small>nihil</small>':''}</button></td>`;
@@ -2557,8 +2605,18 @@ function dashKalender(comb,ys,yl){
     <div class="ag-wrap"><h4>${icon('clock')} Agenda Terdekat</h4><div class="ag-row">${agenda||`<div class="empty" style="padding:16px">Tidak ada kewajiban yang menunggu. Semua sudah disetor &amp; dilaporkan 🎉</div>`}</div></div>
     <div class="table-wrap"><table class="kal kx-t"><thead><tr><th class="kx-h">Kewajiban</th>${head}</tr></thead><tbody>${body}${extra}</tbody></table></div>
     ${(()=>{ const L=[...ALL].filter(R=>R.st==='late-done').sort((a,b)=>a.eff-b.eff); if(!L.length) return '';
-      return `<div class="kx-late-box"><h4>${icon('alert')} Sudah disetor/dilaporkan, tetapi melewati batas waktu (${L.length})</h4><ul>${L.map(R=>`<li onclick="${R.o.id==='thn'?(adm?`openTahunan(${R.y})`:''):`oblOpen('${R.o.id}',${R.y},${R.i})`}"><b>${R.kind==='setor'?'Setor':'Lapor'} ${esc(R.o.l)}</b> ${R.o.id==='thn'?`Tahun Pajak ${R.y}`:`masa ${MONTHS[R.i]} ${R.y}`} — ${R.kind==='setor'?'disetor':'dilaporkan'} <b>${fmtDate(R.doneAt)}</b>, batas <b>${fmtDate(isoD(R.eff))}</b> · <span class="lt">terlambat ${R.late} hari</span></li>`).join('')}</ul>
-        <p>Keterlambatan dapat dikenai sanksi administrasi (bunga setor / denda lapor) sesuai ketentuan KUP.</p></div>`; })()}
+      const X=L.map(R=>({R,S:sanksiOf(R)})), tot=X.reduce((a,x)=>a+(x.S&&x.S.nilai||0),0), miss=X.filter(x=>x.S&&x.S.nilai==null).length;
+      return `<div class="kx-late-box"><div class="kx-lb-h"><h4>${icon('alert')} Sudah disetor/dilaporkan, tetapi melewati batas waktu (${L.length})</h4>
+        <div class="kx-lb-tot"><small>Estimasi sanksi administrasi</small><b>${rp(tot)}</b>${miss?`<span>${miss} belum dapat dihitung</span>`:''}</div></div>
+        <div class="table-wrap"><table class="kx-sk"><thead><tr><th>Kewajiban</th><th>Batas</th><th>Tanggal</th><th>Terlambat</th><th>Jenis sanksi &amp; dasar</th><th>Rumus perhitungan</th><th class="num">Sanksi</th></tr></thead><tbody>
+        ${X.map(({R,S})=>`<tr onclick="${R.o.id==='thn'?(adm?`openTahunan(${R.y})`:''):`oblOpen('${R.o.id}',${R.y},${R.i})`}"><td><b>${R.kind==='setor'?'Setor':'Lapor'} ${esc(R.o.l)}</b><div class="sub-t">${R.o.id==='thn'?`Tahun Pajak ${R.y}`:`Masa ${MONTHS[R.i]} ${R.y}`}</div></td>
+          <td>${fmtDate(isoD(R.eff))}</td><td>${fmtDate(R.doneAt)}</td><td><span class="lt">${R.late} hari</span>${S&&S.bulan?`<div class="sub-t">= ${S.bulan} bulan</div>`:''}</td>
+          <td>${S.jenis}<div class="sub-t">${S.dasar}</div></td>
+          <td>${esc(S.rumus)}${S.T?`<div class="sub-t">Tarif bunga ${MONTHS[+S.ym.slice(5)-1]} ${S.ym.slice(0,4)}: ${esc(S.T.kmk||'')}${S.T.src==='admin'?' (diisi admin)':''}</div>`:''}</td>
+          <td class="num"><b>${S.nilai!=null?rp(S.nilai):'—'}</b></td></tr>`).join('')}</tbody></table></div>
+        <p><b>Ketentuan:</b> bunga telat setor = pokok pajak × tarif bunga per bulan (KMK) × jumlah bulan terlambat — bagian dari bulan dihitung satu bulan penuh, paling lama 24 bulan (Pasal 9 ayat (2a)/(2b) UU KUP). Tarif bunga diambil dari KMK yang berlaku saat dimulainya penghitungan sanksi.
+        Denda telat lapor (Pasal 7 ayat (1) UU KUP): SPT Masa PPN Rp500.000, SPT Masa PPh Rp100.000, SPT Tahunan PPh Badan Rp1.000.000.
+        Angka ini estimasi; nilai final mengikuti STP yang diterbitkan DJP. Cek tarif resmi: <a href="${TARIF_BUNGA_URL}" target="_blank" rel="noopener">fiskal.kemenkeu.go.id — Tarif Bunga</a>${adm?` · <a href="javascript:void 0" onclick="openTarifBunga()">Kelola tarif bunga</a>`:''}</p></div>`; })()}
     <div class="card-b kal-leg">
       <span><span class="kx k-done"><b>✓</b></span>Sudah, tepat waktu</span><span><span class="kx k-late-done"><b>✓</b><i class="kx-lt">telat</i></span>Sudah, tetapi terlambat (melewati batas)</span>
       <span><span class="kx k-over"><b>H+</b></span>Lewat batas</span><span><span class="kx k-soon"><b>H-</b></span>≤ 7 hari lagi</span><span><span class="kx k-near"><b>H-</b></span>≤ 30 hari</span>
@@ -3069,6 +3127,7 @@ function openPpnRep(y,m){
       <div class="field"><label>Nomor BPE</label><input class="input mono" name="bpe" value="${esc(r.bpe||'')}" placeholder="Nomor Bukti Penerimaan Elektronik"></div>
       <div class="field"><label>Tanggal Pelaporan</label><input class="input" type="date" name="tglLapor" value="${esc(r.tglLapor||'')}"></div>
       <div class="field"><label>Tanggal Setor <span class="sub-t">(diisi bila PPN kurang bayar)</span></label><input class="input" type="date" name="tglSetor" value="${esc(r.tglSetor||'')}"></div>
+      <div class="field"><label>Jumlah PPN Kurang Bayar Disetor <span class="sub-t">(untuk hitung bunga bila terlambat)</span></label><input class="input" name="jmlSetor" inputmode="decimal" value="${r.jmlSetor?fmt(r.jmlSetor):''}"></div>
     </div>
     <div class="ppn-files">
       <div class="ppn-slot"><div class="ppn-sh"><b>Dokumen BPE</b><small>Bukti Penerimaan Elektronik · PDF</small></div><div id="ppF_bpe"></div></div>
@@ -3099,7 +3158,7 @@ async function savePpnRep(e){
     for(const w of ['bpe','spt']){ const o=PPNF[w];
       if(o.file){ const id=uid(); await putFile(id,o.file); if(o.cur) await delFile(o.cur.id); out[w]={id,name:o.file.name,size:o.file.size,at:new Date().toISOString()}; }
       else if(o.rm){ if(o.cur) await delFile(o.cur.id); out[w]=null; } else out[w]=o.cur||null; }
-    const rec={bpe:g('bpe'),tglLapor:g('tglLapor'),tglSetor:g('tglSetor'),ntpn:(ppnRepK(k)||{}).ntpn||'',fBpe:out.bpe,fSpt:out.spt,ket:g('ket'),updated:new Date().toISOString()};
+    const rec={bpe:g('bpe'),tglLapor:g('tglLapor'),tglSetor:g('tglSetor'),jmlSetor:g('jmlSetor')?roundPph(toNum(g('jmlSetor'))):'',ntpn:(ppnRepK(k)||{}).ntpn||'',fBpe:out.bpe,fSpt:out.spt,ket:g('ket'),updated:new Date().toISOString()};
     const c=ppnLapor(rec); rec.lapor=c.ok?'Sudah':'Belum';
     DB.reports.PPN=DB.reports.PPN||{};
     if(c.n||rec.ket||rec.tglSetor||rec.ntpn) DB.reports.PPN[k]=rec; else delete DB.reports.PPN[k];
