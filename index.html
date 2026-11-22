@@ -1654,6 +1654,16 @@ const ppMsg = res => res.moved?` · ${fmt(res.moved)} faktur pindah ke Pajak Mas
 const sumF = (rows,f) => rows.reduce((a,r)=> a + (isCanceled(r)?0:(+r[f]||0)), 0);
 const fakturKey = s => String(s||'').replace(/[^0-9a-z]/gi,'').toUpperCase();
 const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+/* Tarif: 0.1 → 10% · 0.0265 → 2,65% · 0.005 → 0,5% · "2.65" → 2,65% · "10%" tetap */
+function fmtTarif(v){
+  if(v==null||v==='') return '';
+  let s=String(v).trim(); if(!s) return '';
+  const hasPct=/%/.test(s), raw=s.replace(/%/g,'').replace(/\s/g,'');
+  const num=/^-?\d+(\.\d+)?$/.test(raw)?+raw:/^-?\d+(,\d+)?$/.test(raw)?+raw.replace(',','.'):NaN;
+  if(isNaN(num)) return s;
+  const pct=hasPct?num:(Math.abs(num)<=0.35?num*100:num);
+  return (Math.round(pct*10000)/10000).toLocaleString('id-ID',{maximumFractionDigits:4})+'%';
+}
 function fmtDate(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); return m?`${m[3]}/${m[2]}/${m[1]}`:(iso||'-'); }
 /* =========================================================
    INPUT TANGGAL dd/mm/yyyy
@@ -2732,7 +2742,7 @@ function renderData(t){
   if(rows.length) renderTableOnly();
 }
 function cellHTML(c,r){
-  const v=r[c.k];
+  const v=c.k==='tarif'?fmtTarif(r[c.k]):r[c.k];
   switch(c.f){
     case 'date': return `<td>${esc(fmtDate(v))}</td>`;
     case 'strong': return `<td class="strike"><b>${esc(v||'-')}</b></td>`;
@@ -2856,7 +2866,7 @@ function openRowForm(t,id){
     else if(f.type==='mon') inp=`<select class="select" name="${f.k}"><option value="">— pilih bulan —</option>${MONTHS.map((nm,i)=>`<option value="${i}" ${val!==''&&val!=null&&+val===i?'selected':''}>${nm}</option>`).join('')}</select>`;
     else if(f.type==='month') inp=`<input class="input" type="month" name="${f.k}" value="${esc(/^\d{4}-\d{2}$/.test(val||'')?val:'')}" min="${START_YEAR}-01">`;
     else if(f.type==='bayar') inp=`<select class="select" name="${f.k}"><option value="0" ${!val?'selected':''}>Belum dibayar</option><option value="1" ${val?'selected':''}>Sudah dibayar</option></select>`;
-    else inp=`<input class="input" name="${f.k}" value="${esc(val||'')}" ${f.list?`list="dl-${f.k}"`:''}>${f.list?`<datalist id="dl-${f.k}">${f.list.map(o=>`<option value="${o}">`).join('')}</datalist>`:''}`;
+    else inp=`<input class="input" name="${f.k}" value="${esc(f.k==='tarif'?fmtTarif(val):(val||''))}" ${f.k==='tarif'?'placeholder="mis. 2,65%"':''} ${f.list?`list="dl-${f.k}"`:''}>${f.list?`<datalist id="dl-${f.k}">${f.list.map(o=>`<option value="${o}">`).join('')}</datalist>`:''}`;
     return `<div class="field ${f.full?'full':''}">${lab}${inp}</div>`;
   };
   openModal(`
@@ -4027,7 +4037,7 @@ function parseWorkbook(input,isCsv,schema,progress){
     if(r%10000===0) progress('Memproses baris '+r.toLocaleString('id-ID')+' dari '+aoa.length.toLocaleString('id-ID')+'…');
     const row=aoa[r]; if(!row || !row.length) continue;
     const rec={};
-    for(const k of keys){ const v=(k in map && row[map[k]]!=null)?row[map[k]]:''; rec[k]=conv[fields[k].t](v); }
+    for(const k of keys){ const v=(k in map && row[map[k]]!=null)?row[map[k]]:''; rec[k]=conv[fields[k].t](v); if(k==='tarif') rec[k]=fmtTarif(v); }
     if(schema.key.every(k=>!rec[k])){ empty++; continue; }
     if(/^(total|jumlah|grand)/i.test(String(rec.npwp||'')+String(rec.nama||'')) && !rec[schema.id]){ empty++; continue; }
     recs.push(rec);
@@ -4227,7 +4237,7 @@ function exportInfo(kind){
   $('#xGo').disabled=!n;
 }
 const PDF_SAFE=s=>String(s??'').replace(/[−–—]/g,'-').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[✓✔]\s?/g,'').replace(/…/g,'...').replace(/→/g,'->');
-const xVal=(c,r)=>c.f==='a1perx'?a1Info(r).per:c.f==='a1jenisx'?a1Info(r).label:c.f==='batasx'?((b=>b?b.endTxt:'-')(batasInfo(r))):c.f==='batasl'?((b=>b?BATAS_LBL[b.lvl]+(b.lvl==='aman'?` (sisa ${b.left} masa)`:''):'-')(batasInfo(r))):c.f==='filename'?(r.file?r.file.name:''):c.f==='date'?fmtDate(r[c.k]):c.f==='bayar'?(r.bayar?'Sudah dibayar':'Belum dibayar'):c.f==='num'?(+r[c.k]||0):(r[c.k]??'');
+const xVal=(c,r)=>c.k==='tarif'?fmtTarif(r[c.k]):c.f==='a1perx'?a1Info(r).per:c.f==='a1jenisx'?a1Info(r).label:c.f==='batasx'?((b=>b?b.endTxt:'-')(batasInfo(r))):c.f==='batasl'?((b=>b?BATAS_LBL[b.lvl]+(b.lvl==='aman'?` (sisa ${b.left} masa)`:''):'-')(batasInfo(r))):c.f==='filename'?(r.file?r.file.name:''):c.f==='date'?fmtDate(r[c.k]):c.f==='bayar'?(r.bayar?'Sudah dibayar':'Belum dibayar'):c.f==='num'?(+r[c.k]||0):(r[c.k]??'');
 function buildExport(kind,scope){
   const y=state.year, printed=new Date().toLocaleString('id-ID',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const yearly=scope!=='month', allY=scope==='all', YS=allY?years():[y], months=yearly?MONTHS.map((_,i)=>i):[state.month], period=allY?`Gabungan ${YS[0]}-${YS[YS.length-1]}`:yearly?`Tahun ${y}`:`${MONTHS[state.month]} ${y}`;
