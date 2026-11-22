@@ -3438,6 +3438,7 @@ class XBook{
     [...rel.getElementsByTagName('Relationship')].forEach(x=>map[x.getAttribute('Id')]=x.getAttribute('Target'));
     this.order=[]; for(const s of [...this.wb.getElementsByTagName('sheet')]){ const n=s.getAttribute('name'), p='xl/'+map[s.getAttribute('r:id')||s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id')];
       this.order.push(n); this.sh[n]={name:n,path:p,doc:await rd(p)}; }
+    this.st=await rd('xl/styles.xml'); this.ct=await rd('[Content_Types].xml');
     const sst=this.z.file('xl/sharedStrings.xml'); this.sst=[]; if(sst){ const d=P.parseFromString(await sst.async('string'),'application/xml'); [...d.getElementsByTagName('si')].forEach(si=>this.sst.push([...si.getElementsByTagName('t')].map(t=>t.textContent).join(''))); }
   }
   rows(n){ return [...this.sh[n].doc.getElementsByTagName('row')]; }
@@ -3459,7 +3460,7 @@ class XBook{
     for(const row of this.rows(n).reverse()){ const r=+row.getAttribute('r'); if(r<at) continue; row.setAttribute('r',r+k); for(const c of [...row.getElementsByTagName('c')]) c.setAttribute('r',c.getAttribute('r').replace(/\d+$/,'')+(r+k)); }
     /* formula di semua sheet (sebelum baris baru dibuat) */
     for(const {n:own,f} of this.formulaCells()) f.textContent=lapShift(f.textContent,own,n,at,k);
-    const src=this.rowEl(n,at-1), next=this.rowEl(n,at+k);
+    const src=this.rowEl(n,at-1)||d.createElementNS(XNS,'row'), next=this.rowEl(n,at+k);
     for(let i=0;i<k;i++){ const nr=src.cloneNode(true), rr=at+i; nr.setAttribute('r',rr);
       for(const c of [...nr.getElementsByTagName('c')]){ const col=c.getAttribute('r').replace(/\d+$/,''); c.setAttribute('r',col+rr); const hadF=c.getElementsByTagName('f').length; while(c.firstChild) c.removeChild(c.firstChild); c.removeAttribute('t');
         if(col==='A'&&hadF){ const f=d.createElementNS(XNS,'f'); f.textContent=`A${rr-1}+1`; c.appendChild(f); } }
@@ -3473,6 +3474,42 @@ class XBook{
     const idx=this.order.indexOf(n);
     for(const dn of [...this.wb.getElementsByTagName('definedName')]){ const own=dn.hasAttribute('localSheetId')?this.order[+dn.getAttribute('localSheetId')]:null; if(own!==n&&!dn.textContent.includes(n)) continue; dn.textContent=lapShift(dn.textContent,own||n,n,at,k); }
     void idx; }
+  xfCenter(sz,bold){ /* gaya baru: font Calibri, rata tengah */
+    const S=this.st, fonts=S.getElementsByTagName('fonts')[0], xfs=S.getElementsByTagName('cellXfs')[0], E=t=>S.createElementNS(XNS,t);
+    const f=E('font'); if(bold) f.appendChild(E('b')); const z=E('sz'); z.setAttribute('val',sz); f.appendChild(z); const nm=E('name'); nm.setAttribute('val','Calibri'); f.appendChild(nm);
+    fonts.appendChild(f); const fid=fonts.getElementsByTagName('font').length-1; fonts.setAttribute('count',fid+1);
+    const x=E('xf'); [['numFmtId',0],['fontId',fid],['fillId',0],['borderId',0],['xfId',0],['applyFont',1],['applyAlignment',1]].forEach(([a,v])=>x.setAttribute(a,v));
+    const al=E('alignment'); al.setAttribute('horizontal','center'); al.setAttribute('vertical','center'); al.setAttribute('wrapText','1'); x.appendChild(al); xfs.appendChild(x);
+    const xid=xfs.getElementsByTagName('xf').length-1; xfs.setAttribute('count',xid+1); return xid; }
+  merge(n,ref){ const d=this.sh[n].doc; let mc=d.getElementsByTagName('mergeCells')[0]; if(!mc){ mc=d.createElementNS(XNS,'mergeCells'); const sd=d.getElementsByTagName('sheetData')[0]; let a=sd.nextSibling; while(a&&a.nodeType!==1) a=a.nextSibling;
+      if(a&&['sheetCalcPr','sheetProtection','protectedRanges','scenarios','autoFilter','sortState','dataConsolidate','customSheetViews'].includes(a.localName)){ while(a&&a.nodeType===1&&['sheetCalcPr','sheetProtection','protectedRanges','scenarios','autoFilter','sortState','dataConsolidate','customSheetViews'].includes(a.localName)) a=a.nextElementSibling; }
+      sd.parentNode.insertBefore(mc,a||null); }
+    const m=d.createElementNS(XNS,'mergeCell'); m.setAttribute('ref',ref); mc.appendChild(m); mc.setAttribute('count',mc.getElementsByTagName('mergeCell').length); }
+  /* kop: logo + nama KSO + nama proyek di atas judul sheet (3 baris disisipkan di baris 1) */
+  addKop(n,c1,c2,lines,logos,x0){
+    this.insertRows(n,1,3); const d=this.sh[n].doc, xBig=this.xfCenter(18,1), xMid=this.xfCenter(16,1);
+    [[1,lines[0],xBig,27],[2,lines[1],xMid,24],[3,'',null,8]].forEach(([r,txt,xf,h])=>{ const row=this.rowEl(n,r,true); while(row.firstChild) row.removeChild(row.firstChild);
+      ['s','customFormat','thickBot','thickTop','spans'].forEach(a=>row.removeAttribute(a)); row.setAttribute('ht',h); row.setAttribute('customHeight','1');
+      if(txt){ this.set(n,c1+r,txt); this.cell(n,c1+r).setAttribute('s',xf); this.merge(n,`${c1}${r}:${c2}${r}`); } });
+    for(const dn of [...this.wb.getElementsByTagName('definedName')]){ if(dn.getAttribute('name')!=='_xlnm.Print_Area') continue; const own=dn.hasAttribute('localSheetId')?this.order[+dn.getAttribute('localSheetId')]:null; if(own!==n) continue;
+      dn.textContent=dn.textContent.replace(/(\$[A-Z]+\$)(\d+)(:)/,(m0,a,r,c)=>a+'1'+c); }
+    if(!logos||!logos.length) return;
+    /* gambar logo (drawing) */
+    const di=(this.drawN=(this.drawN||0)+1), path=this.sh[n].path, relP=path.replace('worksheets/','worksheets/_rels/')+'.rels', EMU=9525, H=48;
+    let x=x0||8, pics='', rels='';
+    logos.forEach((l,i)=>{ const w=Math.round(Math.min(130,H*l.w/l.h)), img=`kop${di}_${i+1}.png`; this.z.file('xl/media/'+img,l.data.split(',')[1],{base64:true});
+      rels+=`<Relationship Id="rIdL${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${img}"/>`;
+      pics+=`<xdr:absoluteAnchor><xdr:pos x="${x*EMU}" y="${4*EMU}"/><xdr:ext cx="${w*EMU}" cy="${H*EMU}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${i+2}" name="Logo ${i+1}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rIdL${i+1}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="${x*EMU}" y="${4*EMU}"/><a:ext cx="${w*EMU}" cy="${H*EMU}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:absoluteAnchor>`;
+      x+=w+12; });
+    this.z.file(`xl/drawings/drawing${di}.xml`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${pics}</xdr:wsDr>`);
+    this.z.file(`xl/drawings/_rels/drawing${di}.xml.rels`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels}</Relationships>`);
+    this.relAdd=this.relAdd||{}; (this.relAdd[relP]=this.relAdd[relP]||[]).push(`<Relationship Id="rIdKop" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing${di}.xml"/>`);
+    const dr=d.createElementNS(XNS,'drawing'); dr.setAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','r:id','rIdKop');
+    const after=['legacyDrawing','legacyDrawingHF','drawingHF','picture','oleObjects','controls','webPublishItems','tableParts','extLst'], root=d.documentElement; let before=null;
+    for(const c of [...root.children]) if(after.includes(c.localName)){ before=c; break; } root.insertBefore(dr,before);
+    const CT='http://schemas.openxmlformats.org/package/2006/content-types', T=this.ct.documentElement;
+    if(![...T.getElementsByTagName('Default')].some(e=>e.getAttribute('Extension')==='png')){ const e=this.ct.createElementNS(CT,'Default'); e.setAttribute('Extension','png'); e.setAttribute('ContentType','image/png'); T.insertBefore(e,T.firstChild); }
+    const o=this.ct.createElementNS(CT,'Override'); o.setAttribute('PartName',`/xl/drawings/drawing${di}.xml`); o.setAttribute('ContentType','application/vnd.openxmlformats-officedocument.drawing+xml'); T.appendChild(o); }
   evaluate(){ /* hitung nilai rumus (cache) agar file langsung tampil benar di semua aplikasi */
     this.cache={}; const F=this.formulaCells(), self=this;
     const V=(s,ref)=>{ const v=self.val(s,ref.replace(/\$/g,'')); return v==null?0:v; };
@@ -3486,6 +3523,9 @@ class XBook{
       if(v==null) continue; const e=d.createElementNS(XNS,'v'); if(typeof v==='number'){ e.textContent=String(Math.round(v*1e6)/1e6); } else { o.c.setAttribute('t','str'); e.textContent=String(v); } o.c.appendChild(e); }
   }
   async out(){ const S=new XMLSerializer(); for(const n of this.order) this.z.file(this.sh[n].path,S.serializeToString(this.sh[n].doc)); this.z.file('xl/workbook.xml',S.serializeToString(this.wb));
+    this.z.file('xl/styles.xml',S.serializeToString(this.st)); this.z.file('[Content_Types].xml',S.serializeToString(this.ct));
+    for(const [rp,arr] of Object.entries(this.relAdd||{})){ const f=this.z.file(rp); let x=f?await f.async('string'):'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
+      x=x.replace('<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>').replace('</Relationships>',arr.join('')+'</Relationships>'); this.z.file(rp,x); }
     return this.z.generateAsync({type:'uint8array',compression:'DEFLATE'}); }
 }
 const xlDate=iso=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); return m?Math.round((Date.UTC(+m[1],+m[2]-1,+m[3])-Date.UTC(1899,11,30))/864e5):''; };
@@ -3512,21 +3552,25 @@ async function lapXlsx(rows,M,y,m){
   /* tempat & tanggal: sel "Jakarta, ..." di sheet PPh 23 (sheet lain merujuk ke sel ini) */
   const lp=X.rows(sh('P23')).map(r=>+r.getAttribute('r')).find(rr=>/Jakarta|ISI SECARA MANUAL/i.test(String(X.val(sh('P23'),'K'+rr)||''))); if(lp) X.set(sh('P23'),'K'+lp,M.tglTxt);
   if(M.bil21) X.set('REKAP','I9',M.bil21); if(M.ntpn21) X.set('REKAP','J9',M.ntpn21); if(M.bilU) X.set('REKAP','I11',M.bilU); if(M.ntpnU) X.set('REKAP','J11',M.ntpnU);
+  /* kop: logo, nama KSO & nama proyek sesuai menu Pengaturan */
+  const logos=await logoImagesForPdf(), L=[brandKso().toUpperCase(),brandProyek().toUpperCase()];
+  X.addKop('REKAP','B','K',L,logos,80); X.addKop(sh('DAF'),'A','K',L,logos,8); X.addKop(sh('P23'),'A','O',L,logos,8); X.addKop(sh('SEWA'),'A','O',L,logos,8); X.addKop(sh('KONS'),'A','O',L,logos,8);
   X.evaluate(); return X.out();
 }
 /* --- versi PDF laporan (struktur sama dengan sheet Excel) --- */
 async function lapPdf(rows,M,y,m){
   const jsPDF=await ensurePdfLib(), doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true}), W=297;
   const G={}; rows.forEach(r=>{ const s=vprSheetOf(r); (G[s]=G[s]||[]).push(r); }); const S=k=>G[k]||[], sum=(a,f)=>a.reduce((x,r)=>x+(+r[f]||0),0);
-  const head=(t1,t2)=>{ doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('LAPORAN PEMOTONGAN DAN PENYETORAN PPh',W/2,14,{align:'center'}); doc.setFontSize(11); doc.text(t1,W/2,20,{align:'center'}); doc.text(M.masaTxt,W/2,26,{align:'center'}); if(t2) doc.text(t2,W/2,32,{align:'center'}); doc.setLineWidth(.6); doc.line(10,29+(t2?6:0),W-10,29+(t2?6:0)); };
-  const ttd=(y0,cols)=>{ let yy=Math.max(y0,150); if(yy>180){ doc.addPage(); yy=20; } doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  const K=22; /* tinggi kop (logo + KSO + proyek) */
+  const head=(t1,t2)=>{ doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('LAPORAN PEMOTONGAN DAN PENYETORAN PPh',W/2,K+6,{align:'center'}); doc.setFontSize(11); doc.text(t1,W/2,K+12,{align:'center'}); doc.text(M.masaTxt,W/2,K+18,{align:'center'}); doc.setLineWidth(.6); doc.line(10,K+21,W-10,K+21); };
+  const ttd=(y0,cols)=>{ let yy=Math.max(y0,150); if(yy>180){ doc.addPage(); yy=K+8; } doc.setFont('helvetica','normal'); doc.setFontSize(9);
     if(cols.tgl) doc.text(M.tglTxt,cols.tgl,yy,{align:'center'}); cols.list.forEach(([x,l,n,j])=>{ doc.setFont('helvetica','bold'); doc.text(l,x,yy+5,{align:'center'}); doc.text(n,x,yy+27,{align:'center'}); doc.setLineWidth(.2); doc.line(x-18,yy+28,x+18,yy+28); doc.setFont('helvetica','normal'); doc.text(j,x,yy+32,{align:'center'}); }); };
   const th={fillColor:[214,255,51],textColor:0,fontStyle:'bold',halign:'center',valign:'middle',lineColor:0,lineWidth:.2,fontSize:7.5}, bd={lineColor:0,lineWidth:.2,fontSize:7.5,cellPadding:1.2,textColor:0};
   const tot={fillColor:[214,255,51],fontStyle:'bold'};
   /* REKAP */
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('REKAPITULASI TAGIHAN PAJAK PPH',W/2,16,{align:'center'}); doc.text(M.masaTxt,W/2,22,{align:'center'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('REKAPITULASI TAGIHAN PAJAK PPH',W/2,K+7,{align:'center'}); doc.text(M.masaTxt,W/2,K+13,{align:'center'});
   const rk=[['PPh 21 - PKWT',S('PKWT')],['PPh 21 - Bukan Pegawai Tetap',[...S('BORONGAN'),...S('HARIAN')]],['PPh Pasal 23',S('P23')],['PPh Pasal 4(2)-sewa',S('SEWA')],['PPh Pasal 4(2)-Jasa Konstruksi',S('KONS')]];
-  doc.autoTable({startY:28,margin:{left:30,right:30},theme:'grid',headStyles:th,styles:bd,
+  doc.autoTable({startY:K+18,margin:{left:30,right:30,top:K+4},theme:'grid',headStyles:th,styles:bd,
     head:[[{content:'NO',rowSpan:2},{content:'JENIS PAJAK',rowSpan:2},{content:'PPH PASAL 21 / PPH UNIFIKASI',colSpan:3},{content:'PEMBAYARAN',colSpan:3}],['Jumlah PEGAWAI/TRANSAKSI','DPP','PPh','BILLING','NTPN','KETERANGAN']],
     body:[...rk.map(([l,a],i)=>{ const c=[i+1,l,a.length,fmt(sum(a,'dpp')),fmt(sum(a,'pph'))], mid={valign:'middle',halign:'center'};
         if(i===0) c.push({content:M.bil21,rowSpan:2,styles:mid},{content:M.ntpn21,rowSpan:2,styles:mid}); if(i===2) c.push({content:M.bilU,rowSpan:3,styles:mid},{content:M.ntpnU,rowSpan:3,styles:mid}); c.push(''); return c; }),
@@ -3538,23 +3582,28 @@ async function lapPdf(rows,M,y,m){
   doc.addPage(); head('PPH 21 PEGAWAI TETAP DAN PPH 21 SELAIN PEGAWAI TETAP');
   const r21=(a,lbl,pk)=>[...a.map((r,i)=>[i+1,`${MONTHS[m]} ${y}`,r.nobukti||'',pk?'':r.noInv||'',pk?'':fmtDate(r.tglInv||r.tanggal),r.npwp||'',r.nama||'',fmt(r.dpp),fmt(r.pph),r.fasilitas&&r.fasilitas!=='Tanpa Fasilitas'?r.fasilitas:'',[r.kode,r.ket].filter(Boolean).join(' · ')]),
     [{content:lbl,colSpan:7,styles:tot},{content:fmt(sum(a,'dpp')),styles:{...tot,halign:'right'}},{content:fmt(sum(a,'pph')),styles:{...tot,halign:'right'}},{content:'',colSpan:2,styles:tot}]];
-  doc.autoTable({startY:34,margin:{left:10,right:10},theme:'grid',headStyles:th,styles:bd,head:[['No.','Masa Pajak','Nomor Pemotongan','NO INV','TGL','NPWP','Nama','DPP','Pajak Penghasilan (Rp)','Fasilitas Pajak','Keterangan']],
+  doc.autoTable({startY:K+25,margin:{left:10,right:10,top:K+4},theme:'grid',headStyles:th,styles:bd,head:[['No.','Masa Pajak','Nomor Pemotongan','NO INV','TGL','NPWP','Nama','DPP','Pajak Penghasilan (Rp)','Fasilitas Pajak','Keterangan']],
     body:[...r21(S('PKWT'),'PKWT',1),...r21(S('BORONGAN'),'BUKAN PEGAWAI (PEKERJA UPAH BORONGAN)'),...r21(S('HARIAN'),'BUKAN PEGAWAI (PEKERJA UPAH HARIAN)'),
       [{content:'JUMLAH PPH 21 YANG DI SETORKAN',colSpan:7,styles:tot},{content:fmt(sum([...S('PKWT'),...S('BORONGAN'),...S('HARIAN')],'dpp')),styles:{...tot,halign:'right'}},{content:fmt(sum([...S('PKWT'),...S('BORONGAN'),...S('HARIAN')],'pph')),styles:{...tot,halign:'right'}},{content:'',colSpan:2,styles:tot}]],
     columnStyles:{0:{halign:'center',cellWidth:8},7:{halign:'right'},8:{halign:'right'}}});
-  const ttd2=()=>{ let yy=Math.max(doc.lastAutoTable.finalY+12,150); if(yy>180){ doc.addPage(); yy=20; } const xL=W-95, xR=W-50, xc=(xL+xR)/2;
+  const ttd2=()=>{ let yy=Math.max(doc.lastAutoTable.finalY+12,150); if(yy>180){ doc.addPage(); yy=K+8; } const xL=W-95, xR=W-50, xc=(xL+xR)/2;
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text(M.tglTxt,xc,yy,{align:'center'}); doc.setFont('helvetica','bold'); doc.text('Diperiksa Oleh,',70,yy+5,{align:'center'}); doc.text('Disiapkan Oleh,',xc,yy+5,{align:'center'});
     [[70,'Raditya Adi P'],[xL,'Idris'],[xR,'Ari Wibowo Purba']].forEach(([x,n])=>{ doc.text(n,x,yy+27,{align:'center'}); doc.setLineWidth(.2); doc.line(x-18,yy+28,x+18,yy+28); });
     doc.setFont('helvetica','normal'); doc.text('Finance',70,yy+32,{align:'center'}); doc.text('Tax Staff',xc,yy+32,{align:'center'}); };
   ttd2();
   const uni=(sec,t1,lab)=>{ doc.addPage(); head(t1); const a=S(sec);
-    doc.autoTable({startY:34,margin:{left:8,right:8},theme:'grid',headStyles:th,styles:{...bd,fontSize:7},
+    doc.autoTable({startY:K+25,margin:{left:8,right:8,top:K+4},theme:'grid',headStyles:th,styles:{...bd,fontSize:7},
       head:[[{content:'NO',rowSpan:2},{content:lab,colSpan:4},{content:'NOMOR INVOICE / NOMOR FP',rowSpan:2},{content:'TANGGAL',rowSpan:2},{content:'BUKTI PEMOTONGAN',colSpan:2},{content:'JENIS OBJEK / JASA',rowSpan:2},{content:'JUMLAH BRUTO (Rp)',rowSpan:2},{content:'JUMLAH PPh YG DIPOTONG (Rp)',rowSpan:2},{content:'%',rowSpan:2},{content:'LOKASI',rowSpan:2},{content:'KETERANGAN',rowSpan:2}],['NPWP','NITKU','NAMA','ALAMAT','NOMOR','TANGGAL']],
       body:[...a.map((r,i)=>[i+1,r.npwp||'',r.nitku||vprNitku(r.npwp),r.nama||'',r.alamat||'',r.noInv||'',r.tglInv?fmtDate(r.tglInv):'',r.nobukti||'',fmtDate(r.tanggal),r.kode||'',fmt(r.bruto),fmt(r.pph),fmtTarif(r.tarif),r.lokasi||'',r.ket||'']),
         [{content:'TOTAL',colSpan:10,styles:{...tot,halign:'center'}},{content:fmt(sum(a,'bruto')),styles:{...tot,halign:'right'}},{content:fmt(sum(a,'pph')),styles:{...tot,halign:'right'}},{content:'',colSpan:3,styles:tot}]],
       columnStyles:{0:{halign:'center',cellWidth:7},1:{cellWidth:24},2:{cellWidth:30},3:{cellWidth:32},10:{halign:'right'},11:{halign:'right'},12:{halign:'center'}}});
     ttd2(); };
   uni('P23','PPh PASAL 23 DAN PASAL 26','PEMBERI JASA'); uni('SEWA','SEWA TANAH DAN/ATAU BANGUNAN','YANG MENYEWAKAN'); uni('KONS','JASA KONSTRUKSI','YANG MENYEWAKAN');
+  const logos=await logoImagesForPdf(), N=doc.internal.getNumberOfPages();
+  for(let i=1;i<=N;i++){ doc.setPage(i); let x=10; logos.forEach((l,j)=>{ const h=12, w=Math.min(34,h*l.w/l.h); doc.addImage(l.data,'PNG',x,6,w,h,'kop'+j,'FAST'); x+=w+4; });
+    doc.setTextColor(0,0,0); doc.setFont('helvetica','bold'); doc.setFontSize(11); if(brandKso()) doc.text(PDF_SAFE(brandKso().toUpperCase()),W/2,10.5,{align:'center'});
+    doc.setFontSize(10); doc.text(PDF_SAFE(brandProyek().toUpperCase()),W/2,16,{align:'center'}); doc.setDrawColor(0); doc.setLineWidth(.3); doc.line(10,K-2,W-10,K-2);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(100); doc.text(`Halaman ${i} dari ${N}`,W-10,205,{align:'right'}); doc.setTextColor(0); }
   doc.setProperties({title:lapName(y,m)}); doc.save(lapName(y,m)+'.pdf');
 }
 /* --- import dari file laporan (template yang sudah diisi) --- */
