@@ -1413,8 +1413,10 @@ const TYPES = {
       desc:'Bukti Pemotongan PPh 21 <b>selain pegawai tetap</b>: mandor, pekerja/upah harian, tenaga lepas, dan penerima penghasilan lain selain karyawan tetap/PKWT.',
       cols:[cT,cNo,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Penerima',f:'wide'},{k:'kode',l:'Kode Objek'},{k:'bruto',l:'Penghasilan Bruto',f:'num'},{k:'dpp',l:'DPP',f:'num'},{k:'tarif',l:'Tarif'},{k:'pph',l:'PPh 21 Dipotong',f:'num'},cSt],
       form:[fNo,fTgl,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Penerima',req:1},fKode21,fPtkp,fNum('bruto','Penghasilan Bruto'),fNum('hari','Jumlah Hari Kerja (untuk upah harian)'),fNum('dpp','DPP'),fTarif,fNum('pph','PPh 21 Dipotong',1),fSt,fKet],
-      tpl:[['NPWP/NIK Penerima','Nama Penerima','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Kode Objek Pajak','Penghasilan Bruto','DPP','Tarif','PPh Dipotong','Status','Keterangan'],
-           ['3171000000000002','Slamet','2600000201','31/01/2026','01','2026','',4500000,4500000,'0,5%',22500,'NORMAL','Contoh upah harian']]},
+      tpl:[['NPWP/NIK Penerima','Nama Penerima','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Kode Objek Pajak','Status PTKP','Penghasilan Bruto','Jumlah Hari Kerja','DPP','Tarif','PPh Dipotong','Status','Keterangan'],
+           ['3171000000000002','Slamet','2600000201','31/01/2026','01','2026','21-100-24','',4500000,9,'','','','NORMAL','Upah harian — tarif, DPP & PPh dihitung otomatis'],
+           ['3171000000000003','Ir. Hendra','2600000202','31/01/2026','01','2026','21-100-07','',20000000,'','','','','NORMAL','Tenaga ahli — Pasal 17 × 50% bruto'],
+           ['3171000000000004','Rudi','2600000203','31/01/2026','01','2026','21-100-35','K/1',7000000,'','','','','NORMAL','Tidak tetap bulanan — TER sesuai Status PTKP']]},
   PPH21A1:{...PPH_BASE,rep:'PPH21',label:'BP A1 — Masa Pajak Terakhir',menu:'BP A1 · Masa Pajak Terakhir',party:'Pegawai',fields:PPH21A1_FIELDS,base:'bruto',
       amountLabel:'PPh 21 Masa Terakhir',baseLabel:'Penghasilan Bruto Setahun',key:['nobukti','pph','bruto','pphSetahun'],
       desc:`<div class="a1-info"><div><b>${'Fungsi BP A1'}</b><span>Menunjukkan total <b>penghasilan bruto, pengurang, penghasilan neto</b>, serta <b>PPh Pasal 21 yang telah dipotong &amp; dilunasi</b> pemberi kerja selama satu tahun pajak atau bagian tahun pajak. Menjadi <b>dasar pegawai mengisi SPT Tahunan Orang Pribadi</b>.</span></div>
@@ -1435,8 +1437,9 @@ const TYPES = {
       desc:'Bukti Pemotongan PPh 21 <b>bulanan pegawai tetap</b> (karyawan tetap), umumnya memakai tarif efektif rata-rata (TER).',
       cols:[cT,cNo,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',f:'wide'},{k:'kode',l:'Kode Objek'},{k:'stPtkp',l:'PTKP'},{k:'bruto',l:'Penghasilan Bruto',f:'num'},{k:'tarif',l:'Tarif TER'},{k:'pph',l:'PPh 21 Dipotong',f:'num'},cSt],
       form:[fNo,fTgl,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',req:1},fKode,fPtkp,fNum('bruto','Penghasilan Bruto'),{k:'tarif',l:'Tarif TER'},fNum('pph','PPh 21 Dipotong',1),fSt,fKet],
-      tpl:[['NPWP/NIK Pegawai','Nama Pegawai','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Kode Objek Pajak','Penghasilan Bruto','Tarif','PPh 21 Dipotong','Status','Keterangan'],
-           ['3171000000000001','Budi Santoso','2600000001','31/01/2026','01','2026','',8000000,'1,5%',120000,'NORMAL','Contoh']]},
+      tpl:[['NPWP/NIK Pegawai','Nama Pegawai','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Kode Objek Pajak','Status PTKP','Penghasilan Bruto','Tarif','PPh 21 Dipotong','Status','Keterangan'],
+           ['3171000000000001','Budi Santoso','2600000001','31/01/2026','01','2026','21-100-01','TK/0',8000000,'','','NORMAL','Tarif TER & PPh dihitung otomatis dari Status PTKP'],
+           ['3171000000000005','Andi Wijaya','2600000002','31/01/2026','01','2026','21-100-01','K/1',12000000,'','','NORMAL','Kategori B']]},
   PPH23:{...PPH_BASE,rep:'PPHU',label:'PPh Pasal 23',menu:'PPh Pasal 23',party:'Penerima',fields:PPHU_FIELDS,base:'dpp',amountLabel:'PPh 23 Dipotong',baseLabel:'DPP',key:['nobukti','pph','dpp'],
       defJenis:'PPh 23', accept:r=>!r.jenis||/23/.test(r.jenis),
       desc:'Bukti Pemotongan Unifikasi <b>PPh Pasal 23</b> (mis. jasa teknik, sewa alat, jasa lainnya). Saat import file gabungan, baris jenis PPh lain otomatis dilewati.',
@@ -2925,7 +2928,8 @@ function pph21Calc(t,{kode,bruto,stPtkp,hari,masa}){
   else { R.rate={f5:5,f15:15,f0:0}[K.m]; R.note='Tarif final honorarium APBN/APBD'; }
   R.pph=roundPph(R.dpp*R.rate/100); return R;
 }
-function pph21AutoRec(rec,t){ const R=pph21Calc(t,{kode:rec.kode,bruto:rec.bruto,stPtkp:rec.stPtkp,hari:rec.hari,masa:rec.masa}); if(R&&R.rate!=null){ rec.tarif=pctTxtT(R.rate); if(t==='PPH21NP'&&!rec.dpp) rec.dpp=R.dpp; } }
+function pph21AutoRec(rec,t){ const st=String(rec.stPtkp||'').toUpperCase().replace(/\s/g,''); if(st) rec.stPtkp=st;
+  const R=pph21Calc(t,{kode:rec.kode,bruto:rec.bruto,stPtkp:rec.stPtkp,hari:rec.hari,masa:rec.masa}); if(R&&R.rate!=null){ rec.tarif=pctTxtT(R.rate); if(t==='PPH21NP'&&!rec.dpp) rec.dpp=roundPph(R.dpp); if(rec.pph===''||rec.pph==null||rec.pph===0) rec.pph=R.pph; } }
 function taxAutoInit(t){
   const F=$('#rowForm'); if(!F) return; const g=n=>F.querySelector(`[name="${n}"]`), tarif=g('tarif');
   const box=document.createElement('div'); box.className='field full tax-auto'; tarif.closest('.field').after(box);
@@ -4126,9 +4130,7 @@ function parseWorkbook(input,isCsv,schema,progress){
     if(r%10000===0) progress('Memproses baris '+r.toLocaleString('id-ID')+' dari '+aoa.length.toLocaleString('id-ID')+'…');
     const row=aoa[r]; if(!row || !row.length) continue;
     const rec={};
-    for(const k of keys){ const v=(k in map && row[map[k]]!=null)?row[map[k]]:''; rec[k]=conv[fields[k].t](v); if(k==='tarif') rec[k]=fmtTarif(v); }
-    if(fields===PPH21_FIELDS||fields===PPH21NP_FIELDS||fields===PPHU_FIELDS||fields===PPH21A1_FIELDS) for(const k of keys) if(fields[k].t==='n'&&typeof rec[k]==='number') rec[k]=roundPph(rec[k]);
-    if((fields===PPH21_FIELDS||fields===PPH21NP_FIELDS)&&!rec.tarif&&rec.bruto&&rec.masa!==11) pph21AutoRec(rec,fields===PPH21_FIELDS?'PPH21':'PPH21NP');
+    for(const k of keys){ const v=(k in map && row[map[k]]!=null)?row[map[k]]:''; rec[k]=conv[fields[k].t](v); }
     if(schema.key.every(k=>!rec[k])){ empty++; continue; }
     if(/^(total|jumlah|grand)/i.test(String(rec.npwp||'')+String(rec.nama||'')) && !rec[schema.id]){ empty++; continue; }
     recs.push(rec);
@@ -4184,6 +4186,12 @@ function readAs(file,asText){
 }
 const PPH_KODE={'22':'PPh 22','24':'PPh 23','28':'PPh 4(2)'};
 function normalizeRec(t,r){
+  /* PPh: tarif ke bentuk persen, pembulatan angka, dan tarif/PPh 21 otomatis (dijalankan di halaman utama, bukan di worker) */
+  if(TYPES[t].rep){
+    if('tarif' in r) r.tarif=fmtTarif(r.tarif);
+    for(const [k,f] of Object.entries(TYPES[t].fields||{})) if(f.t==='n'&&typeof r[k]==='number') r[k]=roundPph(r[k]);
+    if((t==='PPH21'||t==='PPH21NP')&&!r.tarif&&r.bruto&&r.masa!==11) pph21AutoRec(r,t);
+  }
   if(TYPES[t].pay){ r.bayar = r.bayar==null ? !!r.tglBayar : !!r.bayar; if(!r.bayar) r.tglBayar=r.tglBayar||''; }
   if(t==='PP'){ r.statusAsli=r.status||''; ppNorm(r); }
   if(t==='PPH21A1') a1Norm(r);
