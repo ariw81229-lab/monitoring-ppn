@@ -5008,10 +5008,46 @@ function cloudSerialize(){
   }
   return out;
 }
+/* ---- Ketahanan saat banyak perangkat login bersamaan ----
+   1. Permintaan ke server diulang otomatis (maks. 4×, jeda bertahap + acak) bila jaringan putus sesaat atau server sibuk (429/5xx).
+   2. Data disimpan sementara di perangkat (IndexedDB). Saat login/refresh hanya bagian yang berubah yang diunduh dari server,
+      sehingga beban server & kuota bandwidth Supabase jauh lebih kecil. Cache dihapus saat logout.
+   3. Pembaruan realtime diberi jeda acak agar perangkat tidak memuat ulang serentak. */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isTransient=e=>{ const m=String((e&&(e.message||e.error_description||e.msg))||e||''), st=+(e&&(e.status||e.code))||0;
+  return st===429||st>=500||/fetch|network|timeout|timed out|Failed to|Load failed|rate limit|too many|503|502|504|ECONN/i.test(m); };
+async function withRetry(fn,label,tries=4){ let last;
+  for(let i=0;i<tries;i++){ try{ const r=await fn(); if(r&&r.error&&isTransient(r.error)&&i<tries-1){ last=r.error; throw r.error; } return r; }
+    catch(e){ last=e; if(!isTransient(e)||i===tries-1) throw e; if(label) cloudLoaderMsg(`${label} — server sibuk, mencoba lagi (${i+2}/${tries})…`); await sleep(700*2**i+Math.random()*900); } }
+  throw last; }
+function cloudLoaderMsg(t){ const el=document.querySelector('#cloudLoad b'); if(el) el.textContent=t; }
+const CACHE_DB='ppn-cache';
+function cidb(){ return new Promise((res,rej)=>{ if(!window.indexedDB) return rej(new Error('no idb')); const r=indexedDB.open(CACHE_DB,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function cacheGet(){ try{ const d=await cidb(); return await new Promise(res=>{ const q=d.transaction('kv').objectStore('kv').get(CLOUD.url||'x'); q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; } }
+async function cachePut(v){ try{ const d=await cidb(); d.transaction('kv','readwrite').objectStore('kv').put(v,CLOUD.url||'x'); }catch(e){} }
+async function cacheClear(){ try{ const d=await cidb(); d.transaction('kv','readwrite').objectStore('kv').clear(); }catch(e){} }
+async function pool(items,n,fn){ const out=[]; let i=0; await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{ while(i<items.length){ const k=i++; out[k]=await fn(items[k]); } })); return out; }
+async function cloudFetchMeta(){ /* daftar key + waktu ubah (ringan), dibaca paralel per 1000 baris */
+  const head=await withRetry(()=>SB.from('app_state').select('key',{count:'exact',head:true}),'Memuat data'); if(head.error) throw head.error;
+  const n=head.count||0, step=1000, pages=[]; for(let f=0;f<Math.max(n,1);f+=step) pages.push(f);
+  const res=await pool(pages,4,async f=>{ const r=await withRetry(()=>SB.from('app_state').select('key,updated_at').order('key').range(f,f+step-1),'Memuat data'); if(r.error) throw r.error; return r.data||[]; });
+  return res.flat(); }
 async function cloudFetchAll(){
+  try{
+    const meta=await cloudFetchMeta(), cache=(await cacheGet())||{rows:{}}, C=cache.rows||{};
+    const need=meta.filter(m=>!C[m.key]||!m.updated_at||C[m.key].u!==m.updated_at).map(m=>m.key), got={};
+    const batches=[]; for(let i=0;i<need.length;i+=40) batches.push(need.slice(i,i+40));
+    let done=0;
+    await pool(batches,4,async b=>{ const r=await withRetry(()=>SB.from('app_state').select('key,value,updated_at').in('key',b),'Memuat data'); if(r.error) throw r.error;
+      (r.data||[]).forEach(x=>got[x.key]=x); done+=b.length; if(need.length>80) cloudLoaderMsg(`Memuat data dari server… ${Math.round(done/need.length*100)}%`); });
+    const rows=[], nc={}; for(const m of meta){ const x=got[m.key]||C[m.key]; if(!x) continue; const v=got[m.key]?x.value:x.v; rows.push({key:m.key,value:v}); nc[m.key]={u:got[m.key]?x.updated_at:x.u,v}; }
+    CLOUD.lastFetch={total:meta.length,downloaded:need.length}; cachePut({rows:nc,at:Date.now()});
+    return rows.sort((a,b)=>a.key<b.key?-1:1);
+  }catch(e){ if(isTransient(e)) throw e; console.warn('incremental fetch gagal, memakai cara lama',e); }
   const rows=[], step=100;
   for(let from=0;;from+=step){
-    const {data,error}=await SB.from('app_state').select('key,value').order('key').range(from,from+step-1);
+    const {data,error}=await withRetry(()=>SB.from('app_state').select('key,value').order('key').range(from,from+step-1),'Memuat data');
     if(error) throw error; rows.push(...(data||[])); if(!data||data.length<step) break;
   }
   return rows;
@@ -5057,15 +5093,15 @@ function cloudStatusText(){
 }
 /* ---------- Akun ---------- */
 async function cloudLoadUsers(){
-  const {data,error}=await SB.from('profiles').select('id,username,name,role,active,created_at').order('created_at');
+  const {data,error}=await withRetry(()=>SB.from('profiles').select('id,username,name,role,active,created_at').order('created_at'),'Memuat akun');
   if(error) throw error;
   DB.users=(data||[]).map(p=>{ let theme; try{ theme=JSON.parse(localStorage.getItem('ppn_theme_'+p.username)||'null')||undefined; }catch(e){}
     return {id:p.id,username:p.username,name:p.name||p.username,role:p.role,active:p.active,created:p.created_at,theme}; });
 }
 async function cloudAfterLogin(remember){
-  const {data:{user}}=await SB.auth.getUser(); if(!user) throw new Error('Sesi tidak valid');
+  const {data:{user}}=await withRetry(()=>SB.auth.getUser(),'Memeriksa sesi'); if(!user) throw new Error('Sesi tidak valid');
   CLOUD.uid=user.id;
-  const {data:prof,error}=await SB.from('profiles').select('*').eq('id',user.id).maybeSingle();
+  const {data:prof,error}=await withRetry(()=>SB.from('profiles').select('*').eq('id',user.id).maybeSingle(),'Memeriksa akun');
   if(error) throw new Error(cloudErr(error));
   if(!prof){ await SB.auth.signOut(); throw new Error('Profil akun belum ada. Pastikan setup-supabase.sql sudah dijalankan sebelum akun dibuat.'); }
   if(!prof.active){ await SB.auth.signOut(); const e=new Error('Akun ini belum diaktifkan atau dinonaktifkan oleh admin.'); e.inactive=true; throw e; }
@@ -5080,7 +5116,8 @@ async function cloudLogin(u,p,remember){
   await cloudReady();
   try{ localStorage.setItem('ppn_remember',remember?'1':'0'); }catch(e){}
   IDLE_FRESH=true;
-  const {error}=await SB.auth.signInWithPassword({email:toEmail(u),password:p});
+  const {error}=await withRetry(()=>SB.auth.signInWithPassword({email:toEmail(u),password:p}),'Masuk');
+  if(error&&isTransient(error)){ const e=new Error('Server sedang ramai (terlalu banyak login bersamaan dari jaringan yang sama). Tunggu ±1 menit lalu coba lagi.'); throw e; }
   if(error){ const e=new Error(/invalid login|invalid_credentials|credentials/i.test(error.message)?'bad':/not confirmed/i.test(error.message)?'Email akun belum dikonfirmasi. Matikan "Confirm email" di Supabase lalu minta admin mengatur ulang password akun ini.':cloudErr(error)); e.bad=e.message==='bad'; throw e; }
   await cloudAfterLogin(remember);
 }
@@ -5093,7 +5130,8 @@ async function cloudResume(){
     let remember=false; try{ remember=localStorage.getItem('ppn_remember')==='1'; }catch(e){}
     await cloudAfterLogin(remember);
     return true;
-  }catch(e){ console.warn(e); session.clear(); if(!e.inactive && !/Sesi/.test(e.message)) toast(cloudErr(e),'error'); return false; }
+  }catch(e){ console.warn(e); if(isTransient(e)){ toast('Koneksi ke server sedang sibuk/terputus. Muat ulang halaman sebentar lagi — sesi Anda tetap tersimpan.','error'); return false; }
+    session.clear(); if(!e.inactive && !/Sesi/.test(e.message)) toast(cloudErr(e),'error'); return false; }
   finally{ cloudLoader(false); }
 }
 async function cloudBranding(){
@@ -5107,7 +5145,7 @@ function cloudReset(){
   for(const k of Object.keys(MEMFILES)) delete MEMFILES[k];
   const st=DB.settings; DB=cloudEmptyDB(); DB.settings=st;
 }
-async function cloudLogout(){ const s=SB; if(CLOUD.uid) await audit('logout'); cloudReset(); try{ s&&await s.auth.signOut({scope:'local'}); }catch(e){} }
+async function cloudLogout(){ const s=SB; if(CLOUD.uid) await audit('logout'); cloudReset(); cacheClear(); try{ s&&await s.auth.signOut({scope:'local'}); }catch(e){} }
 /* ---------- Sinkron realtime ---------- */
 function cloudSubscribe(){
   if(CLOUD_CH) try{ SB.removeChannel(CLOUD_CH); }catch(e){}
@@ -5120,7 +5158,7 @@ function cloudSubscribe(){
   clearInterval(CLOUD.poll);
   CLOUD.poll=setInterval(()=>{ if(document.visibilityState==='visible') cloudCheckProfile(); },60000);
 }
-function cloudScheduleReload(){ clearTimeout(CLOUD_TIMER); CLOUD_TIMER=setTimeout(()=>cloudReload(),1500); }
+function cloudScheduleReload(){ clearTimeout(CLOUD_TIMER); CLOUD_TIMER=setTimeout(()=>cloudReload(),1500+Math.random()*4500); }
 async function cloudCheckProfile(){
   if(!SB||!CLOUD.uid) return true;
   const {data,error}=await SB.from('profiles').select('active,role,name').eq('id',CLOUD.uid).maybeSingle();
