@@ -1957,11 +1957,12 @@ function combTabs(t,countFn){
 function resetFilters(){ state.page=1; state.search=''; state.f={status:'all',bayar:'all',jenis:'all',spt:'all',rest:'all',batas:'all',a1aw:'all',a1ak:'all',a1j:'all'}; state.sel=new Set(); }
 /* Pilihan tahun & mode gabungan disimpan per menu, sehingga mengganti tahun di satu menu tidak mengubah menu lain */
 const DEF_YEAR=state.year, COMB_DEF={dashComb:false,restComb:true,dataComb:false};
+const yKey=v=>{ const g=NAV.find(n=>n.grp&&n.items.includes(v)); return g?'grp:'+g.grp:v; };
 function switchView(v){
   const p=state.view; if(p===v) return;
-  state.yearBy[p]=state.year; const pk=COMB[p]; if(pk) state.combBy[p]=!!state[pk];
-  state.view=v; state.year=state.yearBy[v]!=null?state.yearBy[v]:DEF_YEAR;
-  const nk=COMB[v]; if(nk) state[nk]=state.combBy[v]!=null?state.combBy[v]:COMB_DEF[nk];
+  state.yearBy[yKey(p)]=state.year; const pk=COMB[p]; if(pk) state.combBy[yKey(p)]=!!state[pk];
+  state.view=v; state.year=state.yearBy[yKey(v)]!=null?state.yearBy[yKey(v)]:DEF_YEAR;
+  const nk=COMB[v]; if(nk) state[nk]=state.combBy[yKey(v)]!=null?state.combBy[yKey(v)]:COMB_DEF[nk];
 }
 /* dari dashboard: buka menu lain dengan tahun/gabungan yang sedang dilihat di dashboard */
 function goD(v){ const comb=!!state.dashComb, y=state.year; switchView(v); const k=COMB[v]; if(k) state[k]=comb; if(!comb) state.year=y; go(v); }
@@ -1976,7 +1977,7 @@ function closeSidebar(){ $('#sidebar').classList.remove('open'); $('#overlay').h
 $('#yearSel').addEventListener('change',e=>{
   const v=e.target.value, ck=COMB[state.view];
   if(v==='all'){ if(ck) state[ck]=true; } else { state.year=+v; if(ck) state[ck]=false; }
-  state.yearBy[state.view]=state.year; if(ck) state.combBy[state.view]=!!state[ck];
+  state.yearBy[yKey(state.view)]=state.year; if(ck) state.combBy[yKey(state.view)]=!!state[ck];
   state.page=1; state.sel=new Set(); render();
 });
 const NAVK='ppn_nav_state';
@@ -2377,14 +2378,13 @@ function openTahunan(ty){
   openModal(`<div class="modal-h"><div><h3>SPT Tahunan PPh Badan — Tahun Pajak ${ty}</h3><p>Batas setor &amp; lapor 30 April ${ty+1}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
    <form id="thnForm" onsubmit="saveTahunan(event,${ty})"><div class="modal-b"><div class="form-grid">
      <div class="field"><label>Tanggal Setor (PPh Pasal 29)</label><input class="input" type="date" name="tglSetor" value="${esc(r.tglSetor||'')}"></div>
-     <div class="field"><label>NTPN</label><input class="input" name="ntpn" value="${esc(r.ntpn||'')}"></div>
      <div class="field"><label>Tanggal Lapor</label><input class="input" type="date" name="tglLapor" value="${esc(r.tglLapor||'')}"></div>
      <div class="field"><label>Nomor BPE</label><input class="input" name="bpe" value="${esc(r.bpe||'')}"></div>
      <div class="field full"><label>Keterangan</label><textarea class="textarea" name="ket" placeholder="Mis. nihil / tidak ada PPh kurang bayar">${esc(r.ket||'')}</textarea></div></div></div>
    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`);
 }
 async function saveTahunan(e,ty){ e.preventDefault(); const fd=new FormData($('#thnForm')), g=n=>(fd.get(n)||'').toString().trim();
-  const rec={tglSetor:g('tglSetor'),ntpn:g('ntpn'),tglLapor:g('tglLapor'),bpe:g('bpe'),ket:g('ket')};
+  const rec={tglSetor:g('tglSetor'),ntpn:(tahunanRep(ty)||{}).ntpn||'',tglLapor:g('tglLapor'),bpe:g('bpe'),ket:g('ket')};
   DB.reports.TAHUNAN=DB.reports.TAHUNAN||{}; if(Object.values(rec).some(Boolean)) DB.reports.TAHUNAN[ty]=rec; else delete DB.reports.TAHUNAN[ty];
   if(await save()){ closeModal(); toast('SPT Tahunan disimpan','success'); render(); } }
 function oblCell(R,click){
@@ -2867,7 +2867,6 @@ function openPpnRep(y,m){
       <div class="field"><label>Nomor BPE</label><input class="input mono" name="bpe" value="${esc(r.bpe||'')}" placeholder="Nomor Bukti Penerimaan Elektronik"></div>
       <div class="field"><label>Tanggal Pelaporan</label><input class="input" type="date" name="tglLapor" value="${esc(r.tglLapor||'')}"></div>
       <div class="field"><label>Tanggal Setor <span class="sub-t">(diisi bila PPN kurang bayar)</span></label><input class="input" type="date" name="tglSetor" value="${esc(r.tglSetor||'')}"></div>
-      <div class="field"><label>NTPN <span class="sub-t">(opsional)</span></label><input class="input mono" name="ntpn" value="${esc(r.ntpn||'')}"></div>
     </div>
     <div class="ppn-files">
       <div class="ppn-slot"><div class="ppn-sh"><b>Dokumen BPE</b><small>Bukti Penerimaan Elektronik · PDF</small></div><div id="ppF_bpe"></div></div>
@@ -2898,7 +2897,7 @@ async function savePpnRep(e){
     for(const w of ['bpe','spt']){ const o=PPNF[w];
       if(o.file){ const id=uid(); await putFile(id,o.file); if(o.cur) await delFile(o.cur.id); out[w]={id,name:o.file.name,size:o.file.size,at:new Date().toISOString()}; }
       else if(o.rm){ if(o.cur) await delFile(o.cur.id); out[w]=null; } else out[w]=o.cur||null; }
-    const rec={bpe:g('bpe'),tglLapor:g('tglLapor'),tglSetor:g('tglSetor'),ntpn:g('ntpn'),fBpe:out.bpe,fSpt:out.spt,ket:g('ket'),updated:new Date().toISOString()};
+    const rec={bpe:g('bpe'),tglLapor:g('tglLapor'),tglSetor:g('tglSetor'),ntpn:(ppnRepK(k)||{}).ntpn||'',fBpe:out.bpe,fSpt:out.spt,ket:g('ket'),updated:new Date().toISOString()};
     const c=ppnLapor(rec); rec.lapor=c.ok?'Sudah':'Belum';
     DB.reports.PPN=DB.reports.PPN||{};
     if(c.n||rec.ket||rec.tglSetor||rec.ntpn) DB.reports.PPN[k]=rec; else delete DB.reports.PPN[k];
@@ -2928,10 +2927,10 @@ function reportCard(t,y,m,rows){
     <div class="card-h"><div><h3>Laporan SPT Masa ${GROUP_LABEL[g]} — ${MONTHS[m]} ${y}</h3><p>Satu SPT Masa mencakup semua sub menu ${g==='PPH21'?'PPh 21 (BP 21, BP A1, Pegawai Tetap)':'PPh Unifikasi (PPh 23 & PPh 4 ayat 2)'}</p></div>
       <button class="btn btn-primary btn-sm" onclick="openReport('${t}')">${icon('edit')} ${r.setor||r.lapor?'Ubah':'Isi'} Status Laporan</button></div>
     <div class="card-b"><div class="rep-grid">
-      <div class="rep-item"><small>Status Setor</small>${b(r.setor,'Sudah disetor','Belum disetor')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglSetor?fmtDate(r.tglSetor):'—'}${r.ntpn?' · NTPN '+esc(r.ntpn):''}</div></div>
-      <div class="rep-item"><small>Jumlah Disetor</small><b>${rp(r.jmlSetor!=null&&r.jmlSetor!==''?r.jmlSetor:(r.setor==='Sudah'?total:0))}</b><div style="font-size:12px;color:var(--muted);margin-top:2px">Total dipotong (semua sub menu): ${rp(total)}</div></div>
+      <div class="rep-item"><small>Status Setor</small>${b(r.setor,'Sudah disetor','Belum disetor')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglSetor?fmtDate(r.tglSetor):'—'}</div></div>
+      <div class="rep-item"><small>Jumlah Disetor</small><b>${rp(r.jmlSetor!=null&&r.jmlSetor!==''?r.jmlSetor:(r.setor==='Sudah'?total:0))}</b>${g==='PPHU'&&(r.jml23!==undefined||r.jml42!==undefined)?`<div style="font-size:12px;color:var(--muted);margin-top:2px">PPh 23: <b>${rp(+r.jml23||0)}</b><br>PPh 4 ayat 2: <b>${rp(+r.jml42||0)}</b></div>`:''}<div style="font-size:12px;color:var(--muted);margin-top:2px">Total dipotong (semua sub menu): ${rp(total)}</div></div>
       <div class="rep-item"><small>Status Lapor SPT</small>${b(r.lapor,'Sudah dilaporkan','Belum dilaporkan')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglLapor?fmtDate(r.tglLapor):'—'}${r.bpe?' · BPE '+esc(r.bpe):''}</div></div>
-      <div class="rep-item"><small>Bukti Lapor (PDF)</small>${r.file?`<span class="file-pill" onclick="openStoredFile('${r.file.id}','${esc(r.file.name)}')">${icon('file')}<span>${esc(r.file.name)}</span></span>`:'<b style="color:var(--muted);font-size:13px">Belum diupload</b>'}</div>
+      <div class="rep-item"><small>Bukti Lapor (BPE &amp; SPT Induk)</small>${[[r.file,'BPE'],[r.fileSpt,'SPT Induk']].map(([f,l])=>f?`<span class="file-pill" style="margin:2px 4px 2px 0" title="${esc(f.name)}" onclick="openStoredFile('${f.id}','${esc(f.name)}')">${icon('file')}<span>${l}</span></span>`:`<span class="badge b-muted" style="margin:2px 4px 2px 0">${l} belum diupload</span>`).join('')}</div>
     </div>${r.ket?`<div class="note">${esc(r.ket)}</div>`:''}</div></div>`;
 }
 function pdfField(cur){
@@ -2939,7 +2938,17 @@ function pdfField(cur){
     <input type="file" id="pdfIn" accept="application/pdf,.pdf" hidden onchange="pickPdf(this.files[0])"></label>
     ${cur?`<div class="toolbar" style="margin-top:8px"><button type="button" class="btn btn-outline btn-sm" onclick="openStoredFile('${cur.id}','${esc(cur.name)}')">${icon('eye')} Lihat file saat ini</button><button type="button" class="btn btn-danger btn-sm" onclick="FORMFILE.remove=true;FORMFILE.file=null;$('#pdfName').textContent='File akan dihapus saat disimpan';$('#pdfSub').textContent='';">Hapus file</button></div>`:''}`;
 }
-let FORMFILE={file:null,remove:false};
+let FORMFILE={file:null,remove:false}, FORMFILE2={file:null,remove:false};
+function pdfField2(cur){
+  return `<label class="drop ${cur?'has':''}" id="pdfDrop2">${icon(cur?'file':'upload')}<b id="pdfName2">${cur?esc(cur.name):'Pilih file PDF'}</b><small id="pdfSub2">${cur?fmtSize(cur.size)+' · klik untuk mengganti':'Format PDF — tanpa batas ukuran'}</small>
+    <input type="file" accept="application/pdf,.pdf" hidden onchange="pickPdf2(this.files[0])"></label>
+    ${cur?`<div class="toolbar" style="margin-top:8px"><button type="button" class="btn btn-outline btn-sm" onclick="openStoredFile('${cur.id}','${esc(cur.name)}')">${icon('eye')} Lihat file saat ini</button><button type="button" class="btn btn-danger btn-sm" onclick="FORMFILE2.remove=true;FORMFILE2.file=null;$('#pdfName2').textContent='File akan dihapus saat disimpan';$('#pdfSub2').textContent='';">Hapus file</button></div>`:''}`;
+}
+function pickPdf2(f){ if(!f) return; if(!/pdf$/i.test(f.type)&&!/\.pdf$/i.test(f.name)){ toast('File harus berformat PDF','error'); return; }
+  FORMFILE2={file:f,remove:false}; $('#pdfDrop2').classList.add('has'); $('#pdfName2').textContent=f.name; $('#pdfSub2').textContent=fmtSize(f.size)+' · siap disimpan'; }
+async function storePdf2(cur){
+  if(FORMFILE2.file){ const id=uid(); await putFile(id,FORMFILE2.file); if(cur) await delFile(cur.id); return {id,name:FORMFILE2.file.name,size:FORMFILE2.file.size,at:new Date().toISOString()}; }
+  if(FORMFILE2.remove&&cur){ await delFile(cur.id); return null; } return cur||null; }
 function pickPdf(f){
   if(!f) return;
   if(!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)){ toast('File harus berformat PDF','error'); return; }
@@ -2954,19 +2963,23 @@ async function storePdf(cur){
   return cur||null;
 }
 function openReport(t){
-  const g=TYPES[t].rep, y=state.year,m=state.month, r=repOf(g,y,m)||{}, total=groupPph(g,y,m); FORMFILE={file:null,remove:false};
+  const g=TYPES[t].rep, y=state.year,m=state.month, r=repOf(g,y,m)||{}, total=groupPph(g,y,m); FORMFILE={file:null,remove:false}; FORMFILE2={file:null,remove:false};
+  const tp=x=>sumF(getRows(x,y,m),'pph'), nv=v=>v!=null&&v!==''?fmt(v):'';
   const sel=(n,v)=>`<select class="select" name="${n}"><option ${v!=='Sudah'?'selected':''}>Belum</option><option ${v==='Sudah'?'selected':''}>Sudah</option></select>`;
   openModal(`
     <div class="modal-h"><div><h3>Status Laporan SPT Masa ${GROUP_LABEL[g]}</h3><p>Masa pajak ${MONTHS[m]} ${y} · total dipotong ${rp(total)}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <form id="repForm" onsubmit="saveReport(event,'${g}')"><div class="modal-b"><div class="form-grid">
       <div class="field"><label>Status Setor</label>${sel('setor',r.setor)}</div>
       <div class="field"><label>Tanggal Setor</label><input class="input" type="date" name="tglSetor" value="${esc(r.tglSetor||'')}"></div>
-      <div class="field"><label>NTPN</label><input class="input" name="ntpn" value="${esc(r.ntpn||'')}"></div>
-      <div class="field"><label>Jumlah Disetor</label><input class="input" name="jmlSetor" inputmode="decimal" value="${r.jmlSetor!=null&&r.jmlSetor!==''?fmt(r.jmlSetor):''}" placeholder="${fmt(total)}"></div>
+      ${g==='PPHU'?`<div class="field"><label>Jumlah Disetor PPh Pasal 23</label><input class="input" name="jml23" inputmode="decimal" value="${nv(r.jml23)}" placeholder="${fmt(tp('PPH23'))}"></div>
+      <div class="field"><label>Jumlah Disetor PPh Pasal 4 Ayat 2 (Final)</label><input class="input" name="jml42" inputmode="decimal" value="${nv(r.jml42)}" placeholder="${fmt(tp('PPH42'))}"></div>
+      <div class="field full"><div class="note" style="margin:0">${icon('alert')} Status setor, lapor, BPE, dan SPT Induk berlaku untuk satu SPT Masa PPh Unifikasi, sehingga otomatis sama di tab PPh 23 dan PPh Pasal 4 Ayat 2 (Final).</div></div>`
+      :`<div class="field"><label>Jumlah Disetor</label><input class="input" name="jmlSetor" inputmode="decimal" value="${nv(r.jmlSetor)}" placeholder="${fmt(total)}"></div>`}
       <div class="field"><label>Status Lapor SPT</label>${sel('lapor',r.lapor)}</div>
       <div class="field"><label>Tanggal Lapor</label><input class="input" type="date" name="tglLapor" value="${esc(r.tglLapor||'')}"></div>
       <div class="field full"><label>Nomor BPE / Bukti Penerimaan Elektronik</label><input class="input" name="bpe" value="${esc(r.bpe||'')}"></div>
-      <div class="field full"><label>Bukti Lapor / BPE (PDF, opsional)</label>${pdfField(r.file)}</div>
+      <div class="field"><label>Bukti Lapor / BPE (PDF, opsional)</label>${pdfField(r.file)}</div>
+      <div class="field"><label>SPT Induk (PDF, opsional)</label>${pdfField2(r.fileSpt)}</div>
       <div class="field full"><label>Keterangan</label><textarea class="textarea" name="ket">${esc(r.ket||'')}</textarea></div>
     </div></div>
     <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit" id="repSave">${icon('check')} Simpan</button></div></form>`,'lg');
@@ -2975,10 +2988,11 @@ async function saveReport(e,g){
   e.preventDefault(); const btn=$('#repSave'); btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…';
   try{
     const fd=new FormData($('#repForm')), k=key(state.year,state.month), cur=repOf(g,state.year,state.month)||{};
-    const js=(fd.get('jmlSetor')||'').toString().trim();
-    const rec={setor:fd.get('setor'),tglSetor:fd.get('tglSetor'),ntpn:(fd.get('ntpn')||'').trim(),jmlSetor:js?toNum(js):'',
+    const num=n=>{ const v=(fd.get(n)||'').toString().trim(); return v?toNum(v):''; };
+    let js=num('jmlSetor'); const j23=num('jml23'), j42=num('jml42'); if(g==='PPHU') js=(j23===''&&j42==='')?'':(+j23||0)+(+j42||0);
+    const rec={setor:fd.get('setor'),tglSetor:fd.get('tglSetor'),ntpn:cur.ntpn||'',jmlSetor:js,...(g==='PPHU'?{jml23:j23,jml42:j42}:{}),
       lapor:fd.get('lapor'),tglLapor:fd.get('tglLapor'),bpe:(fd.get('bpe')||'').trim(),ket:(fd.get('ket')||'').trim()};
-    rec.file=await storePdf(cur.file);
+    rec.file=await storePdf(cur.file); rec.fileSpt=await storePdf2(cur.fileSpt);
     (DB.reports[g]=DB.reports[g]||{})[k]=rec;
     if(await save()){ closeModal(); toast('Status laporan disimpan','success'); render(); }
   }catch(err){ console.error(err); toast('Gagal menyimpan: '+err.message,'error'); btn.disabled=false; btn.innerHTML=icon('check')+' Simpan'; }
@@ -4191,7 +4205,7 @@ function buildExport(kind,scope){
   const ok=list.filter(x=>!isCanceled(x.r)).length, canceled=new Set(); list.forEach((x,i)=>{ if(isCanceled(x.r)) canceled.add(i); });
   const o=1+(yearly?1:0), amt=list.reduce((a,x)=>a+(isCanceled(x.r)?0:(+x.r[T.amount]||0)),0);
   let extra='';
-  if(T.report && !yearly){ const rr=repOf(T.rep,y,state.month)||{}; extra=` | Setor: ${rr.setor==='Sudah'?'Sudah'+(rr.ntpn?' (NTPN '+rr.ntpn+')':''):'Belum'} | Lapor: ${rr.lapor==='Sudah'?'Sudah'+(rr.bpe?' (BPE '+rr.bpe+')':''):'Belum'}`; }
+  if(T.report && !yearly){ const rr=repOf(T.rep,y,state.month)||{}; extra=` | Setor: ${rr.setor==='Sudah'?'Sudah':'Belum'} | Lapor: ${rr.lapor==='Sudah'?'Sudah'+(rr.bpe?' (BPE '+rr.bpe+')':''):'Belum'}`; }
   if(T.pay){ const paid=list.filter(x=>!isCanceled(x.r)&&x.r.bayar).reduce((a,x)=>a+(+x.r.ppn||0),0); extra=` | PPN dibayar Rp ${fmt(paid)} | Belum Rp ${fmt(amt-paid)}`; }
   return {title:`Daftar ${T.label} - ${period}`,
     subtitle:`Masa pajak ${period} | ${fmt(list.length)} ${T.unit}${canceled.size?` (${canceled.size} batal, tidak dihitung)`:''} | Total ${T.amountLabel} Rp ${fmt(amt)}${extra} | Dicetak ${printed}`,
@@ -4493,7 +4507,7 @@ function resetData(){
   confirmBox('Hapus semua data?','Seluruh data PPN, PPh, restitusi, status laporan, bukti SPT, dan bukti potong di semua tahun akan dihapus permanen. Disarankan backup terlebih dahulu.','Hapus Semua',async()=>{
     const ids=[];
     Object.values(DB.spt).forEach(s=>(s.files||[]).forEach(f=>ids.push(f.id)));
-    Object.values(DB.reports).forEach(g=>Object.values(g).forEach(r=>[r.file,r.fBpe,r.fSpt].forEach(f=>f&&ids.push(f.id))));
+    Object.values(DB.reports).forEach(g=>Object.values(g).forEach(r=>[r.file,r.fileSpt,r.fBpe,r.fSpt].forEach(f=>f&&ids.push(f.id))));
     Object.values(DB.restitusi||{}).forEach(r=>(r.docs||[]).forEach(d=>ids.push(d.id)));
     Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id)));
     for(const id of ids) await delFile(id);
@@ -4529,7 +4543,7 @@ const SYNC_KEY='monitoring_ppn_lastsync';
 function allFileIds(){
   const ids=[];
   Object.values(DB.spt||{}).forEach(s=>(s.files||[]).forEach(f=>ids.push(f.id)));
-  Object.values(DB.reports||{}).forEach(g=>Object.values(g).forEach(r=>[r.file,r.fBpe,r.fSpt].forEach(f=>f&&ids.push(f.id))));
+  Object.values(DB.reports||{}).forEach(g=>Object.values(g).forEach(r=>[r.file,r.fileSpt,r.fBpe,r.fSpt].forEach(f=>f&&ids.push(f.id))));
   Object.values(DB.restitusi||{}).forEach(r=>(r.docs||[]).forEach(d=>ids.push(d.id)));
   Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id)));
   return [...new Set(ids)];
