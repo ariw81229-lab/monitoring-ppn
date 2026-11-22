@@ -1093,6 +1093,9 @@ table.kx-t td{padding:5px 3px;border-bottom:1px dashed var(--border)}
 .ik-bar{height:6px;border-radius:4px;background:rgba(100,116,139,.15);overflow:hidden}.ik-bar span{display:block;height:100%;border-radius:4px}
 .ik-comp{display:inline-flex;gap:4px;flex-wrap:wrap}.ik-comp span{font-size:11px;font-weight:800;padding:2px 6px;border-radius:6px}
 .ik-comp .ok{background:rgba(22,163,74,.12);color:#15803d}.ik-comp .lt{background:rgba(202,138,4,.15);color:#a16207}.ik-comp .ov{background:rgba(220,38,38,.12);color:#b91c1c}.ik-comp .op{background:rgba(100,116,139,.12);color:var(--muted)}
+.rep-diff{display:flex;gap:8px;margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.3);color:var(--text);font-size:12px;line-height:1.5}
+.rep-diff svg{flex:none;width:15px;height:15px;color:var(--danger);margin-top:2px}.rep-diff b{color:var(--danger)}.rep-diff.sm{margin-top:6px;padding:6px 8px;font-size:11.5px}
+.rep-ok{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--success);font-weight:700}.rep-ok svg{width:14px;height:14px}
 .ik-rs{display:flex;align-items:center;gap:8px}.ik-rs .kc{flex:none}
 .ik-t tr.ik-empty td{opacity:.55}.ik-t td{vertical-align:middle}
 .kx-lt{display:block;font-style:normal;font-size:8.5px;font-weight:800;color:#b45309;margin-top:1px;letter-spacing:.01em}
@@ -2380,15 +2383,16 @@ function ikhPeriod(y,i){ /* satu masa pajak */
   const k=key(y,i), rs=(DB.restitusi[k]||pmSum(y,i)>0)?restItem(k):null, lp=oblStatus(OBL[2],y,i,'lapor');
   return {...r,C,rs,lp};
 }
-function ikhSum(list){ const o={vPM:0,vPK:0,cPM:0,cPK:0,paidPPN:0,unpaidPPN:0,ppPPN:0,C:{ok:0,late:0,over:0,open:0,sanksi:0},rs:{n:0,aju:0,cair:0,proses:0,st:{}},lapN:0,lapM:0};
+function ikhSum(list){ const o={lbN:0,vPM:0,vPK:0,cPM:0,cPK:0,paidPPN:0,unpaidPPN:0,ppPPN:0,C:{ok:0,late:0,over:0,open:0,sanksi:0},rs:{n:0,aju:0,cair:0,proses:0,st:{}},lapN:0,lapM:0};
   list.forEach(p=>{ ['vPM','vPK','cPM','cPK','paidPPN','unpaidPPN','ppPPN'].forEach(f=>o[f]+=p[f]||0); ['ok','late','over','open','sanksi'].forEach(f=>o.C[f]+=p.C[f]);
+    if(p.vPM>0) o.lbN++;
     if(p.rs&&p.rs.pengajuan>0){ o.rs.n++; o.rs.aju+=p.rs.pengajuan; o.rs.cair+=p.rs.cair; o.rs.proses+=p.rs.belum; o.rs.st[p.rs.status]=(o.rs.st[p.rs.status]||0)+1; }
     if(p.lp.st!=='fut'){ o.lapM++; if(['done','late-done','nihil'].includes(p.lp.st)) o.lapN++; } });
   return o; }
 function ikhInsights(P,S,scope){
-  const out=[], act=P.filter(p=>p.vPM>0), lb=S.vPM-S.vPK;
+  const out=[], act=P.filter(p=>p.vPM>0);
   if(!S.vPM&&!S.vPK) return [['alert','Belum ada data PPN pada periode ini.']];
-  out.push(['refund',`Posisi PPN ${scope}: PPN Masukan <b>${rp(S.vPM)}</b> vs PPN Keluaran <b>${rp(S.vPK)}</b> → ${lb>=0?'lebih bayar':'kurang bayar'} <b>${rp(Math.abs(lb))}</b>${S.vPM?` (PPN Keluaran ${pctTxt(S.vPK,S.vPM,1)} dari PPN Masukan)`:''}.`]);
+  out.push(['refund',`Posisi PPN ${scope}: status <b>Lebih Bayar</b> dengan PPN Masukan <b>${rp(S.vPM)}</b> sebagai dasar lebih bayar / restitusi. PPN Keluaran <b>${rp(S.vPK)}</b> tidak mengurangi lebih bayar.`]);
   if(act.length){ const pk=act.reduce((a,p)=>p.vPM>a.vPM?p:a); out.push(['arrow',`PPN Masukan tertinggi pada <b>${pk.lbl}</b> sebesar <b>${rp(pk.vPM)}</b> (${pctTxt(pk.vPM,S.vPM,1)} dari total) — prioritaskan kelengkapan dokumen restitusi periode ini.`]); }
   if(S.unpaidPPN>0){ const w=P.filter(p=>p.unpaidPPN>0).sort((a,b)=>b.unpaidPPN-a.unpaidPPN)[0]; out.push(['wallet',`PPN Masukan belum dibayar ke rekanan <b>${rp(S.unpaidPPN)}</b> (${pctTxt(S.unpaidPPN,S.vPM,1)})${w?`, terbesar pada <b>${w.lbl}</b> ${rp(w.unpaidPPN)}`:''}. Faktur yang belum dibayar berisiko dikoreksi saat pemeriksaan restitusi.`]); }
   else if(S.vPM) out.push(['check','Seluruh PPN Masukan sudah dibayar ke rekanan — mendukung kelancaran pemeriksaan restitusi.']);
@@ -2415,16 +2419,16 @@ function dashIkhtisar(comb,ys,yl){
       <button class="btn btn-outline btn-sm" onclick="openExport('rekap')">${icon('download')} Export</button></div></div>
     <div class="card-b ik-ai"><h4>${icon('grid')} Analisis Otomatis <span class="sub-t">dihitung otomatis dari data ${scope}</span></h4><ul>${ins.map(([ic,t])=>`<li>${icon(ic)}<span>${t}</span></li>`).join('')}</ul></div>
     <div class="table-wrap"><table class="ik-t">
-      <thead><tr><th>${mode==='tahun'?'Tahun':'Masa Pajak'}</th><th class="num">PPN Masukan</th><th>Dibayar ke rekanan</th><th class="num">PPN Keluaran</th><th class="num">Lebih / (Kurang) Bayar</th><th class="num">Belum Dikreditkan</th><th>SPT Masa PPN</th><th>Kepatuhan setor/lapor</th><th>Restitusi</th></tr></thead>
-      <tbody>${per.map(p=>{ const lb=p.vPM-p.vPK, empty=!p.has&&!p.vPM&&!p.vPK; return `<tr class="clickable ${empty?'ik-empty':''}" onclick="${p.click}">
+      <thead><tr><th>${mode==='tahun'?'Tahun':'Masa Pajak'}</th><th class="num">PPN Masukan</th><th>Dibayar ke rekanan</th><th class="num">PPN Keluaran</th><th>Status PPN</th><th class="num">Belum Dikreditkan</th><th>SPT Masa PPN</th><th>Kepatuhan setor/lapor</th><th>Restitusi</th></tr></thead>
+      <tbody>${per.map(p=>{ const empty=!p.has&&!p.vPM&&!p.vPK; return `<tr class="clickable ${empty?'ik-empty':''}" onclick="${p.click}">
         <td><b>${p.lbl}</b><div class="sub-t">${fmt(p.cPM)} faktur PM · ${fmt(p.cPK)} PK</div></td>
         <td class="num"><b>${p.vPM?rp(p.vPM):'—'}</b></td>
         <td style="min-width:130px">${p.vPM?`${bar(p.paidPPN,p.vPM,'var(--success)')}<div class="sub-t">${pctTxt(p.paidPPN,p.vPM)} dibayar${p.unpaidPPN?` · sisa ${short(p.unpaidPPN)}`:''}</div>`:'<span class="sub-t">—</span>'}</td>
         <td class="num">${p.vPK?rp(p.vPK):'—'}</td>
-        <td class="num" style="font-weight:800;color:${lb>0?'var(--primary)':lb<0?'var(--danger)':'inherit'}">${lb?(lb<0?'('+rp(-lb)+')':rp(lb)):'—'}</td>
+        <td>${p.yearRow?(p.lbN?`<span class="badge b-success">Lebih Bayar</span><div class="sub-t">${p.lbN} masa</div>`:'<span class="sub-t">—</span>'):p.vPM>0?'<span class="badge b-success">Lebih Bayar</span>':p.lp.st==='fut'?'<span class="sub-t">—</span>':'<span class="badge b-primary">Nihil</span>'}</td>
         <td class="num" style="color:${p.ppPPN?'var(--warning)':'inherit'}">${p.ppPPN?short(p.ppPPN):'—'}</td>
         <td>${lapI(p)}</td><td>${comp(p.C)}</td><td style="min-width:150px">${rsCell(p)}</td></tr>`; }).join('')}</tbody>
-      <tfoot><tr><td>Total</td><td class="num">${rp(S.vPM)}</td><td>${pctTxt(S.paidPPN,S.vPM||1)} dibayar</td><td class="num">${rp(S.vPK)}</td><td class="num">${rp(S.vPM-S.vPK)}</td><td class="num">${short(S.ppPPN)}</td><td>${S.lapN}/${S.lapM} masa lapor</td><td>${S.C.ok} tepat · ${S.C.late} telat · ${S.C.over} lewat</td><td>${rp(S.rs.aju)}</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="num">${rp(S.vPM)}</td><td>${pctTxt(S.paidPPN,S.vPM||1)} dibayar</td><td class="num">${rp(S.vPK)}</td><td>Lebih Bayar ${S.lbN} masa</td><td class="num">${short(S.ppPPN)}</td><td>${S.lapN}/${S.lapM} masa lapor</td><td>${S.C.ok} tepat · ${S.C.late} telat · ${S.C.over} lewat</td><td>${rp(S.rs.aju)}</td></tr></tfoot>
     </table></div>
     <div class="card-b" style="padding-top:10px"><div class="legend-mini ik-leg" style="margin:0;font-size:12px">
       <span><span class="ik-comp"><span class="ok">✓</span></span> tepat waktu</span><span><span class="ik-comp"><span class="lt">!</span></span> sudah, tetapi terlambat</span><span><span class="ik-comp"><span class="ov">H+</span></span> lewat batas, belum</span><span><span class="ik-comp"><span class="op">n</span></span> belum jatuh tempo</span>
@@ -2481,7 +2485,7 @@ function dashHero(o){
     </div>
     <div class="dh-strip">
       ${chip('in','PPN Masukan',rp(o.tPM),`${fmt(o.cnt)} faktur · ${o.uploaded}/${ys.length*12} bulan terunggah`,o.uploaded/(ys.length*12)*100,"goD('PM')")}
-      ${chip('out','PPN Keluaran',rp(o.tPK),`${fmt(o.units.reduce((a,r)=>a+(r.cPK||0),0))} faktur keluaran`,o.tPM?Math.min(100,o.tPK/o.tPM*100):0,"goD('PK')")}
+      ${chip('out','PPN Keluaran',rp(o.tPK),`${fmt(o.units.reduce((a,r)=>a+(r.cPK||0),0))} faktur keluaran`,o.units.length?o.units.filter(r=>r.cPK>0).length/o.units.length*100:0,"goD('PK')")}
       ${chip('shield','SPT Masa PPN',`${ppnOk} / ${ppnDue}`,`masa sudah dilaporkan lengkap (BPE & SPT Induk)`,ppnDue?ppnOk/ppnDue*100:0,"goD('PM')")}
       ${chip('users','SPT PPh 21 · Unifikasi',`${P.p21[0]+P.pu[0]} / ${P.p21[1]+P.pu[1]}`,`masa dilaporkan · PPh 21 ${P.p21[0]}/${P.p21[1]} · Unifikasi ${P.pu[0]}/${P.pu[1]}`,(P.p21[1]+P.pu[1])?(P.p21[0]+P.pu[0])/(P.p21[1]+P.pu[1])*100:0,"goD('PPH21NP')")}
     </div></div>`;
@@ -2808,7 +2812,7 @@ function drawChart(units){
       plugins:{legend:{display:false},
         tooltip:{backgroundColor:'rgba(15,23,42,.94)',titleFont:{family:'Plus Jakarta Sans',weight:'800',size:13},bodyFont:{family:'Plus Jakarta Sans',size:12},footerFont:{family:'Plus Jakarta Sans',weight:'700',size:12},padding:12,cornerRadius:10,boxPadding:4,usePointStyle:true,
           callbacks:{title:it=>{ const u=units[it[0].dataIndex]; return u.label||u.n; },label:c=>' '+c.dataset.label+': '+(c.dataset.yAxisID==='y2'?fmt(c.raw)+' faktur':rp(c.raw)),
-            footer:it=>{ const u=units[it[0].dataIndex]; return [`Total PPN Masukan: ${rp(u.vPM)}`,`Selisih PM − PK: ${rp(u.vPM-u.vPK)}`]; }}}},
+            footer:it=>{ const u=units[it[0].dataIndex]; return [`Total PPN Masukan (lebih bayar): ${rp(u.vPM)}`]; }}}},
       scales:{x:{stacked:true,ticks:{color:muted,font:{family:'Plus Jakarta Sans',weight:'600'}},grid:{display:false},border:{display:false}},
         y:{stacked:true,beginAtZero:true,ticks:{color:muted,callback:v=>short(v),maxTicksLimit:6},grid:{color:border},border:{display:false},title:{display:true,text:'PPN per '+(state.dashComb?'tahun':'bulan'),color:muted,font:{size:11}}},
         y2:{position:'right',beginAtZero:true,ticks:{color:'#b8935a',precision:0,maxTicksLimit:6},grid:{display:false},border:{display:false},title:{display:true,text:'Jumlah faktur',color:'#b8935a',font:{size:11}}}}}
@@ -3248,6 +3252,17 @@ async function viewPpnDocs(y,m){
 const REP_SPLIT={PPHU:[['jml23','PPH23','PPh Pasal 23','PPh 23'],['jml42','PPH42','PPh Pasal 4 Ayat 2 (Final)','PPh 4 ayat 2']],
   PPH21:[] /* PPh 21: setoran satu kesatuan, tidak dipisah per sub menu */};
 function repSplit(g,y,m){ const r=repOf(g,y,m)||{}; return (REP_SPLIT[g]||[]).filter(([k,t])=>k!=='jmlA1'||m===11||getRows(t,y,m).length||(r[k]!==undefined&&r[k]!=='')); }
+/* cek selisih antara jumlah disetor (input Status Laporan) dan total PPh dipotong dari bukti potong */
+function repSelisih(g,y,m,r,total){ const out=[]; if(r.jmlSetor==null||r.jmlSetor==='') return out;
+  const d=Math.round(+r.jmlSetor||0)-Math.round(total); if(d) out.push({l:'Total',set:+r.jmlSetor,pot:total,d});
+  repSplit(g,y,m).forEach(([k,t,l])=>{ if(r[k]===undefined||r[k]==='') return; const pot=sumF(getRows(t,y,m),'pph'), dd=Math.round(+r[k]||0)-Math.round(pot); if(dd) out.push({l,set:+r[k],pot,d:dd}); });
+  return out; }
+function repSelisihHTML(g,y,m,r,total){ const L=repSelisih(g,y,m,r,total); if(!L.length) return r.jmlSetor!=null&&r.jmlSetor!==''?`<div class="rep-ok">${icon('check')} Jumlah disetor sama dengan total PPh dipotong</div>`:'';
+  return `<div class="rep-diff">${icon('alert')}<div><b>Ada selisih — lakukan crosscheck</b>${L.map(x=>`<div>${x.l==='Total'?'Jumlah disetor':'Disetor '+esc(x.l)} ${rp(x.set)} vs dipotong (bukti potong) ${rp(x.pot)} → <b>${x.d>0?'lebih setor':'kurang setor'} ${rp(Math.abs(x.d))}</b></div>`).join('')}<div class="sub-t">Cocokkan dengan bukti setor (BPN/NTPN) dan daftar bukti potong pada sub menu.</div></div></div>`; }
+document.addEventListener('input',e=>{ const el=e.target; if(!el.classList||!el.classList.contains('js-chk')) return; jsChk(el); });
+function jsChk(el){ const box=el.parentNode.querySelector('.js-msg'); if(!box) return; const v=el.value.trim(); if(!v){ box.innerHTML=''; return; }
+  const d=Math.round(toNum(v))-Math.round(+el.dataset.pot||0);
+  box.innerHTML=d?`<div class="rep-diff sm">${icon('alert')}<span>Selisih dengan total bukti potong ${rp(+el.dataset.pot||0)}: <b>${d>0?'lebih':'kurang'} ${rp(Math.abs(d))}</b> — crosscheck sebelum menyimpan</span></div>`:`<div class="rep-ok">${icon('check')} Sama dengan total bukti potong</div>`; }
 function reportCard(t,y,m,rows){
   const g=TYPES[t].rep, r=repOf(g,y,m)||{}, total=groupPph(g,y,m);
   const b=(v,ok,no)=>`<span class="badge ${v==='Sudah'?'b-success':'b-warning'}">${v==='Sudah'?ok:no}</span>`;
@@ -3256,7 +3271,7 @@ function reportCard(t,y,m,rows){
       <button class="btn btn-primary btn-sm" onclick="openReport('${t}')">${icon('edit')} ${r.setor||r.lapor?'Ubah':'Isi'} Status Laporan</button></div>
     <div class="card-b"><div class="rep-grid">
       <div class="rep-item"><small>Status Setor</small>${b(r.setor,'Sudah disetor','Belum disetor')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglSetor?fmtDate(r.tglSetor):'—'}</div></div>
-      <div class="rep-item"><small>Jumlah Disetor</small><b>${rp(r.jmlSetor!=null&&r.jmlSetor!==''?r.jmlSetor:(r.setor==='Sudah'?total:0))}</b>${(()=>{ const P=repSplit(g,y,m).filter(([k])=>r[k]!==undefined&&r[k]!==''); return P.length?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${P.map(([k,,,sh])=>`${sh}: <b>${rp(+r[k]||0)}</b>`).join('<br>')}</div>`:''; })()}<div style="font-size:12px;color:var(--muted);margin-top:2px">Total dipotong (semua sub menu): ${rp(total)}</div></div>
+      <div class="rep-item"><small>Jumlah Disetor</small><b>${rp(r.jmlSetor!=null&&r.jmlSetor!==''?r.jmlSetor:(r.setor==='Sudah'?total:0))}</b>${(()=>{ const P=repSplit(g,y,m).filter(([k])=>r[k]!==undefined&&r[k]!==''); return P.length?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${P.map(([k,,,sh])=>`${sh}: <b>${rp(+r[k]||0)}</b>`).join('<br>')}</div>`:''; })()}<div style="font-size:12px;color:var(--muted);margin-top:2px">Total dipotong (semua sub menu): ${rp(total)}</div>${repSelisihHTML(g,y,m,r,total)}</div>
       <div class="rep-item"><small>Status Lapor SPT</small>${b(r.lapor,'Sudah dilaporkan','Belum dilaporkan')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglLapor?fmtDate(r.tglLapor):'—'}${r.bpe?' · BPE '+esc(r.bpe):''}</div></div>
       <div class="rep-item"><small>Bukti Lapor (BPE &amp; SPT Induk)</small>${[[r.file,'BPE'],[r.fileSpt,'SPT Induk']].map(([f,l])=>f?`<span class="file-pill" style="margin:2px 4px 2px 0" title="${esc(f.name)}" onclick="openStoredFile('${f.id}','${esc(f.name)}')">${icon('file')}<span>${l}</span></span>`:`<span class="badge b-muted" style="margin:2px 4px 2px 0">${l} belum diupload</span>`).join('')}</div>
     </div>${r.ket?`<div class="note">${esc(r.ket)}</div>`:''}</div></div>`;
@@ -3291,7 +3306,7 @@ async function storePdf(cur){
   return cur||null;
 }
 function openReport(t){
-  const g=TYPES[t].rep, y=state.year,m=state.month, r=repOf(g,y,m)||{}, total=groupPph(g,y,m); FORMFILE={file:null,remove:false}; FORMFILE2={file:null,remove:false};
+  const g=TYPES[t].rep, y=state.year,m=state.month, r=repOf(g,y,m)||{}, total=groupPph(g,y,m); FORMFILE={file:null,remove:false}; FORMFILE2={file:null,remove:false}; setTimeout(()=>document.querySelectorAll('#repForm .js-chk').forEach(jsChk),0);
   const tp=x=>sumF(getRows(x,y,m),'pph'), nv=v=>v!=null&&v!==''?fmt(v):'';
   const sel=(n,v)=>`<select class="select" name="${n}"><option ${v!=='Sudah'?'selected':''}>Belum</option><option ${v==='Sudah'?'selected':''}>Sudah</option></select>`;
   openModal(`
@@ -3299,8 +3314,8 @@ function openReport(t){
     <form id="repForm" onsubmit="saveReport(event,'${g}')"><div class="modal-b"><div class="form-grid">
       <div class="field"><label>Status Setor</label>${sel('setor',r.setor)}</div>
       <div class="field"><label>Tanggal Setor</label><input class="input" type="date" name="tglSetor" value="${esc(r.tglSetor||'')}"></div>
-      ${repSplit(g,y,m).length?'':`<div class="field"><label>Jumlah Disetor</label><input class="input" name="jmlSetor" inputmode="decimal" value="${nv(r.jmlSetor)}" placeholder="${fmt(total)}"></div>`}
-      ${repSplit(g,y,m).map(([k,tt,l])=>`<div class="field"><label>Jumlah Disetor ${l}</label><input class="input" name="${k}" inputmode="decimal" value="${nv(r[k])}" placeholder="${fmt(tp(tt))}"></div>`).join('')}
+      ${repSplit(g,y,m).length?'':`<div class="field"><label>Jumlah Disetor</label><input class="input js-chk" data-pot="${total}" name="jmlSetor" inputmode="decimal" value="${nv(r.jmlSetor)}" placeholder="${fmt(total)}"><div class="js-msg"></div></div>`}
+      ${repSplit(g,y,m).map(([k,tt,l])=>`<div class="field"><label>Jumlah Disetor ${l}</label><input class="input js-chk" data-pot="${tp(tt)}" name="${k}" inputmode="decimal" value="${nv(r[k])}" placeholder="${fmt(tp(tt))}"><div class="js-msg"></div></div>`).join('')}
       <div class="field full"><div class="note" style="margin:0">${icon('alert')} Status setor, lapor, nomor BPE, file BPE, dan SPT Induk berlaku untuk <b>satu SPT Masa ${GROUP_LABEL[g]}</b>, sehingga otomatis sama di tab ${g==='PPHU'?'PPh Pasal 23 dan PPh Pasal 4 Ayat 2 (Final)':'BP 21 Selain Pegawai Tetap, Bulanan Pegawai Tetap, dan BP A1'} — cukup diisi sekali dari tab mana saja.</div></div>
       <div class="field"><label>Status Lapor SPT</label>${sel('lapor',r.lapor)}</div>
       <div class="field"><label>Tanggal Lapor</label><input class="input" type="date" name="tglLapor" value="${esc(r.tglLapor||'')}"></div>
