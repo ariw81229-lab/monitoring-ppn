@@ -1084,6 +1084,17 @@ table.kx-t td{padding:5px 3px;border-bottom:1px dashed var(--border)}
 [data-mode="dark"] .kx.k-nihil{color:#4ade80}
 .kx.k-none{background:transparent;color:var(--muted);cursor:default}.kx.k-none:hover{transform:none}
 [data-mode="dark"] .kx.k-done{color:#4ade80}[data-mode="dark"] .kx.k-late-done{color:#fbbf24}[data-mode="dark"] .kx.k-soon{color:#fbbf24}[data-mode="dark"] .kx.k-near{color:#93c5fd}[data-mode="dark"] .kx.k-lb{color:#cbd5e1}
+.dk-sub{display:flex;align-items:center;gap:8px;margin:4px 2px 10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.dk-sub span{display:inline-flex;align-items:center;gap:6px}.dk-sub svg{width:14px;height:14px}
+.dk-sub::after{content:'';flex:1;height:1px;background:var(--border)}
+.ikh .seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}.ikh .seg button{border:0;background:transparent;padding:7px 12px;font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}.ikh .seg button.on{background:var(--primary);color:#fff}
+.ik-ai{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(var(--primary-rgb),.04)}
+.ik-ai h4{margin:0 0 8px;display:flex;align-items:center;gap:8px;font-size:13.5px}.ik-ai h4 svg{width:16px;height:16px;color:var(--primary)}
+.ik-ai ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:8px 18px}.ik-ai li{display:flex;gap:8px;font-size:12.8px;line-height:1.5}.ik-ai li svg{flex:none;width:15px;height:15px;margin-top:3px;color:var(--primary)}
+.ik-bar{height:6px;border-radius:4px;background:rgba(100,116,139,.15);overflow:hidden}.ik-bar span{display:block;height:100%;border-radius:4px}
+.ik-comp{display:inline-flex;gap:4px;flex-wrap:wrap}.ik-comp span{font-size:11px;font-weight:800;padding:2px 6px;border-radius:6px}
+.ik-comp .ok{background:rgba(22,163,74,.12);color:#15803d}.ik-comp .lt{background:rgba(202,138,4,.15);color:#a16207}.ik-comp .ov{background:rgba(220,38,38,.12);color:#b91c1c}.ik-comp .op{background:rgba(100,116,139,.12);color:var(--muted)}
+.ik-rs{display:flex;align-items:center;gap:8px}.ik-rs .kc{flex:none}
+.ik-t tr.ik-empty td{opacity:.55}.ik-t td{vertical-align:middle}
 .kx-lt{display:block;font-style:normal;font-size:8.5px;font-weight:800;color:#b45309;margin-top:1px;letter-spacing:.01em}
 .kx.k-late-done{height:auto;min-height:38px;padding:3px 4px}
 .kal-leg .kx-lt{display:inline;margin:0 0 0 2px}
@@ -2248,7 +2259,27 @@ function renderDashboard(){
   const rsList=restScope(comb,state.year);
   $('#view').innerHTML=`
   ${dashHero({comb,ys,yl,units,RS,rsList,tPM,tPK,cnt,uploaded,p21,pu})}
+  <div data-sec="kpi">
   ${dashKpis({units,tPM,tPK,dPM,dPK,pP,uP,pct,qP,qN,cnt,yl,comb})}
+  <div class="dk-sub"><span>${icon('receipt')} PPh, SPT Rekanan &amp; Bukti Potong ESDM</span></div>
+  <div class="grid four mb">
+    <div class="card sum-card" onclick="goD('PPH21NP')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('users')}</span>PPh 21 · ${yl}</div></div>
+      <div class="val">${rp(p21.total)}</div><div class="foot">${fmt(p21.n)} bukti potong · ${p21.lapor} dari ${p21.withData} bulan sudah dilaporkan</div>${bt(p21)}${mp(p21)}</div>
+    <div class="card sum-card" onclick="goD('PPH23')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('receipt')}</span>PPh Unifikasi · ${yl}</div></div>
+      <div class="val">${rp(pu.total)}</div><div class="foot">${fmt(pu.n)} bukti potong · ${pu.lapor} dari ${pu.withData} bulan sudah dilaporkan</div>${bt(pu)}${mp(pu)}</div>
+    <div class="card sum-card" onclick="goD('spt')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico ${sp.tot&&sp.up===sp.tot?'g':'o'}">${icon('shield')}</span>SPT PPN Rekanan · ${yl}</div></div>
+      <div class="val">${fmt(sp.up)} / ${fmt(sp.tot)}</div><div class="foot">rekanan sudah upload bukti SPT · ${fmt(sp.tot-sp.up)} belum</div>
+      <div class="progress" style="margin-top:14px"><span style="width:${sp.tot?sp.up/sp.tot*100:0}%;background:var(--success)"></span></div>
+      <div class="legend-mini"><span>${sp.tot?(sp.up/sp.tot*100).toFixed(0):0}% lengkap</span></div></div>
+    ${(()=>{ const b=ys.reduce((a,y)=>{ for(let i=0;i<12;i++) getRows('BPS',y,i).forEach(r=>{ if(isCanceled(r)) return; a.n++; a.v+=+r.pajak||0; if(r.file) a.f++; const j=r.jenis||'Lainnya'; a.j[j]=(a.j[j]||0)+(+r.pajak||0); }); return a; },{n:0,v:0,f:0,j:{}});
+      const sh=j=>j.replace(/\s*\(.*\)/,'').replace('PPN Dipungut','PPN Dipungut (WAPU)');
+      return `<div class="card sum-card" onclick="goD('BPS')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('folder')}</span>Bukti Potong ESDM / Owner · ${yl}</div></div>
+      <div class="val">${rp(b.v)}</div><div class="foot">${fmt(b.n)} bukti potong/pungut · ${b.f} file terunggah</div>
+      ${Object.entries(b.j).sort((a,c)=>c[1]-a[1]).slice(0,4).map(([j,v])=>`<div class="bt"><span>${esc(sh(j))}</span><b>${short(v)}</b></div>`).join('')||'<div class="bt"><span>Belum ada bukti potong</span><b>—</b></div>'}
+      <div class="progress" style="margin-top:12px"><span style="width:${b.n?b.f/b.n*100:0}%;background:var(--success)"></span></div>
+      <div class="legend-mini"><span>${b.n?(b.f/b.n*100).toFixed(0):0}% file bukti lengkap</span></div></div>`; })()}
+  </div>
+  </div>
   ${dashKalender(comb,ys,yl)}
   ${dashRest(RS,rsList,yl)}
 
@@ -2284,40 +2315,7 @@ function renderDashboard(){
 
   ${dashChart(ys,yl,units,comb,top,uploaded)}
 
-  <div class="grid four mb" data-sec="pph">
-    <div class="card sum-card" onclick="goD('PPH21NP')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('users')}</span>PPh 21 · ${yl}</div></div>
-      <div class="val">${rp(p21.total)}</div><div class="foot">${fmt(p21.n)} bukti potong · ${p21.lapor} dari ${p21.withData} bulan sudah dilaporkan</div>${bt(p21)}${mp(p21)}</div>
-    <div class="card sum-card" onclick="goD('PPH23')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('receipt')}</span>PPh Unifikasi · ${yl}</div></div>
-      <div class="val">${rp(pu.total)}</div><div class="foot">${fmt(pu.n)} bukti potong · ${pu.lapor} dari ${pu.withData} bulan sudah dilaporkan</div>${bt(pu)}${mp(pu)}</div>
-    <div class="card sum-card" onclick="goD('spt')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico ${sp.tot&&sp.up===sp.tot?'g':'o'}">${icon('shield')}</span>SPT PPN Rekanan · ${yl}</div></div>
-      <div class="val">${fmt(sp.up)} / ${fmt(sp.tot)}</div><div class="foot">rekanan sudah upload bukti SPT · ${fmt(sp.tot-sp.up)} belum</div>
-      <div class="progress" style="margin-top:14px"><span style="width:${sp.tot?sp.up/sp.tot*100:0}%;background:var(--success)"></span></div>
-      <div class="legend-mini"><span>${sp.tot?(sp.up/sp.tot*100).toFixed(0):0}% lengkap</span></div></div>
-    ${(()=>{ const b=ys.reduce((a,y)=>{ for(let i=0;i<12;i++) getRows('BPS',y,i).forEach(r=>{ if(isCanceled(r)) return; a.n++; a.v+=+r.pajak||0; if(r.file) a.f++; const j=r.jenis||'Lainnya'; a.j[j]=(a.j[j]||0)+(+r.pajak||0); }); return a; },{n:0,v:0,f:0,j:{}});
-      const sh=j=>j.replace(/\s*\(.*\)/,'').replace('PPN Dipungut','PPN Dipungut (WAPU)');
-      return `<div class="card sum-card" onclick="goD('BPS')"><div class="kpi" style="padding:0"><div class="lbl"><span class="ico">${icon('folder')}</span>Bukti Potong ESDM / Owner · ${yl}</div></div>
-      <div class="val">${rp(b.v)}</div><div class="foot">${fmt(b.n)} bukti potong/pungut · ${b.f} file terunggah</div>
-      ${Object.entries(b.j).sort((a,c)=>c[1]-a[1]).slice(0,4).map(([j,v])=>`<div class="bt"><span>${esc(sh(j))}</span><b>${short(v)}</b></div>`).join('')||'<div class="bt"><span>Belum ada bukti potong</span><b>—</b></div>'}
-      <div class="progress" style="margin-top:12px"><span style="width:${b.n?b.f/b.n*100:0}%;background:var(--success)"></span></div>
-      <div class="legend-mini"><span>${b.n?(b.f/b.n*100).toFixed(0):0}% file bukti lengkap</span></div></div>`; })()}
-  </div>
-
-  <div class="card" data-sec="rekap">
-    <div class="card-h"><div><h3>Rekap PPN per ${col1} · ${yl}</h3><p>Klik baris untuk membuka detail · Restitusi = PPN Masukan yang diajukan (fasilitas KSO)</p></div>
-      <button class="btn btn-outline btn-sm" onclick="openExport('rekap')">${icon('download')} Export</button></div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>${col1}</th><th class="num">Faktur PM</th><th class="num">PPN Masukan</th><th class="num">PPN Dibayar</th><th class="num">Faktur PK</th><th class="num">PPN Keluaran</th><th class="num">Restitusi</th><th>Status</th></tr></thead>
-      <tbody>${units.map(r=>`<tr class="clickable" onclick="${r.click}">
-        <td><b>${r.label}</b></td><td class="num">${fmt(r.cPM)}</td><td class="num">${rp(r.vPM)}</td><td class="num" style="color:var(--success)">${rp(r.paidPPN)}</td>
-        <td class="num">${fmt(r.cPK)}</td><td class="num">${rp(r.vPK)}</td>
-        <td class="num" style="font-weight:800;color:${r.restitusi?'var(--primary)':'inherit'}">${rp(r.restitusi)}</td><td>${stCell(r)}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><td>Total</td><td class="num">${fmt(cnt)}</td><td class="num">${rp(tPM)}</td><td class="num">${rp(pP)}</td><td class="num">${fmt(T('cPK'))}</td><td class="num">${rp(tPK)}</td><td class="num">${rp(T('restitusi'))}</td><td></td></tr></tfoot>
-    </table></div>
-    <div class="card-b" style="padding-top:12px"><div class="legend-mini" style="margin:0;font-size:12px">
-      <span><span class="badge b-success">Lebih Bayar</span> ada PPN Masukan, diajukan restitusi</span>
-      <span><span class="badge b-primary">Lapor Nihil</span> PPN Masukan 0 & batas lapor (akhir bulan berikutnya) sudah lewat</span>
-      <span><span class="badge b-warning">Belum Dilapor</span> PPN Masukan 0 & masih dalam batas waktu lapor</span></div></div>
-  </div>`;
+  ${dashIkhtisar(comb,ys,yl)}`;
   dashSections();
   drawChart(units);
 }
@@ -2373,22 +2371,82 @@ function dashPP(ys,yl,units,comb,tPM,cnt){
       </div>
     </div></div>`;
 }
+/* ---------- Ikhtisar kinerja pajak per periode + analisis otomatis ---------- */
+function ikhPeriod(y,i){ /* satu masa pajak */
+  const r=rekapData(y)[i], C={ok:0,late:0,over:0,open:0,sanksi:0};
+  OBL.forEach(o=>['setor','lapor'].forEach(k=>{ const R=oblStatus(o,y,i,k);
+    if(['done','nihil','lb'].includes(R.st)) C.ok++; else if(R.st==='late-done'){ C.late++; const S=sanksiOf(R); if(S&&S.nilai) C.sanksi+=S.nilai; }
+    else if(R.st==='over') C.over++; else if(['today','soon','near','wait'].includes(R.st)) C.open++; }));
+  const k=key(y,i), rs=(DB.restitusi[k]||pmSum(y,i)>0)?restItem(k):null, lp=oblStatus(OBL[2],y,i,'lapor');
+  return {...r,C,rs,lp};
+}
+function ikhSum(list){ const o={vPM:0,vPK:0,cPM:0,cPK:0,paidPPN:0,unpaidPPN:0,ppPPN:0,C:{ok:0,late:0,over:0,open:0,sanksi:0},rs:{n:0,aju:0,cair:0,proses:0,st:{}},lapN:0,lapM:0};
+  list.forEach(p=>{ ['vPM','vPK','cPM','cPK','paidPPN','unpaidPPN','ppPPN'].forEach(f=>o[f]+=p[f]||0); ['ok','late','over','open','sanksi'].forEach(f=>o.C[f]+=p.C[f]);
+    if(p.rs&&p.rs.pengajuan>0){ o.rs.n++; o.rs.aju+=p.rs.pengajuan; o.rs.cair+=p.rs.cair; o.rs.proses+=p.rs.belum; o.rs.st[p.rs.status]=(o.rs.st[p.rs.status]||0)+1; }
+    if(p.lp.st!=='fut'){ o.lapM++; if(['done','late-done','nihil'].includes(p.lp.st)) o.lapN++; } });
+  return o; }
+function ikhInsights(P,S,scope){
+  const out=[], act=P.filter(p=>p.vPM>0), lb=S.vPM-S.vPK;
+  if(!S.vPM&&!S.vPK) return [['alert','Belum ada data PPN pada periode ini.']];
+  out.push(['refund',`Posisi PPN ${scope}: PPN Masukan <b>${rp(S.vPM)}</b> vs PPN Keluaran <b>${rp(S.vPK)}</b> → ${lb>=0?'lebih bayar':'kurang bayar'} <b>${rp(Math.abs(lb))}</b>${S.vPM?` (PPN Keluaran ${pctTxt(S.vPK,S.vPM,1)} dari PPN Masukan)`:''}.`]);
+  if(act.length){ const pk=act.reduce((a,p)=>p.vPM>a.vPM?p:a); out.push(['arrow',`PPN Masukan tertinggi pada <b>${pk.lbl}</b> sebesar <b>${rp(pk.vPM)}</b> (${pctTxt(pk.vPM,S.vPM,1)} dari total) — prioritaskan kelengkapan dokumen restitusi periode ini.`]); }
+  if(S.unpaidPPN>0){ const w=P.filter(p=>p.unpaidPPN>0).sort((a,b)=>b.unpaidPPN-a.unpaidPPN)[0]; out.push(['wallet',`PPN Masukan belum dibayar ke rekanan <b>${rp(S.unpaidPPN)}</b> (${pctTxt(S.unpaidPPN,S.vPM,1)})${w?`, terbesar pada <b>${w.lbl}</b> ${rp(w.unpaidPPN)}`:''}. Faktur yang belum dibayar berisiko dikoreksi saat pemeriksaan restitusi.`]); }
+  else if(S.vPM) out.push(['check','Seluruh PPN Masukan sudah dibayar ke rekanan — mendukung kelancaran pemeriksaan restitusi.']);
+  if(S.rs.aju>0) out.push(['refund',`Restitusi diajukan <b>${rp(S.rs.aju)}</b> dari ${S.rs.n} masa: sudah cair <b>${rp(S.rs.cair)}</b> (${pctTxt(S.rs.cair,S.rs.aju,1)}), masih dalam proses <b>${rp(S.rs.proses)}</b>${REST_ST.filter(x=>x.k!=='cair'&&S.rs.st[x.k]).map(x=>` · ${S.rs.st[x.k]} masa: ${x.l}`).join('')}.`]);
+  const tot=S.C.ok+S.C.late+S.C.over; if(tot) out.push([S.C.over?'alert':S.C.late?'clock':'check',`Kepatuhan setor &amp; lapor (PPh 21, PPh Unifikasi, PPN): <b>${S.C.ok} dari ${tot}</b> kewajiban tepat waktu (${pctTxt(S.C.ok,tot)})${S.C.late?`, <b>${S.C.late}</b> terlambat dengan estimasi sanksi <b>${rp(S.C.sanksi)}</b>`:''}${S.C.over?`, <b style="color:var(--danger)">${S.C.over} lewat batas dan belum diselesaikan</b>`:''}.`]);
+  if(S.ppPPN>0) out.push(['clock',`Masih ada faktur prepopulated belum dikreditkan senilai <b>${rp(S.ppPPN)}</b> — bila dikreditkan, PPN Masukan (dan potensi restitusi) naik ${pctTxt(S.ppPPN,S.vPM||1,1)}.`]);
+  return out; }
+function dashIkhtisar(comb,ys,yl){
+  const mode=state.ikhMode||(comb?'tahun':'masa'), y=state.year;
+  const per=mode==='tahun'?years().map(yy=>{ const L=MONTHS.map((_,i)=>ikhPeriod(yy,i)), S=ikhSum(L); return {...S,lbl:`Tahun ${yy}`,y:yy,has:L.some(p=>p.has),click:`state.dashComb=false;state.ikhMode='masa';state.year=${yy};render()`,yearRow:1}; }).filter(p=>p.has||p.y<=new Date().getFullYear())
+    :MONTHS.map((_,i)=>{ const p=ikhPeriod(y,i); return {...p,lbl:`${MONTHS[i]} ${y}`,click:`state.month=${i};goD('PM')`}; });
+  const ysA=mode==='tahun'?per.map(p=>p.y):[y], S=mode==='tahun'?ikhSum(ysA.flatMap(yy=>MONTHS.map((_,i)=>ikhPeriod(yy,i)))):ikhSum(per), scope=mode==='tahun'?(ysA.length>1?`gabungan ${ysA[0]}–${ysA[ysA.length-1]}`:`gabungan (${ysA[0]})`):`tahun ${y}`;
+  const ins=ikhInsights(per,S,scope), bar=(v,t,c)=>`<div class="ik-bar"><span style="width:${t?Math.min(100,v/t*100):0}%;background:${c}"></span></div>`;
+  const comp=C=>{ const t=C.ok+C.late+C.over+C.open; if(!t) return '<span class="sub-t">—</span>';
+    return `<div class="ik-comp" title="${C.ok} tepat waktu · ${C.late} terlambat · ${C.over} lewat batas · ${C.open} belum jatuh tempo">${C.ok?`<span class="ok">✓ ${C.ok}</span>`:''}${C.late?`<span class="lt">! ${C.late}</span>`:''}${C.over?`<span class="ov">H+ ${C.over}</span>`:''}${C.open?`<span class="op">${C.open}</span>`:''}</div>${C.sanksi?`<div class="sub-t" style="color:#b45309">sanksi ${short(C.sanksi)}</div>`:''}`; };
+  const rsCell=p=>{ if(p.yearRow){ const R=p.rs; if(!R.aju) return '<span class="sub-t">—</span>'; return `<b>${short(R.aju)}</b><div class="sub-t">cair ${short(R.cair)} · proses ${short(R.proses)}</div>`; }
+    if(!p.rs||!p.rs.pengajuan) return '<span class="sub-t">—</span>'; const o=ST_MAP[p.rs.status];
+    return `<div class="ik-rs"><span class="kc rs" style="--c:${o.c}">${{sp2:'0',periksa:'1–3',selesai:'4–5',cair:'✓'}[p.rs.status]}</span><div><b>${short(p.rs.status==='cair'?p.rs.cair:p.rs.pengajuan)}</b><div class="sub-t">${o.l}</div></div></div>`; };
+  const lapI=p=>{ if(p.yearRow) return p.lapM?`<b>${p.lapN}/${p.lapM}</b><div class="sub-t">masa sudah lapor</div>`:'<span class="sub-t">—</span>';
+    const R=p.lp; return R.st==='fut'?'<span class="sub-t">belum jatuh tempo</span>':R.st==='nihil'?'<span class="badge b-primary">Lapor nihil</span>':['done','late-done'].includes(R.st)?`<span class="badge ${R.st==='done'?'b-success':'b-warning'}">✓ ${R.doneAt&&R.doneAt!=='ada'?fmtDate(R.doneAt):'Lapor'}</span>${R.late?`<div class="sub-t" style="color:#b45309">telat ${R.late} hr</div>`:''}`:R.st==='over'?`<span class="badge b-danger">Belum · H+${-R.diff}</span>`:`<span class="badge b-warning">Belum · H-${R.diff}</span>`; };
+  return `<div class="card ikh" data-sec="rekap">
+    <div class="card-h"><div><h3>Ikhtisar Kinerja Pajak · ${mode==='tahun'?'Gabungan Semua Tahun':y}</h3><p>Posisi PPN, pembayaran ke rekanan, lapor SPT Masa PPN, kepatuhan setor/lapor, dan progres restitusi dalam satu tabel · klik baris untuk membuka</p></div>
+      <div class="toolbar"><div class="seg"><button class="${mode==='masa'?'on':''}" onclick="state.ikhMode='masa';render()">Per masa · ${y}</button><button class="${mode==='tahun'?'on':''}" onclick="state.ikhMode='tahun';render()">Per tahun (gabungan)</button></div>
+      <button class="btn btn-outline btn-sm" onclick="openExport('rekap')">${icon('download')} Export</button></div></div>
+    <div class="card-b ik-ai"><h4>${icon('grid')} Analisis Otomatis <span class="sub-t">dihitung otomatis dari data ${scope}</span></h4><ul>${ins.map(([ic,t])=>`<li>${icon(ic)}<span>${t}</span></li>`).join('')}</ul></div>
+    <div class="table-wrap"><table class="ik-t">
+      <thead><tr><th>${mode==='tahun'?'Tahun':'Masa Pajak'}</th><th class="num">PPN Masukan</th><th>Dibayar ke rekanan</th><th class="num">PPN Keluaran</th><th class="num">Lebih / (Kurang) Bayar</th><th class="num">Belum Dikreditkan</th><th>SPT Masa PPN</th><th>Kepatuhan setor/lapor</th><th>Restitusi</th></tr></thead>
+      <tbody>${per.map(p=>{ const lb=p.vPM-p.vPK, empty=!p.has&&!p.vPM&&!p.vPK; return `<tr class="clickable ${empty?'ik-empty':''}" onclick="${p.click}">
+        <td><b>${p.lbl}</b><div class="sub-t">${fmt(p.cPM)} faktur PM · ${fmt(p.cPK)} PK</div></td>
+        <td class="num"><b>${p.vPM?rp(p.vPM):'—'}</b></td>
+        <td style="min-width:130px">${p.vPM?`${bar(p.paidPPN,p.vPM,'var(--success)')}<div class="sub-t">${pctTxt(p.paidPPN,p.vPM)} dibayar${p.unpaidPPN?` · sisa ${short(p.unpaidPPN)}`:''}</div>`:'<span class="sub-t">—</span>'}</td>
+        <td class="num">${p.vPK?rp(p.vPK):'—'}</td>
+        <td class="num" style="font-weight:800;color:${lb>0?'var(--primary)':lb<0?'var(--danger)':'inherit'}">${lb?(lb<0?'('+rp(-lb)+')':rp(lb)):'—'}</td>
+        <td class="num" style="color:${p.ppPPN?'var(--warning)':'inherit'}">${p.ppPPN?short(p.ppPPN):'—'}</td>
+        <td>${lapI(p)}</td><td>${comp(p.C)}</td><td style="min-width:150px">${rsCell(p)}</td></tr>`; }).join('')}</tbody>
+      <tfoot><tr><td>Total</td><td class="num">${rp(S.vPM)}</td><td>${pctTxt(S.paidPPN,S.vPM||1)} dibayar</td><td class="num">${rp(S.vPK)}</td><td class="num">${rp(S.vPM-S.vPK)}</td><td class="num">${short(S.ppPPN)}</td><td>${S.lapN}/${S.lapM} masa lapor</td><td>${S.C.ok} tepat · ${S.C.late} telat · ${S.C.over} lewat</td><td>${rp(S.rs.aju)}</td></tr></tfoot>
+    </table></div>
+    <div class="card-b" style="padding-top:10px"><div class="legend-mini ik-leg" style="margin:0;font-size:12px">
+      <span><span class="ik-comp"><span class="ok">✓</span></span> tepat waktu</span><span><span class="ik-comp"><span class="lt">!</span></span> sudah, tetapi terlambat</span><span><span class="ik-comp"><span class="ov">H+</span></span> lewat batas, belum</span><span><span class="ik-comp"><span class="op">n</span></span> belum jatuh tempo</span>
+      <span>Kepatuhan = 6 kewajiban per masa (setor &amp; lapor PPh 21, PPh Unifikasi, PPN) · Restitusi: 0 menunggu SP2 · 1–3 pemeriksaan · 4–5 pencairan · ✓ cair</span></div></div>
+  </div>`;
+}
 function dashChart(ys,yl,units,comb,top,uploaded){
   const act=units.filter(u=>u.vPM>0), avg=act.length?act.reduce((a,u)=>a+u.vPM,0)/act.length:0, pk=units.reduce((a,u)=>a+u.vPK,0), pm=units.reduce((a,u)=>a+u.vPM,0);
   const peak=units.reduce((a,u)=>u.vPM>(a?a.vPM:0)?u:a,null), paid=units.reduce((a,u)=>a+u.paidPPN,0), totTop=top.reduce((a,t)=>a+t.ppn,0)||1;
   const st=(ic,l,v,sub)=>`<div class="ch-s"><span class="ico">${icon(ic)}</span><div><small>${l}</small><b>${v}</b><em>${sub}</em></div></div>`;
   const per=comb?'tahun':'bulan';
-  return `<div class="card mb" data-sec="chart"><div class="card-h"><div><h3>Analitik PPN · ${yl}</h3><p>PPN Masukan (sudah &amp; belum dibayar), PPN Keluaran, dan akumulasi lebih bayar sebagai dasar pengajuan restitusi</p></div>
+  return `<div class="card mb" data-sec="chart"><div class="card-h"><div><h3>Analitik PPN · ${yl}</h3><p>PPN Masukan (sudah &amp; belum dibayar), PPN Keluaran, dan jumlah faktur pajak masukan per ${per}</p></div>
       ${isAdmin()?`<button class="btn btn-outline btn-sm" onclick="openImport('PM')">${icon('upload')} Import Pajak Masukan</button>`:''}</div>
     <div class="ch-stats">
       ${st('in',`Rata-rata PPN Masukan / ${per}`,rp(avg),`${act.length} ${per} berisi data`)}
       ${st('arrow','Puncak PPN Masukan',peak?rp(peak.vPM):'—',peak?`${comb?'Tahun '+peak.label.replace('Tahun ',''):MONTHS[peak.i]}`:'belum ada data')}
       ${st('wallet','PPN Masukan dibayar',pctTxt(paid,pm,1),`${rp(paid)} dari ${short(pm)}`)}
-      ${st('refund','Akumulasi lebih bayar (PM − PK)',rp(pm-pk),`rasio PK : PM = ${pm?(pk/pm*100).toFixed(1).replace('.',','):0}%`)}
+      ${(()=>{ const un=units.reduce((a,u)=>a+u.unpaidPPN,0), nf=units.reduce((a,u)=>a+u.unpaidN,0); return st('clock','PPN Masukan belum dibayar',rp(un),`${fmt(nf)} faktur · ${pctTxt(un,pm,1)} dari PPN Masukan`); })()}
     </div>
     <div class="ch-grid">
       <div class="ch-main"><div class="ch-leg" id="chartLeg"></div><div class="chart-box ch-box"><canvas id="chartPPN"></canvas></div>
-        <div class="ch-note">${icon('alert')} <span>${pm?`PPN Masukan ${yl} sebesar <b>${rp(pm)}</b>${peak?`, tertinggi pada <b>${comb?peak.label:MONTHS[peak.i]}</b>`:''}. Sebanyak <b>${pctTxt(paid,pm,1)}</b> sudah dibayar ke rekanan. Selisih PPN Masukan dan PPN Keluaran sebesar <b>${rp(pm-pk)}</b> menjadi dasar lebih bayar yang diajukan restitusi.`:'Belum ada data PPN untuk periode ini.'}</span></div></div>
+        <div class="ch-note">${icon('alert')} <span>${pm?`PPN Masukan ${yl} sebesar <b>${rp(pm)}</b>${peak?`, tertinggi pada <b>${comb?peak.label:MONTHS[peak.i]}</b>`:''}. Sebanyak <b>${pctTxt(paid,pm,1)}</b> sudah dibayar ke rekanan. Sisa yang belum dibayar <b>${rp(pm-paid)}</b> perlu dipantau karena faktur yang belum dibayar berisiko dikoreksi saat pemeriksaan restitusi.`:'Belum ada data PPN untuk periode ini.'}</span></div></div>
       <div class="ch-side">
         <h4>Kelengkapan Upload Faktur PM</h4>
         ${comb?ys.map(y=>{ const c=MONTHS.filter((_,i)=>getRows('PM',y,i).length).length; return `<div class="bt" style="margin:0 0 4px"><span><b style="color:var(--text)">${y}</b></span><b>${c}/12 bulan</b></div><div class="progress" style="margin-bottom:10px"><span style="width:${c/12*100}%"></span></div>`; }).join('')
@@ -2432,7 +2490,7 @@ function dashKpis(o){
   const {units}=o, cs=getComputedStyle(document.documentElement), prim=cs.getPropertyValue('--primary').trim()||'#2563eb';
   const card=(ic,l,v,foot,vals,c,click,extra)=>`<div class="card dk" onclick="${click}"><div class="dk-h"><span class="ico">${icon(ic)}</span><small>${l}</small></div><b class="dk-v">${v}</b><div class="dk-f">${foot}</div>${extra||''}${sparkSVG(vals,c)}</div>`;
   const lbl=o.comb?'per tahun':'per bulan';
-  return `<div class="grid dk-grid mb" data-sec="kpi">
+  return `<div class="dk-sub"><span>${icon('shield')} PPN</span></div><div class="grid dk-grid mb">
     ${card('in','PPN Masukan · '+o.yl,rp(o.tPM),`DPP ${rp(o.dPM)} · tren ${lbl}`,units.map(r=>r.vPM),prim,"goD('PM')")}
     ${card('out','PPN Keluaran · '+o.yl,rp(o.tPK),`DPP ${rp(o.dPK)} · tren ${lbl}`,units.map(r=>r.vPK),'#0e7490',"goD('PK')")}
     ${card('wallet','PPN Masukan Dibayar',rp(o.pP),`${o.pct.toFixed(1).replace('.',',')}% dibayar · belum ${short(o.uP)}`,units.map(r=>r.paidPPN),'#16a34a',"goD('PM')",`<div class="dk-bar"><i style="width:${o.pct}%"></i></div>`)}
@@ -2671,8 +2729,8 @@ function dashFlow(S,list,yl){
       <div class="toolbar"><button class="btn btn-outline btn-sm" onclick="goD('flow')">${icon('eye')} Buka halaman flowchart</button></div></div>
     <div class="card-b">${list.length?`<div class="flow-wrap flow2-wrap">${flowSVG2(S)}</div>`:`<div class="empty">${icon('flow')}<b>Belum ada data restitusi</b></div>`}</div></div>`;
 }
-const DASH_SEC=[['kpi','Ringkasan Utama'],['comp','Kalender Kepatuhan Pajak'],['rest','Pengajuan & Proses Restitusi'],['chart','Analitik & Grafik PPN'],
-  ['pay','Status Pembayaran Pajak Masukan'],['pp','Pajak Masukan Belum Dikreditkan (Prepopulated)'],['pph','Ringkasan PPh, SPT Rekanan & Bukti Potong ESDM'],['rekap','Rekap PPN per Masa Pajak']];
+const DASH_SEC=[['kpi','Ringkasan Pajak · PPN, PPh, SPT Rekanan & Bukti Potong ESDM'],['comp','Kalender Kepatuhan Pajak'],['rest','Pengajuan & Proses Restitusi'],['chart','Analitik & Grafik PPN'],
+  ['pay','Status Pembayaran Pajak Masukan'],['pp','Pajak Masukan Belum Dikreditkan (Prepopulated)'],['rekap','Ikhtisar Kinerja Pajak & Analisis Otomatis']];
 const dashKey=()=>'ppn_dash_'+((currentUser()||{}).username||'');
 /* Urutan & bagian yang ditampilkan diatur admin dan disimpan di pengaturan bersama (berlaku untuk semua akun).
    Status buka/tutup tiap bagian tetap tersimpan per akun di browser masing-masing. */
@@ -2738,23 +2796,22 @@ function drawChart(units){
   if(chart) chart.destroy();
   const cs=getComputedStyle(document.documentElement), prim=cs.getPropertyValue('--primary').trim(), rgb=cs.getPropertyValue('--primary-rgb').trim();
   const muted=cs.getPropertyValue('--muted').trim(), border=cs.getPropertyValue('--border').trim(), text=cs.getPropertyValue('--text').trim();
-  let cum=0; const last=units.reduce((a,r,i)=>(r.vPM||r.vPK)?i:a,-1), cumul=units.map((r,i)=>i>last?null:(cum+=r.vPM-r.vPK));
   const grad=(c,a1,a2)=>ctx=>{ const {chart:ch}=ctx, ca=ch.chartArea; if(!ca) return c; const g=ch.ctx.createLinearGradient(0,ca.top,0,ca.bottom); g.addColorStop(0,a1); g.addColorStop(1,a2); return g; };
   const ds=[
     {label:'PPN Masukan · sudah dibayar',data:units.map(r=>r.paidPPN),backgroundColor:grad(prim,prim,`rgba(${rgb},.75)`),borderRadius:{topLeft:0,topRight:0,bottomLeft:6,bottomRight:6},borderSkipped:false,stack:'pm',maxBarThickness:34,order:3},
     {label:'PPN Masukan · belum dibayar',data:units.map(r=>r.unpaidPPN),backgroundColor:'rgba(245,158,11,.85)',borderRadius:{topLeft:6,topRight:6,bottomLeft:0,bottomRight:0},borderSkipped:false,stack:'pm',maxBarThickness:34,order:3},
     {label:'PPN Keluaran',data:units.map(r=>r.vPK),backgroundColor:'rgba(14,116,144,.55)',borderRadius:6,stack:'pk',maxBarThickness:22,order:3},
-    {type:'line',label:'Akumulasi lebih bayar (PM − PK)',data:cumul,yAxisID:'y2',borderColor:'#b8935a',pointBackgroundColor:'#b8935a',pointBorderColor:'#fff',pointBorderWidth:1.5,pointRadius:3.5,pointHoverRadius:6,borderWidth:2.5,tension:.35,
-      fill:true,backgroundColor:grad('#b8935a','rgba(201,169,106,.22)','rgba(201,169,106,0)'),order:1}];
+    {type:'line',label:'Jumlah faktur PM',data:units.map(r=>r.cPM),yAxisID:'y2',borderColor:'#b8935a',pointBackgroundColor:'#b8935a',pointBorderColor:'#fff',pointBorderWidth:1.5,pointRadius:3.5,pointHoverRadius:6,borderWidth:2.5,tension:.3,cubicInterpolationMode:'monotone',
+      fill:false,order:1}];
   chart=new Chart(el,{type:'bar',data:{labels:units.map(u=>u.short),datasets:ds},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{display:false},
         tooltip:{backgroundColor:'rgba(15,23,42,.94)',titleFont:{family:'Plus Jakarta Sans',weight:'800',size:13},bodyFont:{family:'Plus Jakarta Sans',size:12},footerFont:{family:'Plus Jakarta Sans',weight:'700',size:12},padding:12,cornerRadius:10,boxPadding:4,usePointStyle:true,
-          callbacks:{title:it=>{ const u=units[it[0].dataIndex]; return u.label||u.n; },label:c=>' '+c.dataset.label+': '+rp(c.raw),
+          callbacks:{title:it=>{ const u=units[it[0].dataIndex]; return u.label||u.n; },label:c=>' '+c.dataset.label+': '+(c.dataset.yAxisID==='y2'?fmt(c.raw)+' faktur':rp(c.raw)),
             footer:it=>{ const u=units[it[0].dataIndex]; return [`Total PPN Masukan: ${rp(u.vPM)}`,`Selisih PM − PK: ${rp(u.vPM-u.vPK)}`]; }}}},
       scales:{x:{stacked:true,ticks:{color:muted,font:{family:'Plus Jakarta Sans',weight:'600'}},grid:{display:false},border:{display:false}},
         y:{stacked:true,beginAtZero:true,ticks:{color:muted,callback:v=>short(v),maxTicksLimit:6},grid:{color:border},border:{display:false},title:{display:true,text:'PPN per '+(state.dashComb?'tahun':'bulan'),color:muted,font:{size:11}}},
-        y2:{position:'right',beginAtZero:true,ticks:{color:'#b8935a',callback:v=>short(v),maxTicksLimit:6},grid:{display:false},border:{display:false},title:{display:true,text:'Akumulasi lebih bayar',color:'#b8935a',font:{size:11}}}}}
+        y2:{position:'right',beginAtZero:true,ticks:{color:'#b8935a',precision:0,maxTicksLimit:6},grid:{display:false},border:{display:false},title:{display:true,text:'Jumlah faktur',color:'#b8935a',font:{size:11}}}}}
   });
   const lg=$('#chartLeg'); if(lg) lg.innerHTML=ds.map((d,i)=>`<button type="button" class="ch-lg on" onclick="chart.setDatasetVisibility(${i},!chart.isDatasetVisible(${i}));chart.update();this.classList.toggle('on')"><i style="background:${i===0?prim:i===1?'#f59e0b':i===2?'rgba(14,116,144,.7)':'#b8935a'}${i===3?';height:3px;border-radius:2px':''}"></i>${d.label}</button>`).join('');
 }
