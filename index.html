@@ -3103,6 +3103,10 @@ async function viewPpnDocs(y,m){
     if(typeof audit==='function') audit('buka dokumen',`BPE & SPT Induk ${MONTHS[m]} ${y}`);
   }catch(err){ console.error(err); if(w&&!w.closed) w.close(); toast('Gagal membuka dokumen: '+err.message,'error'); }
 }
+/* pembagian jumlah setor per sub menu dalam satu SPT Masa */
+const REP_SPLIT={PPHU:[['jml23','PPH23','PPh Pasal 23','PPh 23'],['jml42','PPH42','PPh Pasal 4 Ayat 2 (Final)','PPh 4 ayat 2']],
+  PPH21:[] /* PPh 21: setoran satu kesatuan, tidak dipisah per sub menu */};
+function repSplit(g,y,m){ const r=repOf(g,y,m)||{}; return (REP_SPLIT[g]||[]).filter(([k,t])=>k!=='jmlA1'||m===11||getRows(t,y,m).length||(r[k]!==undefined&&r[k]!=='')); }
 function reportCard(t,y,m,rows){
   const g=TYPES[t].rep, r=repOf(g,y,m)||{}, total=groupPph(g,y,m);
   const b=(v,ok,no)=>`<span class="badge ${v==='Sudah'?'b-success':'b-warning'}">${v==='Sudah'?ok:no}</span>`;
@@ -3111,7 +3115,7 @@ function reportCard(t,y,m,rows){
       <button class="btn btn-primary btn-sm" onclick="openReport('${t}')">${icon('edit')} ${r.setor||r.lapor?'Ubah':'Isi'} Status Laporan</button></div>
     <div class="card-b"><div class="rep-grid">
       <div class="rep-item"><small>Status Setor</small>${b(r.setor,'Sudah disetor','Belum disetor')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglSetor?fmtDate(r.tglSetor):'—'}</div></div>
-      <div class="rep-item"><small>Jumlah Disetor</small><b>${rp(r.jmlSetor!=null&&r.jmlSetor!==''?r.jmlSetor:(r.setor==='Sudah'?total:0))}</b>${g==='PPHU'&&(r.jml23!==undefined||r.jml42!==undefined)?`<div style="font-size:12px;color:var(--muted);margin-top:2px">PPh 23: <b>${rp(+r.jml23||0)}</b><br>PPh 4 ayat 2: <b>${rp(+r.jml42||0)}</b></div>`:''}<div style="font-size:12px;color:var(--muted);margin-top:2px">Total dipotong (semua sub menu): ${rp(total)}</div></div>
+      <div class="rep-item"><small>Jumlah Disetor</small><b>${rp(r.jmlSetor!=null&&r.jmlSetor!==''?r.jmlSetor:(r.setor==='Sudah'?total:0))}</b>${(()=>{ const P=repSplit(g,y,m).filter(([k])=>r[k]!==undefined&&r[k]!==''); return P.length?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${P.map(([k,,,sh])=>`${sh}: <b>${rp(+r[k]||0)}</b>`).join('<br>')}</div>`:''; })()}<div style="font-size:12px;color:var(--muted);margin-top:2px">Total dipotong (semua sub menu): ${rp(total)}</div></div>
       <div class="rep-item"><small>Status Lapor SPT</small>${b(r.lapor,'Sudah dilaporkan','Belum dilaporkan')}<div style="font-size:12px;color:var(--muted);margin-top:4px">${r.tglLapor?fmtDate(r.tglLapor):'—'}${r.bpe?' · BPE '+esc(r.bpe):''}</div></div>
       <div class="rep-item"><small>Bukti Lapor (BPE &amp; SPT Induk)</small>${[[r.file,'BPE'],[r.fileSpt,'SPT Induk']].map(([f,l])=>f?`<span class="file-pill" style="margin:2px 4px 2px 0" title="${esc(f.name)}" onclick="openStoredFile('${f.id}','${esc(f.name)}')">${icon('file')}<span>${l}</span></span>`:`<span class="badge b-muted" style="margin:2px 4px 2px 0">${l} belum diupload</span>`).join('')}</div>
     </div>${r.ket?`<div class="note">${esc(r.ket)}</div>`:''}</div></div>`;
@@ -3154,10 +3158,9 @@ function openReport(t){
     <form id="repForm" onsubmit="saveReport(event,'${g}')"><div class="modal-b"><div class="form-grid">
       <div class="field"><label>Status Setor</label>${sel('setor',r.setor)}</div>
       <div class="field"><label>Tanggal Setor</label><input class="input" type="date" name="tglSetor" value="${esc(r.tglSetor||'')}"></div>
-      ${g==='PPHU'?`<div class="field"><label>Jumlah Disetor PPh Pasal 23</label><input class="input" name="jml23" inputmode="decimal" value="${nv(r.jml23)}" placeholder="${fmt(tp('PPH23'))}"></div>
-      <div class="field"><label>Jumlah Disetor PPh Pasal 4 Ayat 2 (Final)</label><input class="input" name="jml42" inputmode="decimal" value="${nv(r.jml42)}" placeholder="${fmt(tp('PPH42'))}"></div>
-      <div class="field full"><div class="note" style="margin:0">${icon('alert')} Status setor, lapor, BPE, dan SPT Induk berlaku untuk satu SPT Masa PPh Unifikasi, sehingga otomatis sama di tab PPh 23 dan PPh Pasal 4 Ayat 2 (Final).</div></div>`
-      :`<div class="field"><label>Jumlah Disetor</label><input class="input" name="jmlSetor" inputmode="decimal" value="${nv(r.jmlSetor)}" placeholder="${fmt(total)}"></div>`}
+      ${repSplit(g,y,m).length?'':`<div class="field"><label>Jumlah Disetor</label><input class="input" name="jmlSetor" inputmode="decimal" value="${nv(r.jmlSetor)}" placeholder="${fmt(total)}"></div>`}
+      ${repSplit(g,y,m).map(([k,tt,l])=>`<div class="field"><label>Jumlah Disetor ${l}</label><input class="input" name="${k}" inputmode="decimal" value="${nv(r[k])}" placeholder="${fmt(tp(tt))}"></div>`).join('')}
+      <div class="field full"><div class="note" style="margin:0">${icon('alert')} Status setor, lapor, nomor BPE, file BPE, dan SPT Induk berlaku untuk <b>satu SPT Masa ${GROUP_LABEL[g]}</b>, sehingga otomatis sama di tab ${g==='PPHU'?'PPh Pasal 23 dan PPh Pasal 4 Ayat 2 (Final)':'BP 21 Selain Pegawai Tetap, Bulanan Pegawai Tetap, dan BP A1'} — cukup diisi sekali dari tab mana saja.</div></div>
       <div class="field"><label>Status Lapor SPT</label>${sel('lapor',r.lapor)}</div>
       <div class="field"><label>Tanggal Lapor</label><input class="input" type="date" name="tglLapor" value="${esc(r.tglLapor||'')}"></div>
       <div class="field full"><label>Nomor BPE / Bukti Penerimaan Elektronik</label><input class="input" name="bpe" value="${esc(r.bpe||'')}"></div>
@@ -3172,8 +3175,10 @@ async function saveReport(e,g){
   try{
     const fd=new FormData($('#repForm')), k=key(state.year,state.month), cur=repOf(g,state.year,state.month)||{};
     const num=n=>{ const v=(fd.get(n)||'').toString().trim(); return v?roundPph(toNum(v)):''; };
-    let js=num('jmlSetor'); const j23=num('jml23'), j42=num('jml42'); if(g==='PPHU') js=(j23===''&&j42==='')?'':(+j23||0)+(+j42||0);
-    const rec={setor:fd.get('setor'),tglSetor:fd.get('tglSetor'),ntpn:cur.ntpn||'',jmlSetor:js,...(g==='PPHU'?{jml23:j23,jml42:j42}:{}),
+    const SP=repSplit(g,state.year,state.month), parts=Object.fromEntries(SP.map(([k])=>[k,num(k)]));
+    const legacy=SP.every(([k])=>cur[k]===undefined)&&cur.jmlSetor!==undefined&&cur.jmlSetor!=='';
+    const js=!SP.length?num('jmlSetor'):Object.values(parts).every(v=>v==='')?(legacy?cur.jmlSetor:''):Object.values(parts).reduce((a,v)=>a+(+v||0),0);
+    const rec={setor:fd.get('setor'),tglSetor:fd.get('tglSetor'),ntpn:cur.ntpn||'',jmlSetor:js,...parts,
       lapor:fd.get('lapor'),tglLapor:fd.get('tglLapor'),bpe:(fd.get('bpe')||'').trim(),ket:(fd.get('ket')||'').trim()};
     rec.file=await storePdf(cur.file); rec.fileSpt=await storePdf2(cur.fileSpt);
     (DB.reports[g]=DB.reports[g]||{})[k]=rec;
