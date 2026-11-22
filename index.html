@@ -1075,6 +1075,9 @@ table.kx-t td{padding:5px 3px;border-bottom:1px dashed var(--border)}
 .kx.k-wait{background:var(--surface-2);color:var(--text);border-color:var(--border)}
 .kx.k-fut{background:transparent;color:var(--muted);border:1px dashed var(--border)}
 .kx.k-lb{background:rgba(100,116,139,.1);color:#475569;border-color:rgba(100,116,139,.25)}
+.kx.k-nihil{background:rgba(22,163,74,.08);color:#15803d;border:1px dashed rgba(22,163,74,.4)}
+.kb.k-nihil{background:rgba(22,163,74,.1);color:#15803d}
+[data-mode="dark"] .kx.k-nihil{color:#4ade80}
 .kx.k-none{background:transparent;color:var(--muted);cursor:default}.kx.k-none:hover{transform:none}
 [data-mode="dark"] .kx.k-done{color:#4ade80}[data-mode="dark"] .kx.k-late-done{color:#fbbf24}[data-mode="dark"] .kx.k-soon{color:#fbbf24}[data-mode="dark"] .kx.k-near{color:#93c5fd}[data-mode="dark"] .kx.k-lb{color:#cbd5e1}
 .kal-leg .kx{min-width:34px;height:22px;border-radius:7px;cursor:default}.kal-leg .kx b{font-size:10px}.kal-leg .kx:hover{transform:none}
@@ -2339,26 +2342,27 @@ function oblStatus(o,y,i,kind){
   const due=oblDue(o,y,i,kind), eff=effDue(due), t=today0(), ended=new Date(y,i+1,1)<=t, diff=dDiff(eff,t);
   const R={o,y,i,kind,due,eff,diff,shifted:eff.getTime()!==due.getTime()};
   let doneAt='', has=true, na='';
-  if(o.id==='ppn'){ const r=ppnRep(y,i)||{}, c=ppnLapor(ppnRep(y,i)), pm=pmSum(y,i), pk=getRows('PK',y,i).reduce((a,x)=>a+(isCanceled(x)?0:+x.ppn||0),0);
-    has=pm>0||pk>0||!!ppnRep(y,i)||MONTHS.some((_,j)=>getRows('PM',y,j).length||getRows('PK',y,j).length); R.n=has?1:0;
-    if(kind==='lapor'){ doneAt=c.ok?r.tglLapor:''; R.partial=!c.ok&&c.n?c.n:0; }
-    else { doneAt=r.tglSetor||''; if(!doneAt&&ended&&has&&pk<=pm) na=pm>pk?'lb':'nihil'; R.kb=pk>pm?pk-pm:0; } }
+  if(o.id==='ppn'){ /* KSO mendapat fasilitas lebih bayar: setoran hanya ada bila tanggal setor diisi (kurang bayar).
+       Status lapor mengikuti Rekap PPN per Masa Pajak: lengkap = sudah lapor, 'Lapor Nihil' = nihil, selain itu belum dilapor. */
+    const r=ppnRep(y,i)||{}, c=ppnLapor(ppnRep(y,i)), pm=pmSum(y,i), rk=pmStatus(y,i,pm); R.rekap=rk;
+    if(kind==='lapor'){ doneAt=c.ok?r.tglLapor:''; R.partial=!c.ok&&c.n?c.n:0; if(!doneAt&&rk==='Lapor Nihil'&&!R.partial) na='nihil'; }
+    else { doneAt=r.tglSetor||''; if(doneAt) R.kbSetor=true; else if(ended) na=rk==='Lapor Nihil'?'nihil':'lb'; } }
   else { const r=repOf(o.g,y,i)||{}, n=groupCount(o.g,y,i);
     if(kind==='setor') doneAt=r.setor==='Sudah'?(r.tglSetor||'ada'):''; else doneAt=r.lapor==='Sudah'?(r.tglLapor||'ada'):'';
     has=n>0||!!repOf(o.g,y,i); R.n=n; }
   R.doneAt=doneAt;
   if(doneAt){ R.st='done'; if(/^\d{4}-\d{2}-\d{2}$/.test(doneAt)){ const late=dDiff(new Date(doneAt),eff); if(late>0){ R.st='late-done'; R.late=late; } } return R; }
-  if(na){ R.st='lb'; R.na=na; return R; }
+  if(na){ R.st=R.kind==='lapor'?'nihil':'lb'; R.na=na; return R; }
   if(!ended){ R.st='fut'; return R; }
   if(!has){ R.st='none'; return R; }
   R.st=diff<0?'over':diff===0?'today':diff<=7?'soon':diff<=30?'near':'wait'; return R;
 }
-const OB_DONE=['done','late-done','lb','none'];
+const OB_DONE=['done','late-done','lb','none','nihil'];
 function oblChip(R){ const d=R.diff;
-  return {done:['✓',`Sudah ${R.kind}`],'late-done':['✓',`Sudah ${R.kind} · terlambat ${R.late} hari`],lb:['LB',R.na==='lb'?'Lebih bayar — tidak ada setoran':'Nihil — tidak ada setoran'],
+  return {nihil:['✓','Lapor nihil (Rekap PPN)'],done:['✓',R.kbSetor?'Kurang bayar sudah disetor':`Sudah ${R.kind}`],'late-done':['✓',`Sudah ${R.kind} · terlambat ${R.late} hari`],lb:['LB',R.na==='lb'?'Lebih bayar (fasilitas KSO) — tidak ada setoran':'Nihil — tidak ada setoran'],
     none:['·','Tidak ada transaksi'],fut:['',`Masa belum berakhir`],over:[`H+${-d}`,`Lewat ${-d} hari dari batas ${R.kind}`],today:['H-0',`Batas ${R.kind} hari ini`],
     soon:[`H-${d}`,`${d} hari lagi batas ${R.kind}`],near:[`H-${d}`,`${d} hari lagi batas ${R.kind}`],wait:[`H-${d}`,`${d} hari lagi batas ${R.kind}`]}[R.st]; }
-function oblTip(R){ const c=oblChip(R); return `${R.o.l} · ${R.kind==='setor'?'Setor':'Lapor'} masa ${MONTHS[R.i]} ${R.y}\nBatas: ${HARI[R.eff.getDay()]}, ${fmtDate(isoD(R.eff))}${R.shifted?` (semula ${fmtDate(isoD(R.due))}, jatuh hari libur akhir pekan)`:''}\nStatus: ${c[1]}${R.doneAt&&R.doneAt!=='ada'?` · tanggal ${fmtDate(R.doneAt)}`:''}${R.partial?` · data lapor ${R.partial}/4`:''}${R.kb?` · kurang bayar ${rp(R.kb)}`:''}`; }
+function oblTip(R){ const c=oblChip(R); return `${R.o.l} · ${R.kind==='setor'?'Setor':'Lapor'} masa ${MONTHS[R.i]} ${R.y}\nBatas: ${HARI[R.eff.getDay()]}, ${fmtDate(isoD(R.eff))}${R.shifted?` (semula ${fmtDate(isoD(R.due))}, jatuh hari libur akhir pekan)`:''}\nStatus: ${c[1]}${R.doneAt&&R.doneAt!=='ada'?` · tanggal ${fmtDate(R.doneAt)}`:''}${R.partial?` · data lapor ${R.partial}/4`:''}${R.rekap?` · Rekap PPN: ${R.rekap}`:''}`; }
 function oblOpen(id,y,i){ const o=OBL.find(x=>x.id===id); state.month=i; state.year=y;
   if(o.id==='ppn'){ goD('PM'); if(isAdmin()) setTimeout(()=>openPpnRep(y,i),60); else setTimeout(()=>{ const e=$('#ppnRekap'); e&&e.scrollIntoView({behavior:'smooth'}); },80); }
   else { goD(o.view); if(isAdmin()) setTimeout(()=>openReport(o.view),60); } }
@@ -2385,7 +2389,7 @@ async function saveTahunan(e,ty){ e.preventDefault(); const fd=new FormData($('#
   if(await save()){ closeModal(); toast('SPT Tahunan disimpan','success'); render(); } }
 function oblCell(R,click){
   const [t]=oblChip(R), dd=String(R.eff.getDate()).padStart(2,'0')+'/'+String(R.eff.getMonth()+1).padStart(2,'0');
-  return `<td><button type="button" class="kx k-${R.st}" title="${esc(oblTip(R))}" ${click?`onclick="${click}"`:''}><b>${t||dd}</b>${t&&R.st!=='none'&&R.st!=='lb'?`<small>${R.st==='done'||R.st==='late-done'?(R.doneAt&&R.doneAt!=='ada'?fmtDate(R.doneAt).slice(0,5):'✓'):dd}</small>`:R.st==='lb'?`<small>${R.na==='lb'?'tanpa setor':'nihil'}</small>`:''}</button></td>`;
+  return `<td><button type="button" class="kx k-${R.st}" title="${esc(oblTip(R))}" ${click?`onclick="${click}"`:''}><b>${t||dd}</b>${t&&R.st!=='none'&&R.st!=='lb'&&R.st!=='nihil'?`<small>${R.st==='done'||R.st==='late-done'?(R.doneAt&&R.doneAt!=='ada'?fmtDate(R.doneAt).slice(0,5):'✓'):dd}</small>`:R.st==='lb'?`<small>${R.na==='lb'?'tanpa setor':'nihil'}</small>`:R.st==='nihil'?'<small>nihil</small>':''}</button></td>`;
 }
 function dashKalender(comb,ys,yl){
   if(comb){
@@ -2404,7 +2408,7 @@ function dashKalender(comb,ys,yl){
   const open=[...prev,...ALL].filter(R=>R.st in PRI).sort((a,b)=>PRI[a.st]-PRI[b.st]||(a.st==='over'?b.eff-a.eff:a.eff-b.eff));
   const upNext=[...prev,...ALL].filter(R=>R.st==='fut'&&R.eff>=t).sort((a,b)=>a.eff-b.eff);
   const cnt={over:open.filter(R=>R.st==='over').length,soon:open.filter(R=>['today','soon'].includes(R.st)).length,
-    done:ALL.filter(R=>['done','late-done','lb'].includes(R.st)).length,late:ALL.filter(R=>R.st==='late-done').length,due:ALL.filter(R=>!['fut','none'].includes(R.st)).length};
+    done:ALL.filter(R=>['done','late-done','lb','nihil'].includes(R.st)).length,late:ALL.filter(R=>R.st==='late-done').length,due:ALL.filter(R=>!['fut','none'].includes(R.st)).length};
   /* agenda: gabungkan setor & lapor PPN yang tanggalnya sama */
   const ag=[]; [...open,...upNext].forEach(R=>{ const k=`${R.o.id}|${R.y}|${R.i}|${isoD(R.eff)}`, ex=ag.find(a=>a.k===k); if(ex){ ex.kinds.push(R.kind); return; } ag.push({k,R,kinds:[R.kind]}); });
   const agenda=ag.slice(0,6).map(({R,kinds})=>{ const st=R.st==='fut'?'fut':R.st, lbl=R.st==='fut'?`H-${R.diff}`:oblChip(R)[0];
@@ -2425,7 +2429,7 @@ function dashKalender(comb,ys,yl){
       const x=restItem(k), o=ST_MAP[x.status]; return `<td><span class="kc rs" style="--c:${o.c}" title="${esc(`Restitusi ${x.label}: ${o.l} · ${rp(x.pengajuan)}`)}" onclick="openRestForm('${k}')">${{sp2:'0',periksa:'1–3',selesai:'4–5',cair:'✓'}[x.status]}</span></td>`; }).join('')}</tr>`;
   const thRow=R=>`<div class="thn-i k-${R.st}"><small>${R.kind==='setor'?'Setor PPh Ps. 29':'Lapor SPT'}</small><b>${R.st==='done'||R.st==='late-done'?'✓ '+(R.doneAt?fmtDate(R.doneAt):'Sudah'):R.st==='fut'?'Belum dimulai':oblChip(R)[0]}</b><span>${R.st==='late-done'?`terlambat ${R.late} hari`:R.st==='done'?'tepat waktu':oblChip(R)[1]}</span></div>`;
   const list=[]; MONTHS.forEach((_,i)=>OBL.forEach(o=>list.push([o,i,oblStatus(o,y,i,'setor'),oblStatus(o,y,i,'lapor')])));
-  const badge=R=>{ const [t2,txt]=oblChip(R); return `<span class="kb k-${R.st}" title="${esc(oblTip(R))}">${R.st==='done'||R.st==='late-done'?'✓ '+(R.doneAt&&R.doneAt!=='ada'?fmtDate(R.doneAt):'Sudah')+(R.late?` · +${R.late}h`:''):R.st==='fut'?'Belum jatuh tempo':R.st==='lb'?(R.na==='lb'?'LB · tanpa setoran':'Nihil'):R.st==='none'?'Tidak ada transaksi':`${t2} · ${txt}`}</span>`; };
+  const badge=R=>{ const [t2,txt]=oblChip(R); return `<span class="kb k-${R.st}" title="${esc(oblTip(R))}">${R.st==='done'||R.st==='late-done'?'✓ '+(R.doneAt&&R.doneAt!=='ada'?fmtDate(R.doneAt):'Sudah')+(R.late?` · +${R.late}h`:''):R.st==='fut'?'Belum jatuh tempo':R.st==='nihil'?'✓ Lapor nihil':R.st==='lb'?(R.na==='lb'?'LB · tanpa setoran':'Nihil · tanpa setoran'):R.st==='none'?'Tidak ada transaksi':`${t2} · ${txt}`}</span>`; };
   return `<div class="card mb kal2" data-sec="comp"><div class="card-h"><div><h3>Kalender Kepatuhan Pajak · ${y}</h3><p>Batas setor &amp; lapor SPT setiap masa pajak beserta peringatan H− / H+ · sel bertanda ✓ berarti sudah disetor/dilaporkan · klik sel untuk mengisi status</p></div></div>
     <div class="kp-sum">
       <div class="kp-s over"><small>${icon('alert')} Lewat batas</small><b>${cnt.over}</b><span>kewajiban belum disetor/dilapor</span></div>
@@ -2438,7 +2442,7 @@ function dashKalender(comb,ys,yl){
     <div class="card-b kal-leg">
       <span><span class="kx k-done"><b>✓</b></span>Sudah, tepat waktu</span><span><span class="kx k-late-done"><b>✓</b></span>Sudah, terlambat</span>
       <span><span class="kx k-over"><b>H+</b></span>Lewat batas</span><span><span class="kx k-soon"><b>H-</b></span>≤ 7 hari lagi</span><span><span class="kx k-near"><b>H-</b></span>≤ 30 hari</span>
-      <span><span class="kx k-fut"><b>dd/mm</b></span>Batas (masa belum berakhir)</span><span><span class="kx k-lb"><b>LB</b></span>Lebih bayar / nihil</span><span><span class="kx k-none"><b>·</b></span>Tidak ada transaksi</span>
+      <span><span class="kx k-fut"><b>dd/mm</b></span>Batas (masa belum berakhir)</span><span><span class="kx k-nihil"><b>✓</b></span>Lapor nihil</span><span><span class="kx k-lb"><b>LB</b></span>Lebih bayar, tanpa setoran</span><span><span class="kx k-none"><b>·</b></span>Tidak ada transaksi</span>
       <span class="sub-t" style="flex-basis:100%">Batas yang jatuh pada Sabtu/Minggu otomatis bergeser ke hari kerja berikutnya. Hari libur nasional belum diperhitungkan.</span></div>
     <details class="kx-list"><summary>${icon('file')} Daftar lengkap jatuh tempo ${y} <span class="sub-t">· ${list.length+1} kewajiban</span>${icon('chev','i chev')}</summary>
       <div class="table-wrap"><table><thead><tr><th>No</th><th>Masa Pajak</th><th>Jenis Kewajiban</th><th>Jatuh Tempo Setor</th><th>Status Setor</th><th>Jatuh Tempo Lapor</th><th>Status Lapor</th></tr></thead><tbody>
