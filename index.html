@@ -1434,7 +1434,7 @@ const TYPES = {
       amountLabel:'PPh 21 Dipotong',baseLabel:'Penghasilan Bruto',key:['nobukti','pph','bruto'],
       desc:'Bukti Pemotongan PPh 21 <b>bulanan pegawai tetap</b> (karyawan tetap), umumnya memakai tarif efektif rata-rata (TER).',
       cols:[cT,cNo,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',f:'wide'},{k:'kode',l:'Kode Objek'},{k:'stPtkp',l:'PTKP'},{k:'bruto',l:'Penghasilan Bruto',f:'num'},{k:'tarif',l:'Tarif TER'},{k:'pph',l:'PPh 21 Dipotong',f:'num'},cSt],
-      form:[fNo,fTgl,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',req:1},fKode21,fPtkp,fNum('bruto','Penghasilan Bruto'),{k:'tarif',l:'Tarif TER'},fNum('pph','PPh 21 Dipotong',1),fSt,fKet],
+      form:[fNo,fTgl,{k:'npwp',l:'NPWP / NIK'},{k:'nama',l:'Nama Pegawai',req:1},fKode,fPtkp,fNum('bruto','Penghasilan Bruto'),{k:'tarif',l:'Tarif TER'},fNum('pph','PPh 21 Dipotong',1),fSt,fKet],
       tpl:[['NPWP/NIK Pegawai','Nama Pegawai','Nomor Bukti Potong','Tanggal Bukti Potong','Masa Pajak','Tahun','Kode Objek Pajak','Penghasilan Bruto','Tarif','PPh 21 Dipotong','Status','Keterangan'],
            ['3171000000000001','Budi Santoso','2600000001','31/01/2026','01','2026','',8000000,'1,5%',120000,'NORMAL','Contoh']]},
   PPH23:{...PPH_BASE,rep:'PPHU',label:'PPh Pasal 23',menu:'PPh Pasal 23',party:'Penerima',fields:PPHU_FIELDS,base:'dpp',amountLabel:'PPh 23 Dipotong',baseLabel:'DPP',key:['nobukti','pph','dpp'],
@@ -2898,6 +2898,12 @@ const pctTxtT=r=>(Math.round(r*100)/100).toLocaleString('id-ID',{maximumFraction
 /* hasil: {rate(% atas DPP), dpp, pph, note, warn} atau null bila belum bisa dihitung */
 function pph21Calc(t,{kode,bruto,stPtkp,hari,masa}){
   bruto=+bruto||0; if(!bruto) return null;
+  if(t==='PPH21'){ /* pegawai tetap bulanan: tarif ditentukan Status PTKP (TER), bukan kode objek */
+    const R={dpp:bruto};
+    if(masa===11) return {...R,warn:'Masa Desember (masa pajak terakhir) dihitung ulang setahun dengan tarif Pasal 17, tidak memakai TER — isi tarif & PPh secara manual.'};
+    const kat=terKat(stPtkp); if(!kat) return {...R,warn:'Pilih Status PTKP untuk menentukan kategori TER (A/B/C).'};
+    R.rate=terRate(kat,bruto); R.note=`TER Bulanan kategori ${kat} — Status PTKP ${stPtkp} · bruto ${rp(bruto)}`; R.pph=Math.floor(bruto*R.rate/100); return R;
+  }
   const kc=String(kode||'').trim().slice(0,9), def=t==='PPH21'?'21-100-01':'', K=KODE21_MAP[kc||def];
   if(!K) return {warn:kc?`Kode objek ${kc} belum dikenali — isi tarif secara manual.`:'Pilih kode objek pajak terlebih dahulu.'};
   const R={dpp:bruto,kode:K};
@@ -2924,7 +2930,7 @@ function taxAutoInit(t){
   tarif.closest('.field').querySelector('label').insertAdjacentHTML('beforeend',` <span class="lock-tag">otomatis</span>`);
   ['dpp','pph'].forEach(n=>{ const el=g(n); if(el) el.addEventListener('input',()=>el.dataset.man='1'); });
   const run=(force)=>{ const R=pph21Calc(t,{kode:(g('kode')||{}).value,bruto:toNum((g('bruto')||{}).value||''),stPtkp:(g('stPtkp')||{}).value,hari:toNum((g('hari')||{}).value||''),masa:state.month});
-    if(!R){ box.innerHTML=`<div class="tax-info">${icon('alert')}<span>Isi <b>kode objek pajak</b> dan <b>penghasilan bruto</b> — tarif akan terisi otomatis.</span></div>`; return; }
+    if(!R){ box.innerHTML=`<div class="tax-info">${icon('alert')}<span>${t==='PPH21'?'Pilih <b>Status PTKP</b> dan isi <b>penghasilan bruto</b>':'Isi <b>kode objek pajak</b> dan <b>penghasilan bruto</b>'} — tarif akan terisi otomatis.</span></div>`; return; }
     if(R.rate!=null){ tarif.value=pctTxtT(R.rate); const d=g('dpp'), p=g('pph');
       if(d&&(force||!d.dataset.man)) d.value=fmt(Math.round(R.dpp)); if(p&&(force||!p.dataset.man)) p.value=fmt(R.pph); }
     box.innerHTML=`<div class="tax-info ${R.warn?'warn':'ok'}">${icon(R.warn?'alert':'check')}<div>${R.kode?`<b>${esc(R.kode.k)}</b> · ${esc(R.kode.l)}<br>`:''}${R.rate!=null?`Tarif <b>${pctTxtT(R.rate)}</b> · ${esc(R.note||'')} · PPh 21 ≈ <b>${rp(R.pph)}</b>`:''}${R.warn?`<div class="tax-w">${esc(R.warn)}</div>`:''}</div></div>`; };
