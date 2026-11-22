@@ -1663,6 +1663,8 @@ const sumF = (rows,f) => rows.reduce((a,r)=> a + (isCanceled(r)?0:(+r[f]||0)), 0
 const fakturKey = s => String(s||'').replace(/[^0-9a-z]/gi,'').toUpperCase();
 const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
 /* Tarif: 0.1 → 10% · 0.0265 → 2,65% · 0.005 → 0,5% · "2.65" → 2,65% · "10%" tetap */
+/* Pembulatan nilai PPh: desimal di atas ,5 dibulatkan ke atas; ,5 atau kurang tetap (dibulatkan ke bawah) */
+function roundPph(x){ x=+x; if(!isFinite(x)) return x; const f=Math.floor(x), d=x-f; return d>0.5+1e-9?f+1:f; }
 function fmtTarif(v){
   if(v==null||v==='') return '';
   let s=String(v).trim(); if(!s) return '';
@@ -2902,7 +2904,7 @@ function pph21Calc(t,{kode,bruto,stPtkp,hari,masa}){
     const R={dpp:bruto};
     if(masa===11) return {...R,warn:'Masa Desember (masa pajak terakhir) dihitung ulang setahun dengan tarif Pasal 17, tidak memakai TER — isi tarif & PPh secara manual.'};
     const kat=terKat(stPtkp); if(!kat) return {...R,warn:'Pilih Status PTKP untuk menentukan kategori TER (A/B/C).'};
-    R.rate=terRate(kat,bruto); R.note=`TER Bulanan kategori ${kat} — Status PTKP ${stPtkp} · bruto ${rp(bruto)}`; R.pph=Math.floor(bruto*R.rate/100); return R;
+    R.rate=terRate(kat,bruto); R.note=`TER Bulanan kategori ${kat} — Status PTKP ${stPtkp} · bruto ${rp(bruto)}`; R.pph=roundPph(bruto*R.rate/100); return R;
   }
   const kc=String(kode||'').trim().slice(0,9), def=t==='PPH21'?'21-100-01':'', K=KODE21_MAP[kc||def];
   if(!K) return {warn:kc?`Kode objek ${kc} belum dikenali — isi tarif secara manual.`:'Pilih kode objek pajak terlebih dahulu.'};
@@ -2921,7 +2923,7 @@ function pph21Calc(t,{kode,bruto,stPtkp,hari,masa}){
   else if(K.m==='pesangon'){ R.rate=progTax(bruto,[[50e6,0],[100e6,5],[500e6,15],[Infinity,25]])/bruto*100; R.note='Final: 0% s.d. Rp50 jt · 5% · 15% · 25% di atas Rp500 jt'; }
   else if(K.m==='pensiun'){ R.rate=progTax(bruto,[[50e6,0],[Infinity,5]])/bruto*100; R.note='Final: 0% s.d. Rp50 jt · 5% di atasnya'; }
   else { R.rate={f5:5,f15:15,f0:0}[K.m]; R.note='Tarif final honorarium APBN/APBD'; }
-  R.pph=Math.floor(R.dpp*R.rate/100); return R;
+  R.pph=roundPph(R.dpp*R.rate/100); return R;
 }
 function pph21AutoRec(rec,t){ const R=pph21Calc(t,{kode:rec.kode,bruto:rec.bruto,stPtkp:rec.stPtkp,hari:rec.hari,masa:rec.masa}); if(R&&R.rate!=null){ rec.tarif=pctTxtT(R.rate); if(t==='PPH21NP'&&!rec.dpp) rec.dpp=R.dpp; } }
 function taxAutoInit(t){
@@ -2932,7 +2934,7 @@ function taxAutoInit(t){
   const run=(force)=>{ const R=pph21Calc(t,{kode:(g('kode')||{}).value,bruto:toNum((g('bruto')||{}).value||''),stPtkp:(g('stPtkp')||{}).value,hari:toNum((g('hari')||{}).value||''),masa:state.month});
     if(!R){ box.innerHTML=`<div class="tax-info">${icon('alert')}<span>${t==='PPH21'?'Pilih <b>Status PTKP</b> dan isi <b>penghasilan bruto</b>':'Isi <b>kode objek pajak</b> dan <b>penghasilan bruto</b>'} — tarif akan terisi otomatis.</span></div>`; return; }
     if(R.rate!=null){ tarif.value=pctTxtT(R.rate); const d=g('dpp'), p=g('pph');
-      if(d&&(force||!d.dataset.man)) d.value=fmt(Math.round(R.dpp)); if(p&&(force||!p.dataset.man)) p.value=fmt(R.pph); }
+      if(d&&(force||!d.dataset.man)) d.value=fmt(roundPph(R.dpp)); if(p&&(force||!p.dataset.man)) p.value=fmt(R.pph); }
     box.innerHTML=`<div class="tax-info ${R.warn?'warn':'ok'}">${icon(R.warn?'alert':'check')}<div>${R.kode?`<b>${esc(R.kode.k)}</b> · ${esc(R.kode.l)}<br>`:''}${R.rate!=null?`Tarif <b>${pctTxtT(R.rate)}</b> · ${esc(R.note||'')} · PPh 21 ≈ <b>${rp(R.pph)}</b>`:''}${R.warn?`<div class="tax-w">${esc(R.warn)}</div>`:''}</div></div>`; };
   ['kode','bruto','stPtkp','hari'].forEach(n=>{ const el=g(n); if(el){ el.addEventListener('input',()=>run(false)); el.addEventListener('change',()=>run(false)); } });
   const ed=g('pph')&&g('pph').value; ['dpp','pph'].forEach(n=>{ const el=g(n); if(el&&ed) el.dataset.man='1'; });
@@ -2968,7 +2970,7 @@ async function saveRowForm(e,t,id){
     if(f.type==='file') continue;
     let val=(fd.get(f.k)||'').toString().trim();
     if(f.req && !val){ toast(`${f.l} wajib diisi`,'error'); return; }
-    if(f.type==='num') val=toNum(val); else if(f.type==='bayar') val=val==='1'; else if(f.type==='mon') val=val===''?null:+val;
+    if(f.type==='num'){ val=toNum(val); if(T.rep&&val!==''&&val!=null) val=roundPph(val); } else if(f.type==='bayar') val=val==='1'; else if(f.type==='mon') val=val===''?null:+val;
     rec[f.k]=val;
   }
   if(T.pay){ if(rec.bayar && !rec.tglBayar) rec.tglBayar=todayISO(); if(!rec.bayar) rec.tglBayar=''; }
@@ -3134,7 +3136,7 @@ async function saveReport(e,g){
   e.preventDefault(); const btn=$('#repSave'); btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…';
   try{
     const fd=new FormData($('#repForm')), k=key(state.year,state.month), cur=repOf(g,state.year,state.month)||{};
-    const num=n=>{ const v=(fd.get(n)||'').toString().trim(); return v?toNum(v):''; };
+    const num=n=>{ const v=(fd.get(n)||'').toString().trim(); return v?roundPph(toNum(v)):''; };
     let js=num('jmlSetor'); const j23=num('jml23'), j42=num('jml42'); if(g==='PPHU') js=(j23===''&&j42==='')?'':(+j23||0)+(+j42||0);
     const rec={setor:fd.get('setor'),tglSetor:fd.get('tglSetor'),ntpn:cur.ntpn||'',jmlSetor:js,...(g==='PPHU'?{jml23:j23,jml42:j42}:{}),
       lapor:fd.get('lapor'),tglLapor:fd.get('tglLapor'),bpe:(fd.get('bpe')||'').trim(),ket:(fd.get('ket')||'').trim()};
@@ -4125,6 +4127,7 @@ function parseWorkbook(input,isCsv,schema,progress){
     const row=aoa[r]; if(!row || !row.length) continue;
     const rec={};
     for(const k of keys){ const v=(k in map && row[map[k]]!=null)?row[map[k]]:''; rec[k]=conv[fields[k].t](v); if(k==='tarif') rec[k]=fmtTarif(v); }
+    if(fields===PPH21_FIELDS||fields===PPH21NP_FIELDS||fields===PPHU_FIELDS||fields===PPH21A1_FIELDS) for(const k of keys) if(fields[k].t==='n'&&typeof rec[k]==='number') rec[k]=roundPph(rec[k]);
     if((fields===PPH21_FIELDS||fields===PPH21NP_FIELDS)&&!rec.tarif&&rec.bruto&&rec.masa!==11) pph21AutoRec(rec,fields===PPH21_FIELDS?'PPH21':'PPH21NP');
     if(schema.key.every(k=>!rec[k])){ empty++; continue; }
     if(/^(total|jumlah|grand)/i.test(String(rec.npwp||'')+String(rec.nama||'')) && !rec[schema.id]){ empty++; continue; }
