@@ -2050,13 +2050,12 @@ const state={view:'dashboard', year:Math.max(START_YEAR,now.getFullYear()), mont
   search:'', f:{status:'all',bayar:'all',jenis:'all',spt:'all',rest:'all'}, page:1, sel:new Set()};
 const NAV=[
   {sec:'Utama'},{id:'dashboard',label:'Dashboard',ic:'grid'},
-  {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP','GL','RPM']},{id:'PK',label:'Pajak Keluaran',ic:'out'},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
+  {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP','GL','RPM']},{grp:'Pajak Keluaran',ic:'out',items:['PK','BPS']},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
   {sec:'Restitusi PPN'},{id:'rest',label:'Alur Proses Restitusi',ic:'refund'},{id:'flow',label:'Flowchart Restitusi',ic:'flow'},
   {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},
-  {sec:'Dokumen'},{id:'BPS',label:'Bukti Potong ESDM',ic:'folder'},
   {sec:'Sistem'},{id:'settings',label:'Pengaturan',ic:'gear'},
 ];
-const NAV_LBL={RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
+const NAV_LBL={PK:'Monitoring Pajak Keluaran',BPS:'Bukti Potong ESDM',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
 const TITLES={RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PP:'Prepopulated Pajak Masukan (Belum Dikreditkan)',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
   rest:'Alur Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Akun Saya',BPS:'Bukti Potong ESDM',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
@@ -2074,7 +2073,7 @@ function combTabs(t,countFn){
   return `<div class="note" style="margin:0 0 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">${icon('grid')} <span>Menampilkan <b>gabungan seluruh tahun &amp; masa pajak</b> (baca saja). Pilih tahun untuk menambah atau mengubah data:</span>
     ${ys.map(y=>{ const c=countFn(y); return `<button class="btn btn-outline btn-sm" onclick="state.dataComb=false;state.year=${y};render()">${y} <span class="badge ${c?'b-primary':'b-muted'}" style="margin-left:4px">${fmt(c)}</span></button>`; }).join('')}</div>`;
 }
-function resetFilters(){ state.page=1; state.search=''; state.f={status:'all',bayar:'all',jenis:'all',spt:'all',rest:'all',batas:'all',a1aw:'all',a1ak:'all',a1j:'all'}; state.sel=new Set(); }
+function resetFilters(){ state.page=1; state.search=''; state.f={status:'all',bayar:'all',jenis:'all',spt:'all',sptSort:'nama',rest:'all',batas:'all',a1aw:'all',a1ak:'all',a1j:'all'}; state.sel=new Set(); }
 /* Pilihan tahun & mode gabungan disimpan per menu, sehingga mengganti tahun di satu menu tidak mengubah menu lain */
 const DEF_YEAR=state.year, COMB_DEF={dashComb:false,restComb:true,dataComb:false};
 const yKey=v=>{ const g=NAV.find(n=>n.grp&&n.items.includes(v)); return g?'grp:'+g.grp:v; };
@@ -2143,10 +2142,10 @@ function render(){
   const sg=NAV.find(n=>n.grp&&n.items.includes(state.view)); if(sg) $('#view').insertAdjacentHTML('afterbegin',subTabsHTML(sg));
 }
 /* Pemisah antar halaman dalam satu menu (pengganti sub menu di sidebar) */
-const SUB_IC={PM:'in',PP:'clock',GL:'file',RPM:'grid',PPH21NP:'users',PPH21A1:'file',PPH21:'user',PPH23:'receipt',PPH42:'receipt'};
+const SUB_IC={PM:'in',PP:'clock',GL:'file',RPM:'grid',PPH21NP:'users',PPH21A1:'file',PPH21:'user',PPH23:'receipt',PPH42:'receipt',PK:'out',BPS:'folder'};
 function subTabsHTML(g){
   const urgent=g.items.includes('PP')?batasScan().akhir.n:0;
-  return `<div class="subtabs" role="tablist" aria-label="${esc(g.grp)}">${g.items.map(id=>`<button type="button" role="tab" class="${id===state.view?'active':''}" aria-selected="${id===state.view}" onclick="go('${id}')">${icon(SUB_IC[id]||'file')}<span>${TYPES[id]?TYPES[id].sub||TYPES[id].menu:NAV_LBL[id]}</span>${id==='PP'&&urgent?`<i class="nav-cnt">${urgent}</i>`:''}</button>`).join('')}</div>`;
+  return `<div class="subtabs" role="tablist" aria-label="${esc(g.grp)}">${g.items.map(id=>`<button type="button" role="tab" class="${id===state.view?'active':''}" aria-selected="${id===state.view}" onclick="go('${id}')">${icon(SUB_IC[id]||'file')}<span>${NAV_LBL[id]||(TYPES[id]?TYPES[id].sub||TYPES[id].menu:id)}</span>${id==='PP'&&urgent?`<i class="nav-cnt">${urgent}</i>`:''}</button>`).join('')}</div>`;
 }
 
 /* =========================================================
@@ -3294,6 +3293,7 @@ function renderSpt(){
     <div class="card-b" style="padding-bottom:0"><div class="toolbar filters">
       <div class="search">${icon('search')}<input class="input" placeholder="Cari nama rekanan atau NPWP…" value="${esc(state.search)}" oninput="state.search=this.value;renderSptTable()"></div>
       <select class="select" onchange="state.f.spt=this.value;renderSptTable()"><option value="all">Semua status</option><option value="sudah" ${state.f.spt==='sudah'?'selected':''}>Sudah upload SPT</option><option value="belum" ${state.f.spt==='belum'?'selected':''}>Belum upload SPT</option></select>
+      <select class="select" title="Urutkan" onchange="state.f.sptSort=this.value;renderSptTable()">${[['nama','Urut nama A – Z'],['namaZ','Urut nama Z – A'],['ppnDesc','PPN Masukan terbesar'],['ppnAsc','PPN Masukan terkecil']].map(([v,l])=>`<option value="${v}" ${(state.f.sptSort||'nama')===v?'selected':''}>${l}</option>`).join('')}</select>
     </div></div><div id="sptArea"></div>`
     :comb?`<div class="empty">${icon('shield')}<b>Belum ada rekanan di seluruh tahun</b></div>`:`<div class="empty">${icon('shield')}<b>Belum ada rekanan pada ${MONTHS[m]} ${y}</b>Rekanan muncul otomatis setelah data Pajak Masukan bulan ini diimport.<br><br><button class="btn btn-primary" onclick="openImport('PM')">${icon('upload')} Import Pajak Masukan</button></div>`}
   </div>`;
@@ -3303,6 +3303,8 @@ function renderSptTable(){
   const area=$('#sptArea'); if(!area) return;
   const q=state.search.trim().toLowerCase();
   const comb=isComb('spt'), list=(comb?sptAll():sptList(state.year,state.month)).filter(x=>(state.f.spt==='all'||(state.f.spt==='sudah')===!!x.spt) && (!q||(x.nama+' '+x.npwp).toLowerCase().includes(q)));
+  const so=state.f.sptSort||'nama', byN=(a,b)=>String(a.nama).localeCompare(String(b.nama),'id',{sensitivity:'base'});
+  list.sort(so==='ppnDesc'?(a,b)=>b.ppn-a.ppn||byN(a,b):so==='ppnAsc'?(a,b)=>a.ppn-b.ppn||byN(a,b):so==='namaZ'?(a,b)=>byN(b,a):comb?(a,b)=>String(a.masaK).localeCompare(String(b.masaK))||byN(a,b):byN);
   const lastLapor=s=>s.files.map(f=>f.tglLapor).filter(Boolean).sort().pop();
   area.innerHTML=list.length?`<div class="table-wrap" style="margin-top:16px"><table>
     <thead><tr><th>No</th>${comb?'<th>Masa Pajak</th>':''}<th>Nama Rekanan</th><th>NPWP</th><th class="num">Faktur</th><th class="num">DPP</th><th class="num">PPN Masukan</th><th>Status SPT</th><th>Masa SPT</th><th>Tgl Lapor</th><th>Bukti SPT</th><th></th></tr></thead>
