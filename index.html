@@ -490,6 +490,10 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .spt-file .btn span,.spt-file .file-pill span{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pills{display:flex;gap:4px;align-items:center;flex-wrap:wrap;max-width:260px}
 .pills .file-pill{max-width:120px}
+.spt-row{display:flex;flex-wrap:nowrap;gap:6px;align-items:stretch}
+.spt-tl{display:inline-flex;flex-direction:column;align-items:center;padding:3px 8px;border-radius:8px;background:var(--surface-2,rgba(100,116,139,.08));border:1px solid var(--border);line-height:1.2;white-space:nowrap}
+.spt-tl small{font-size:10px;color:var(--muted);font-weight:700}.spt-tl b{font-size:12px;font-variant-numeric:tabular-nums}
+.spt-fp{white-space:nowrap;max-width:none}
 @media (max-width:1200px){.pipe,.four{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:repeat(2,1fr)}.pipe-step:nth-child(2)::after{display:none}}
 @media (max-width:700px){.pipe,.four,.detail-grid{grid-template-columns:1fr}.pipe-step::after{display:none}.kor-grid{grid-template-columns:1fr}.kor-grid .w2{grid-column:auto}.spt-row,.spt-row.doc-row{grid-template-columns:1fr}}
 
@@ -2180,7 +2184,7 @@ function sptList(y,m){
   getRows('PM',y,m).forEach(r=>{ if(isCanceled(r)) return; const k=rkKey(r);
     const o=g[k]||(g[k]={rk:k,nama:r.nama||'-',npwp:r.npwp||'',n:0,dpp:0,ppn:0});
     o.n++; o.dpp+=+r.dpp||0; o.ppn+=+r.ppn||0; });
-  return Object.values(g).map(o=>({...o,spt:sptRec(`${key(y,m)}|${o.rk}`)})).sort((a,b)=>b.ppn-a.ppn);
+  return Object.values(g).map(o=>({...o,spt:sptRec(`${key(y,m)}|${o.rk}`)})).sort((a,b)=>String(a.nama).localeCompare(String(b.nama),'id',{sensitivity:'base'}));
 }
 function sptYear(y){ let tot=0,up=0; for(let m=0;m<12;m++){ const l=sptList(y,m); tot+=l.length; up+=l.filter(x=>x.spt).length; } return {tot,up}; }
 function repOf(g,y,m){ return (DB.reports[g]||{})[key(y,m)]||null; }
@@ -2483,9 +2487,12 @@ function sanksiOf(R){
   const start=new Date(R.eff); start.setDate(start.getDate()+1); const ym=ymOf(start), T=tarifBunga(ym), n=lateMonths(R.eff,new Date(R.doneAt)), pk=+R.pokok||0;
   const S={jenis:'Bunga telat setor',dasar:`Pasal 9 ayat (${R.o.id==='thn'?'2b':'2a'}) UU KUP`,bulan:n,pokok:pk,ym,T};
   if(!T){ S.nilai=null; S.rumus=`Tarif bunga ${MONTHS[start.getMonth()]} ${start.getFullYear()} belum tersedia — ${isAdmin()?'tambahkan lewat "Kelola tarif bunga"':'hubungi admin'}.`; return S; }
-  if(!pk){ S.nilai=null; S.rumus=`Pokok pajak yang disetor belum diisi — ${R.o.id==='ppn'?'isi "Jumlah PPN Kurang Bayar Disetor" di Rekap PPN':R.o.id==='thn'?'isi "Jumlah PPh Pasal 29 Disetor" pada SPT Tahunan':'isi "Jumlah Disetor" pada Status Laporan'}.`; return S; }
+  if(!pk){ S.nilai=null; S.rumus=`Pokok pajak yang disetor belum diisi — ${R.o.id==='ppn'?'isi "Jumlah PPN Kurang Bayar Disetor" di Rekap PPN':R.o.id==='thn'?'isi "Jumlah PPh Pasal 29 Disetor" pada SPT Tahunan':'belum ada data PPh dipotong pada masa ini'}.`; return S; }
   S.nilai=Math.round(pk*T.r/100*n);
-  S.rumus=`${rp(pk)} × ${String(T.r.toFixed(2)).replace('.',',')}% × ${n} bulan = ${rp(S.nilai)}`; return S; }
+  S.rumus=`${rp(pk)} × ${String(T.r.toFixed(2)).replace('.',',')}% × ${n} bulan = ${rp(S.nilai)}`;
+  if(R.pokokDet&&R.pokokDet.length>1) S.det='Pokok = '+R.pokokDet.map(([l,v])=>`${l} ${rp(v)}`).join(' + ');
+  if(R.jmlRec!=null&&Math.round(R.jmlRec)!==Math.round(pk)) S.selisih=`Catatan: "Jumlah Disetor" di Status Laporan tercatat ${rp(R.jmlRec)} (selisih ${rp(Math.abs(pk-R.jmlRec))} dari total PPh dipotong) — periksa kembali isian tersebut.`;
+  return S; }
 /* status satu kewajiban: done | late-done | over | today | soon (≤7 hari) | near (≤30) | wait | fut | none | lb */
 function oblStatus(o,y,i,kind){
   const due=oblDue(o,y,i,kind), eff=effDue(due), t=today0(), ended=new Date(y,i+1,1)<=t, diff=dDiff(eff,t);
@@ -2498,7 +2505,7 @@ function oblStatus(o,y,i,kind){
     else { doneAt=r.tglSetor||''; R.pokok=+r.jmlSetor||0; if(doneAt) R.kbSetor=true; else if(ended) na=rk==='Lapor Nihil'?'nihil':'lb'; } }
   else { const r=repOf(o.g,y,i)||{}, n=groupCount(o.g,y,i);
     if(kind==='setor') doneAt=r.setor==='Sudah'?(r.tglSetor||'ada'):''; else doneAt=r.lapor==='Sudah'?(r.tglLapor||'ada'):'';
-    has=n>0||!!repOf(o.g,y,i); R.n=n; R.pokok=r.jmlSetor!=null&&r.jmlSetor!==''?+r.jmlSetor:groupPph(o.g,y,i); }
+    has=n>0||!!repOf(o.g,y,i); R.n=n; R.pokok=groupPph(o.g,y,i); R.jmlRec=r.jmlSetor!=null&&r.jmlSetor!==''?+r.jmlSetor:null; R.pokokDet=GROUP_TYPES[o.g].map(t=>[TYPES[t].amountLabel||TYPES[t].label,sumF(getRows(t,y,i),'pph')]).filter(x=>x[1]); }
   R.doneAt=doneAt;
   if(doneAt){ R.st='done'; if(/^\d{4}-\d{2}-\d{2}$/.test(doneAt)){ const late=dDiff(new Date(doneAt),eff); if(late>0){ R.st='late-done'; R.late=late; } } return R; }
   if(na){ R.st=R.kind==='lapor'?'nihil':'lb'; R.na=na; return R; }
@@ -2612,9 +2619,9 @@ function dashKalender(comb,ys,yl){
         ${X.map(({R,S})=>`<tr onclick="${R.o.id==='thn'?(adm?`openTahunan(${R.y})`:''):`oblOpen('${R.o.id}',${R.y},${R.i})`}"><td><b>${R.kind==='setor'?'Setor':'Lapor'} ${esc(R.o.l)}</b><div class="sub-t">${R.o.id==='thn'?`Tahun Pajak ${R.y}`:`Masa ${MONTHS[R.i]} ${R.y}`}</div></td>
           <td>${fmtDate(isoD(R.eff))}</td><td>${fmtDate(R.doneAt)}</td><td><span class="lt">${R.late} hari</span>${S&&S.bulan?`<div class="sub-t">= ${S.bulan} bulan</div>`:''}</td>
           <td>${S.jenis}<div class="sub-t">${S.dasar}</div></td>
-          <td>${esc(S.rumus)}${S.T?`<div class="sub-t">Tarif bunga ${MONTHS[+S.ym.slice(5)-1]} ${S.ym.slice(0,4)}: ${esc(S.T.kmk||'')}${S.T.src==='admin'?' (diisi admin)':''}</div>`:''}</td>
+          <td>${esc(S.rumus)}${S.det?`<div class="sub-t">${esc(S.det)}</div>`:''}${S.selisih?`<div class="sub-t" style="color:#b45309">${esc(S.selisih)}</div>`:''}${S.T?`<div class="sub-t">Tarif bunga ${MONTHS[+S.ym.slice(5)-1]} ${S.ym.slice(0,4)}: ${esc(S.T.kmk||'')}${S.T.src==='admin'?' (diisi admin)':''}</div>`:''}</td>
           <td class="num"><b>${S.nilai!=null?rp(S.nilai):'—'}</b></td></tr>`).join('')}</tbody></table></div>
-        <p><b>Ketentuan:</b> bunga telat setor = pokok pajak × tarif bunga per bulan (KMK) × jumlah bulan terlambat — bagian dari bulan dihitung satu bulan penuh, paling lama 24 bulan (Pasal 9 ayat (2a)/(2b) UU KUP). Tarif bunga diambil dari KMK yang berlaku saat dimulainya penghitungan sanksi.
+        <p><b>Ketentuan:</b> bunga telat setor = pokok pajak (PPh 21/Unifikasi: total PPh dipotong pada masa tersebut di semua sub menu) × tarif bunga per bulan (KMK) × jumlah bulan terlambat — bagian dari bulan dihitung satu bulan penuh, paling lama 24 bulan (Pasal 9 ayat (2a)/(2b) UU KUP). Tarif bunga diambil dari KMK yang berlaku saat dimulainya penghitungan sanksi.
         Denda telat lapor (Pasal 7 ayat (1) UU KUP): SPT Masa PPN Rp500.000, SPT Masa PPh Rp100.000, SPT Tahunan PPh Badan Rp1.000.000.
         Angka ini estimasi; nilai final mengikuti STP yang diterbitkan DJP. Cek tarif resmi: <a href="${TARIF_BUNGA_URL}" target="_blank" rel="noopener">fiskal.kemenkeu.go.id — Tarif Bunga</a>${adm?` · <a href="javascript:void 0" onclick="openTarifBunga()">Kelola tarif bunga</a>`:''}</p></div>`; })()}
     <div class="card-b kal-leg">
@@ -3304,13 +3311,16 @@ function renderSptTable(){
       <td class="num">${fmt(x.n)}</td><td class="num">${fmt(x.dpp)}</td><td class="num"><b>${fmt(x.ppn)}</b></td>
       <td><span class="badge ${x.spt?'b-success':'b-warning'}">${x.spt?`✓ ${x.spt.files.length} SPT`:'Belum upload'}</span></td>
       <td style="white-space:normal;min-width:120px">${x.spt?esc(masaRangeText(x.spt.files.map(f=>f.masa).filter(Boolean))):'—'}</td>
-      <td>${x.spt&&lastLapor(x.spt)?fmtDate(lastLapor(x.spt)):'—'}</td>
-      <td>${x.spt?`<div class="pills">${x.spt.files.slice(0,isAdmin()&&!comb?2:SPT_MAX).map(f=>`<span class="file-pill" onclick="openStoredFile('${f.id}','${esc(f.name)}')" title="${esc(f.name)}">${icon('file')}<span>${esc(f.name)}</span></span>`).join('')}${isAdmin()&&!comb&&x.spt.files.length>2?`<span class="badge b-primary" style="cursor:pointer" onclick="openSptForm('${esc(x.rk)}')">+${x.spt.files.length-2}</span>`:''}</div>`:'—'}</td>
+      <td>${x.spt?`<div class="spt-row">${sptFiles(x.spt).map(f=>`<span class="spt-tl" title="Tanggal lapor SPT masa ${f.masa?masaLabel(f.masa):'-'}"><small>${f.masa?masaShort(f.masa):'—'}</small><b>${f.tglLapor?fmtDate(f.tglLapor):'—'}</b></span>`).join('')}</div>`:'—'}</td>
+      <td>${x.spt?`<div class="spt-row">${sptFiles(x.spt).map(f=>`<span class="file-pill spt-fp" onclick="openStoredFile('${f.id}','${esc(f.name)}')" title="${esc(f.name)}${f.masa?' · Masa '+masaLabel(f.masa):''}">${icon('file')}<span>${f.masa?masaShort(f.masa):esc(f.name)}</span></span>`).join('')}</div>`:'—'}</td>
       <td>${comb?'':`<div class="row-act">
         <button class="btn ${x.spt?'btn-outline':'btn-primary'} btn-sm" onclick="openSptForm('${esc(x.rk)}')">${icon(x.spt?'edit':'upload')} ${x.spt?'Kelola':'Upload SPT'}</button>
         ${x.spt?`<button class="icon-btn xs" title="Hapus semua SPT" onclick="deleteSpt('${esc(x.rk)}')">${icon('trash')}</button>`:''}</div>`}</td></tr>`).join('')}</tbody></table></div>`
     :`<div class="empty">Tidak ada rekanan yang cocok dengan pencarian/filter.</div>`;
 }
+/* SPT per rekanan diurutkan sesuai masa pajak; label singkat mis. "Jan 2026" */
+const sptFiles=s=>(s.files||[]).slice().sort((a,b)=>String(a.masa||'').localeCompare(String(b.masa||'')));
+const masaShort=k=>`${MONTHS_S[+k.slice(5)-1]} ${k.slice(0,4)}`;
 let SPTROWS=[], SPTDEL=[];
 const SPT_MAX=7;
 function masaOptions(sel,y){ const o=[]; for(let yy=y-1;yy<=y+1;yy++) for(let mm=0;mm<12;mm++){ const k=key(yy,mm); o.push(`<option value="${k}" ${k===sel?'selected':''}>${MONTHS[mm]} ${yy}</option>`); } return o.join(''); }
