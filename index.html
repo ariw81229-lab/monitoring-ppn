@@ -1103,6 +1103,11 @@ table.kx-t td{padding:5px 3px;border-bottom:1px dashed var(--border)}
 .tax-info.warn{background:rgba(217,119,6,.07);border-color:rgba(217,119,6,.32)}
 .tax-info>svg.i{width:16px;height:16px;flex:none;margin-top:2px;color:var(--success)}.tax-info.warn>svg.i{color:var(--warning)}
 .tax-info .tax-w{color:var(--warning);font-weight:600;margin-top:2px}
+
+#idleWarn{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);width:560px;padding:14px 16px;border-radius:16px;background:var(--surface);border:1px solid rgba(217,119,6,.45);box-shadow:0 20px 50px rgba(0,0,0,.25);animation:iwIn .25s ease}
+@keyframes iwIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+.iw-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(217,119,6,.14);color:#d97706}.iw-ic svg.i{width:20px;height:20px}
+.iw-t{flex:1;min-width:0}.iw-t>b{display:block;font-size:14px}.iw-t span{font-size:12.8px;color:var(--muted)}.iw-t span b{color:#d97706;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1713,6 +1718,19 @@ function enhanceDate(n){
   b.addEventListener('click',()=>{ if(n.disabled||n.readOnly) return; try{ n.showPicker(); }catch(e){ n.style.pointerEvents='auto'; n.focus(); n.click(); } });
   const f=n.form; if(f&&!f.dataset.dmyHook){ f.dataset.dmyHook='1'; f.addEventListener('submit',()=>f.querySelectorAll('.dmy-t').forEach(x=>x.dispatchEvent(new Event('blur'))),true); }
 }
+/* Matikan riwayat isian (autocomplete) browser di semua formulir, kecuali kolom login.
+   Riwayat isian disimpan oleh browser, bukan oleh website, sehingga cara paling aman adalah tidak menyimpannya sama sekali. */
+function noHistory(root){
+  (root||document).querySelectorAll('form,input,textarea').forEach(el=>{
+    if(el.closest&&el.closest('#login')) return;
+    if(el.tagName==='INPUT'&&/^(password|file|checkbox|radio|hidden|button|submit|range|color)$/i.test(el.type)) return;
+    if(el.getAttribute('autocomplete')!=='off') el.setAttribute('autocomplete','off');
+    el.setAttribute('data-lpignore','true'); el.setAttribute('data-1p-ignore','true'); el.setAttribute('data-form-type','other');
+  });
+}
+new MutationObserver(ms=>{ for(const m of ms) for(const nd of m.addedNodes) if(nd.nodeType===1&&(nd.matches('form,input,textarea')||nd.querySelector('form,input,textarea'))) noHistory(nd.parentNode||nd); })
+  .observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('DOMContentLoaded',()=>noHistory());
 function enhanceDates(root){ (root||document).querySelectorAll('input[type="date"]:not([data-dmy])').forEach(enhanceDate); }
 new MutationObserver(ms=>{ for(const m of ms) for(const nd of m.addedNodes) if(nd.nodeType===1){ if(nd.matches&&nd.matches('input[type="date"]')) enhanceDate(nd); else if(nd.querySelector&&nd.querySelector('input[type="date"]')) enhanceDates(nd); } })
   .observe(document.documentElement,{childList:true,subtree:true});
@@ -1902,6 +1920,7 @@ function toggleEye(id,btn){ const i=document.getElementById(id); const show=i.ty
 /* =========================================================
    LOGIN, SESI & LUPA PASSWORD
 ========================================================= */
+var IDLE_FRESH=false, IDLE_BOOTCHK=false; /* login baru di halaman ini · pengecekan sesi lama sudah dilakukan */
 const session={
   get(){ try{ return sessionStorage.getItem('ppn_user')||localStorage.getItem('ppn_user_r'); }catch(e){ return window.__u||null; } },
   set(v,rem){ try{ if(rem) localStorage.setItem('ppn_user_r',v); else sessionStorage.setItem('ppn_user',v); }catch(e){ window.__u=v; } },
@@ -1936,7 +1955,7 @@ $('#loginForm').addEventListener('submit',async e=>{
     return;
   }
   if(user.active===false){ loginError('Akun ini sedang dinonaktifkan. Hubungi admin.'); return; }
-  LOGIN.fails=0; session.set(user.username,$('#remember').checked); $('#lp').value=''; $('#loginErr').hidden=true; showApp();
+  LOGIN.fails=0; IDLE_FRESH=true; session.set(user.username,$('#remember').checked); $('#lp').value=''; $('#loginErr').hidden=true; showApp();
 });
 function openForgot(){
   if(CLOUD_ON){ openModal(`<div class="modal-h"><div><h3>Lupa Password</h3><p>Atur ulang password akun</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
@@ -1977,6 +1996,7 @@ function logout(){ setTimeout(fitKso,60); try{ const t=themeOf(); if(!$('#app').
 function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 function showApp(){
   const u=currentUser(); if(!u){ logout(); return; }
+  if(typeof idleOnShow==='function'&&idleOnShow()) return;
   $('#login').hidden=true; $('#app').hidden=false;
   $('#uName').textContent=u.name||u.username; $('#uAvatar').textContent=(u.name||u.username)[0].toUpperCase();
   $('#uRole').innerHTML=`<span class="role-pill">${u.role==='user'?'Pengunjung · lihat & unduh':'Admin'}</span>`;
@@ -4881,6 +4901,7 @@ async function cloudAfterLogin(remember){
 async function cloudLogin(u,p,remember){
   await cloudReady();
   try{ localStorage.setItem('ppn_remember',remember?'1':'0'); }catch(e){}
+  IDLE_FRESH=true;
   const {error}=await SB.auth.signInWithPassword({email:toEmail(u),password:p});
   if(error){ const e=new Error(/invalid login|invalid_credentials|credentials/i.test(error.message)?'bad':/not confirmed/i.test(error.message)?'Email akun belum dikonfirmasi. Matikan "Confirm email" di Supabase lalu minta admin mengatur ulang password akun ini.':cloudErr(error)); e.bad=e.message==='bad'; throw e; }
   await cloudAfterLogin(remember);
@@ -5832,15 +5853,42 @@ async function audit(action,detail){
     const d=n==='openStoredFile'?`${a[2]?'unduh':'buka'} file · ${a[1]||''}`:n==='doExport'?`export ${a[0]} · ${(document.querySelector('input[name=xfmt]:checked')||{}).value||''}`:n==='exportPackage'?'unduh paket data lengkap':n==='rpmExport'?`rincian pajak masukan · ${a[0]} · ${(state.rpm||{}).from||''} s.d ${(state.rpm||{}).to||''}`:n==='rekonExport'?`rekonsiliasi ${a[0]} · ${a[1]} · posisi ${(state.rpm||{}).to||''}`:'backup json';
     audit(n==='openStoredFile'?'dokumen':'unduh',d); return f.apply(this,a); };
 });
-const IDLE_MIN=30, IDLE_KEY='ppn_last_act';
+/* ---------- Keluar otomatis bila tidak ada aktivitas 40 menit (admin & pengunjung) ----------
+   Aktivitas: klik, ketik, gerak mouse, sentuh, gulir. Waktu aktivitas terakhir disimpan di perangkat sehingga
+   berlaku juga lintas tab dan saat browser/laptop dibuka kembali (sleep). Peringatan muncul 1 menit sebelum keluar. */
+const IDLE_MIN=40, IDLE_WARN_S=60, IDLE_KEY='ppn_last_act';
 let IDLE_LAST=Date.now(), IDLE_SAVED=0;
-function idleTouch(){ IDLE_LAST=Date.now(); if(IDLE_LAST-IDLE_SAVED>5000){ IDLE_SAVED=IDLE_LAST; try{ localStorage.setItem(IDLE_KEY,String(IDLE_LAST)); }catch(e){} } }
-['pointerdown','keydown','mousemove','touchstart','wheel','scroll'].forEach(ev=>document.addEventListener(ev,idleTouch,{passive:true,capture:true}));
-setInterval(()=>{
-  if($('#app').hidden||!currentUser()){ IDLE_LAST=Date.now(); return; }
-  let last=IDLE_LAST; try{ last=Math.max(last,+localStorage.getItem(IDLE_KEY)||0); }catch(e){}
-  if(Date.now()-last>IDLE_MIN*60000){ if(CLOUD_ON) audit('keluar otomatis','tidak aktif '+IDLE_MIN+' menit'); closeModal(); logout(); toast(`Anda keluar otomatis karena tidak ada aktivitas selama ${IDLE_MIN} menit`,'error'); }
-},15000);
+function idleTouch(force){ const now=Date.now(); if(!force&&now-IDLE_LAST<1000&&!$('#idleWarn')) return; IDLE_LAST=now;
+  if(force||now-IDLE_SAVED>5000){ IDLE_SAVED=now; try{ localStorage.setItem(IDLE_KEY,String(now)); }catch(e){} }
+  const w=$('#idleWarn'); if(w) w.remove(); }
+function idleLast(){ let last=IDLE_LAST; try{ last=Math.max(last,+localStorage.getItem(IDLE_KEY)||0); }catch(e){} return last; }
+function idleLogout(){ const w=$('#idleWarn'); if(w) w.remove();
+  try{ if(CLOUD_ON) audit('keluar otomatis','tidak aktif '+IDLE_MIN+' menit'); }catch(e){}
+  closeModal(); logout(); toast(`Anda keluar otomatis karena tidak ada aktivitas selama ${IDLE_MIN} menit. Silakan masuk kembali.`,'error'); }
+function idleCheck(){
+  if($('#app').hidden||!currentUser()) return;
+  const idle=Date.now()-idleLast(), left=Math.ceil((IDLE_MIN*60000-idle)/1000);
+  if(left<=0){ idleLogout(); return; }
+  if(left<=IDLE_WARN_S){ let w=$('#idleWarn');
+    if(!w){ w=document.createElement('div'); w.id='idleWarn'; w.setAttribute('role','alertdialog');
+      w.innerHTML=`<div class="iw-ic">${icon('clock')}</div><div class="iw-t"><b>Sesi akan berakhir</b><span>Tidak ada aktivitas selama ${IDLE_MIN-1} menit. Anda akan keluar otomatis dalam <b id="iwSec"></b> detik.</span></div><button class="btn btn-primary btn-sm" onclick="idleTouch(true)">Tetap masuk</button>`;
+      document.body.appendChild(w); }
+    const sc=$('#iwSec'); if(sc) sc.textContent=left; }
+  else { const w=$('#idleWarn'); if(w) w.remove(); }
+}
+['pointerdown','keydown','mousemove','touchstart','wheel','scroll'].forEach(ev=>document.addEventListener(ev,()=>idleTouch(),{passive:true,capture:true}));
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) idleCheck(); });
+window.addEventListener('focus',idleCheck);
+window.addEventListener('storage',e=>{ if(e.key===IDLE_KEY){ const w=$('#idleWarn'); if(w) w.remove(); } });
+setInterval(()=>{ if($('#app').hidden||!currentUser()){ IDLE_LAST=Date.now(); return; } idleCheck(); },1000);
+/* catat aktivitas saat masuk, dan periksa sesi lama saat halaman dibuka kembali */
+const IDLE_ON_LOAD=(()=>{ try{ return +localStorage.getItem(IDLE_KEY)||0; }catch(e){ return 0; } })();
+/* dipanggil saat aplikasi tampil: sesi yang dipulihkan (reload / buka kembali) dicek terhadap aktivitas terakhir */
+function idleOnShow(){
+  if(IDLE_FRESH){ IDLE_FRESH=false; IDLE_BOOTCHK=true; idleTouch(true); return false; }
+  if(IDLE_BOOTCHK) return false; IDLE_BOOTCHK=true;
+  if(IDLE_ON_LOAD&&Date.now()-IDLE_ON_LOAD>IDLE_MIN*60000){ idleLogout(); return true; }
+  idleTouch(true); return false; }
 async function openAudit(){
   openModal(`<div class="modal-h"><div><h3>Riwayat Aktivitas</h3><p>200 aktivitas terakhir · hanya dapat dilihat admin</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b" id="auditBody"><div class="empty"><span class="spin-sm" style="border-color:rgba(var(--primary-rgb),.25);border-top-color:var(--primary)"></span> Memuat…</div></div>`);
