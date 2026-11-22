@@ -2503,7 +2503,7 @@ function dashKalender(comb,ys,yl){
   }
   const y=ys[0], t=today0(), adm=isAdmin();
   const ALL=[]; OBL.forEach(o=>MONTHS.forEach((_,i)=>['setor','lapor'].forEach(k=>ALL.push(oblStatus(o,y,i,k)))));
-  const th=tahunanStatus(y-1); ALL.push(th.setor,th.lapor);
+  const th=tahunanStatus(y); ALL.push(th.setor,th.lapor);
   /* kewajiban masa Desember tahun lalu yang jatuh tempo di tahun ini */
   const prev=[]; OBL.forEach(o=>[10,11].forEach(i=>['setor','lapor'].forEach(k=>{ const R=oblStatus(o,y-1,i,k); if(R.eff.getFullYear()===y&&!OB_DONE.includes(R.st)&&R.st!=='fut') prev.push(R); })));
   const PRI={today:0,soon:1,over:2,near:3,wait:4};
@@ -2537,7 +2537,7 @@ function dashKalender(comb,ys,yl){
       <div class="kp-s over"><small>${icon('alert')} Lewat batas</small><b>${cnt.over}</b><span>kewajiban belum disetor/dilapor</span></div>
       <div class="kp-s soon"><small>${icon('clock')} Jatuh tempo ≤ 7 hari</small><b>${cnt.soon}</b><span>segera ditindaklanjuti</span></div>
       <div class="kp-s ok"><small>${icon('check')} Sudah setor / lapor</small><b>${cnt.done}<em> / ${cnt.due}</em></b><span>${cnt.late?`${cnt.late} di antaranya terlambat`:'seluruhnya tepat waktu'}</span></div>
-      <div class="kp-s thn" ${adm?`onclick="openTahunan(${y-1})"`:''}><small>${icon('file')} SPT Tahunan PPh Badan · TP ${y-1}</small><div class="thn-r">${thRow(th.setor)}${thRow(th.lapor)}</div><span>Batas 30 April ${y}</span></div>
+      <div class="kp-s thn" ${adm?`onclick="openTahunan(${y})"`:''}><small>${icon('file')} SPT Tahunan PPh Badan · ${y}</small><div class="thn-r">${thRow(th.setor)}${thRow(th.lapor)}</div><span>Batas 30 April ${y+1}</span></div>
     </div>
     <div class="ag-wrap"><h4>${icon('clock')} Agenda Terdekat</h4><div class="ag-row">${agenda||`<div class="empty" style="padding:16px">Tidak ada kewajiban yang menunggu. Semua sudah disetor &amp; dilaporkan 🎉</div>`}</div></div>
     <div class="table-wrap"><table class="kal kx-t"><thead><tr><th class="kx-h">Kewajiban</th>${head}</tr></thead><tbody>${body}${extra}</tbody></table></div>
@@ -2549,7 +2549,7 @@ function dashKalender(comb,ys,yl){
     <details class="kx-list"><summary>${icon('file')} Daftar lengkap jatuh tempo ${y} <span class="sub-t">· ${list.length+1} kewajiban</span>${icon('chev','i chev')}</summary>
       <div class="table-wrap"><table><thead><tr><th>No</th><th>Masa Pajak</th><th>Jenis Kewajiban</th><th>Jatuh Tempo Setor</th><th>Status Setor</th><th>Jatuh Tempo Lapor</th><th>Status Lapor</th></tr></thead><tbody>
         ${list.map(([o,i,S,L],n)=>`<tr class="clickable" onclick="oblOpen('${o.id}',${y},${i})"><td>${n+1}</td><td>${MONTHS[i]} ${y}</td><td><b>${o.l}</b><div class="sub-t">${o.sub}</div></td><td>${fmtDate(isoD(S.eff))}${S.shifted?'<div class="sub-t">geser dari akhir pekan</div>':''}</td><td>${badge(S)}</td><td>${fmtDate(isoD(L.eff))}</td><td>${badge(L)}</td></tr>`).join('')}
-        <tr class="clickable" ${adm?`onclick="openTahunan(${y-1})"`:''}><td>${list.length+1}</td><td>Tahun Pajak ${y-1}</td><td><b>SPT Tahunan PPh Badan</b></td><td>${fmtDate(isoD(th.setor.eff))}</td><td>${badge(th.setor)}</td><td>${fmtDate(isoD(th.lapor.eff))}</td><td>${badge(th.lapor)}</td></tr>
+        <tr class="clickable" ${adm?`onclick="openTahunan(${y})"`:''}><td>${list.length+1}</td><td>Tahun Pajak ${y}</td><td><b>SPT Tahunan PPh Badan</b></td><td>${fmtDate(isoD(th.setor.eff))}</td><td>${badge(th.setor)}</td><td>${fmtDate(isoD(th.lapor.eff))}</td><td>${badge(th.lapor)}</td></tr>
       </tbody></table></div></details>
   </div>`;
 }
