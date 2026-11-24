@@ -3111,7 +3111,7 @@ function vprDelete(id){ const r=vprAll().find(x=>x.id===id); if(!r) return;
   confirmBox('Hapus data?',`Data <b>${esc(r.nama||'-')}</b> (${esc(r.jenis)}) akan dihapus dari Pencatatan PPh Rekanan.${r.lapor?' Salinan yang sudah dipindahkan ke menu PPh tetap disimpan.':''}`,'Hapus',async()=>{
     DB.data.VPR.all=vprAll().filter(x=>x.id!==id); state.sel.delete(id); if(await save()){ toast('Data dihapus','success'); refreshDataView(); } }); }
 const vprPemotong=()=>({...VPR_PEMOTONG_DEF,...(((DB.settings||{}).vpr||{}).pemotong||{})});
-const vprNitku=npwp=>{ const d=String(npwp||'').replace(/\D/g,''); return d.length===16?d+'000000':d.length===15?'0'+d+'000000':''; };
+const vprNitku=npwp=>{ const d=String(npwp||'').replace(/\D/g,''); if(!d) return ''; if(d.length>=22) return d.slice(0,22); return (d.length===15?'0'+d:d)+'000000'; }; /* NITKU = NPWP 16 digit + 000000 */
 const tglPanjang=iso=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); return m?`${m[3]} ${MONTHS[+m[2]-1]} ${m[1]}`:''; };
 const vprSheetOf=r=>{ const j=vprJ(r.jenis); if(j==='21') return r.kel21||'PKWT'; if(j==='23') return 'P23'; return /^28-403-/.test(r.kode||'')?'SEWA':'KONS'; };
 
@@ -3169,8 +3169,8 @@ function vprFormRender(){
   Fm.querySelectorAll('input[name="jenis"]').forEach(el=>el.addEventListener('change',()=>{ vprFormRead(); r.jenis=el.value; r.kode=''; r.fasilitas=''; vprFormRender(); }));
   const kel=Fm.querySelector('[name="kel21"]'); if(kel) kel.addEventListener('change',()=>{ vprFormRead(); r.kode=''; vprFormRender(); });
   const np=Fm.querySelector('[name="npwp"]'), nk=Fm.querySelector('[name="nitku"]');
-  np.addEventListener('input',()=>{ if(!nk.dataset.man) nk.value=vprNitku(np.value); }); nk.addEventListener('input',()=>nk.dataset.man=nk.value?'1':'');
-  if(r.nitku&&r.nitku!==vprNitku(r.npwp)) nk.dataset.man='1';
+  const syncNk=()=>{ if(!nk.dataset.man) nk.value=vprNitku(np.value); }; np.addEventListener('input',syncNk); np.addEventListener('change',syncNk); nk.addEventListener('input',()=>nk.dataset.man=nk.value?'1':'');
+  if(r.nitku&&r.nitku!==vprNitku(r.npwp)) nk.dataset.man='1'; else syncNk();
   ['kode','bruto','stPtkp','hari','fasilitas'].forEach(n=>{ const el=Fm.querySelector(`[name="${n}"]`); if(el){ el.addEventListener('input',vprFormCalc); el.addEventListener('change',vprFormCalc); } });
   vprFormCalc();
 }
@@ -3189,7 +3189,7 @@ async function saveVprForm(e){
   const tglMode=r.tglMode||'auto', createdAt=r.createdAt||todayISO();
   if(tglMode==='manual'&&!/^\d{4}-\d{2}-\d{2}$/.test(r.tanggal||'')) return toast('Isi tanggal bukti potong (atau pilih Otomatis)','error');
   const rec={masaPajak:r.masaPajak,tglMode,createdAt,jenis:r.jenis,kel21:vprJ(r.jenis)==='21'?(r.kel21||'PKWT'):'',nobukti:r.nobukti||'',tanggal:tglMode==='auto'?createdAt:r.tanggal,kode:r.kode,namaObjek:R.namaObjek||'',deemed:R.deemed||'',stPtkp:r.stPtkp||'',hari:r.hari||'',
-    npwp:r.npwp||'',nitku:r.nitku||vprNitku(r.npwp),nama:r.nama,alamat:r.alamat||'',noInv:r.noInv||'',tglInv:r.tglInv||'',bruto:roundPph(+r.bruto),dpp:roundPph(R.dpp),tarif:pctTxtT(R.rate),pph:R.pph,
+    npwp:r.npwp||'',nitku:(r.nitku||'').replace(/\s/g,'')||vprNitku(r.npwp),nama:r.nama,alamat:r.alamat||'',noInv:r.noInv||'',tglInv:r.tglInv||'',bruto:roundPph(+r.bruto),dpp:roundPph(R.dpp),tarif:pctTxtT(R.rate),pph:R.pph,
     fasilitas:r.fasilitas||'',dokRef:r.dokRef||'',noDok:r.noDok||'',tglDok:r.tglDok||'',ipPay:vprJ(r.jenis)==='21'?'':(r.ipPay||''),lokasi:r.lokasi||'',status:r.status||'NORMAL',ket:r.ket||''};
   const arr=vprAll(), cur=VPR_FORM.id?arr.find(x=>x.id===VPR_FORM.id):null;
   if(rec.nobukti&&arr.some(x=>x!==cur&&x.nobukti&&x.nobukti===rec.nobukti)) return toast(`Nomor bukti ${rec.nobukti} sudah ada`,'error');
@@ -3274,7 +3274,7 @@ async function bupotDoc(r){
   const MI=vprMasaIdx(r), masa=`${String(MI.m+1).padStart(2,'0')}-${MI.y}`;
   const nomor=r.nobukti||(r.tanggal?fmtDate(r.tanggal).replace(/\//g,''):'-'), sifat=j==='42'||/^21-40[12]-/.test(r.kode||'')?'FINAL':'TIDAK FINAL';
   const fas=r.fasilitas||'Tanpa Fasilitas', namaObj=r.namaObjek||(K?K[1]:''), noDok=r.noDok||r.noInv||'-', tglDok=tglPanjang(r.tglDok||r.tglInv)||'-', tgl=tglPanjang(r.tanggal)||'-';
-  const nitku=r.nitku||vprNitku(r.npwp);
+  const nitku=r.nitku||vprNitku(r.npwp), nitkuTxt=nitku?`${nitku} - ${r.nama||''}`:'-';
   try{ doc.addImage(BUPOT_LOGO,'PNG',37.3,43.7,38.9,36.8); }catch(e){}
   txt('KEMENTERIAN KEUANGAN',85,44); txt('REPUBLIK INDONESIA',85,52); txt('DIREKTORAT JENDERAL PAJAK',85,59.9,{b:1});
   const B=0.6; /* garis bawah dokumen untuk pembatas */
@@ -3285,7 +3285,7 @@ async function bupotDoc(r){
     [[39,'NOMOR BUKTI PEMOTONGAN',nomor],[174.3,'MASA PAJAK',masa],[309,'SIFAT PEMOTONGAN',sifat],[443.6,'STATUS BUKTI PEMOTONGAN',r.status||'NORMAL']].forEach(([x,l,v])=>{ txt(l,x+56.7,94.6,{b:1,al:'center'}); rect(x,109,113.4,10.8,[255,255,255]); txt(v,x+56.7,110.6,{al:'center'}); });
     const bar=(y,l,t)=>{ rect(28.3,y,538.6,13.6,[0,64,128]); txt(l,31.2,y+4.3,{b:1,c:[255,255,255]}); txt(t,40.6,y+4.3,{b:1,c:[255,255,255]}); };
     bar(127.8,'A.','IDENTITAS PENERIMA PENGHASILAN');
-    [['A.1','NIK/NPWP',r.npwp||'-'],['A.2','Nama',r.nama||'-'],['A.3','NITKU',`${nitku||'-'} - ${r.nama||''}`]].forEach(([a,l,v],i)=>{ const y=146.3+i*14.1; txt(a,31.2,y); txt(l,59.5,y); txt(':',147.7,y); txt(v,158.6,y,{w:400}); });
+    [['A.1','NIK/NPWP',r.npwp||'-'],['A.2','Nama',r.nama||'-'],['A.3','NITKU',nitkuTxt]].forEach(([a,l,v],i)=>{ const y=146.3+i*14.1; txt(a,31.2,y); txt(l,59.5,y); txt(':',147.7,y); txt(v,158.6,y,{w:400}); });
     bar(189.4,'B.','PENGHASILAN YANG DIPOTONG');
     txt('B.1',31.2,207.4); txt('Jenis Fasilitas : '+fas,59.5,207.4);
     const cols=[[56.7,70.9],[127.6,113.4],[240.9,85],[326,85],[411,70.9],[481.9,85]];
@@ -3313,7 +3313,7 @@ async function bupotDoc(r){
     bar(132.8,'A.','IDENTITAS WAJIB PAJAK YANG DIPOTONG DAN/ATAU DIPUNGUT PPh ATAU PENERIMA PENGHASILAN');
     txt('A.1',32.2,147.9); txt('NPWP / NIK',59.5,147.9); txt(':',144.6,147.9); txt(r.npwp||'-',158.7,147.9);
     txt('A.2',32.2,164.3); txt('NAMA',59.5,164.3); txt(':',144.6,164.3); txt(r.nama||'-',158.7,164.3,{w:400});
-    txt('A.3',32.2,180.8); ['NOMOR IDENTITAS','TEMPAT KEGIATAN','USAHA (NITKU)'].forEach((s,i)=>txt(s,59.5,180.8+i*10.8)); txt(':',144.6,180.8); txt(`${nitku||'-'} - ${r.nama||''}`,158.7,180.8,{w:400});
+    txt('A.3',32.2,180.8); ['NOMOR IDENTITAS','TEMPAT KEGIATAN','USAHA (NITKU)'].forEach((s,i)=>txt(s,59.5,180.8+i*10.8)); txt(':',144.6,180.8); txt(nitkuTxt,158.7,180.8,{w:400});
     bar(214.6,'B.','PEMOTONGAN DAN/ATAU PEMUNGUTAN PPh');
     txt('B.1',31.2,229.7); txt('Jenis Fasilitas : '+fas,59.5,229.7);
     txt('B.2',31.2,246.1); txt('Jenis PPh : '+(j==='23'?'Pasal 23':'Pasal 4 Ayat 2'),59.5,246.1);
@@ -3347,9 +3347,9 @@ function bupotDummyMark(doc,txt,x,y,r){ /* QR code buatan sendiri: berisi ringka
       for(let rr=0;rr<n;rr++) for(let cc=0;cc<n;cc++) if(q.isDark(rr,cc)) doc.rect(x+cc*c,y+rr*c,c+.02,c+.02,'F'); ok=true; } }catch(e){ console.warn('QR gagal',e); }
   if(!ok){ doc.setDrawColor(150,150,150); doc.setLineWidth(.6); doc.setLineDashPattern([2,2],0); doc.rect(x,y,size,size); doc.setLineDashPattern([],0);
     txt('DUMMY',x+24.1,y+17,{b:1,s:9,c:[120,120,120],al:'center',h:1}); txt('draf',x+24.1,y+28,{s:7,c:[120,120,120],al:'center',h:1}); }
-  /* catatan di bawah QR: font 2, dibungkus (wrap) selebar QR */
-  doc.setFont('helvetica','normal'); doc.setFontSize(2);
-  doc.splitTextToSize('Bupot dummy untuk verifikasi rekanan - bukan bukti potong resmi. Bukti potong resmi diterbitkan melalui Coretax DJP.',size).forEach((l,i)=>txt(l,x,y+size+1.5+i*2.5,{s:2,c:[140,140,140],h:1}));
+  /* catatan di bawah QR: font 3, dibungkus (wrap) selebar QR */
+  doc.setFont('helvetica','normal'); doc.setFontSize(3);
+  doc.splitTextToSize('Bupot dummy untuk verifikasi rekanan - bukan bukti potong resmi. Bukti potong resmi diterbitkan melalui Coretax DJP.',size).forEach((l,i)=>txt(l,x,y+size+1.5+i*3.6,{s:3,c:[140,140,140],h:1}));
 }
 async function downloadBupot(id){
   const r=vprAll().find(x=>x.id===id); if(!r) return;
