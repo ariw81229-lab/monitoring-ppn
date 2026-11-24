@@ -3347,9 +3347,9 @@ function bupotDummyMark(doc,txt,x,y,r){ /* QR code buatan sendiri: berisi ringka
       for(let rr=0;rr<n;rr++) for(let cc=0;cc<n;cc++) if(q.isDark(rr,cc)) doc.rect(x+cc*c,y+rr*c,c+.02,c+.02,'F'); ok=true; } }catch(e){ console.warn('QR gagal',e); }
   if(!ok){ doc.setDrawColor(150,150,150); doc.setLineWidth(.6); doc.setLineDashPattern([2,2],0); doc.rect(x,y,size,size); doc.setLineDashPattern([],0);
     txt('DUMMY',x+24.1,y+17,{b:1,s:9,c:[120,120,120],al:'center',h:1}); txt('draf',x+24.1,y+28,{s:7,c:[120,120,120],al:'center',h:1}); }
-  /* catatan di bawah QR: font 0,6, dibungkus (wrap) */
-  doc.setFont('helvetica','normal'); doc.setFontSize(0.6);
-  doc.splitTextToSize('Bupot dummy untuk verifikasi rekanan - bukan bukti potong resmi. Bukti potong resmi diterbitkan melalui Coretax DJP.',22).forEach((l,i)=>txt(l,x,y+size+1+i*0.8,{s:0.6,c:[140,140,140],h:1}));
+  /* catatan di bawah QR: font 2, dibungkus (wrap) selebar QR */
+  doc.setFont('helvetica','normal'); doc.setFontSize(2);
+  doc.splitTextToSize('Bupot dummy untuk verifikasi rekanan - bukan bukti potong resmi. Bukti potong resmi diterbitkan melalui Coretax DJP.',size).forEach((l,i)=>txt(l,x,y+size+1.5+i*2.5,{s:2,c:[140,140,140],h:1}));
 }
 async function downloadBupot(id){
   const r=vprAll().find(x=>x.id===id); if(!r) return;
