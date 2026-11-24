@@ -3454,11 +3454,11 @@ function openLapPph(ym){
       <div class="form-grid">
         <div class="field full"><label>Keterangan Masa Pajak <span class="sub-t">(tampil di judul setiap sheet, bisa diubah)</span></label><input class="input" name="masaTxt" value="${esc(M.masaTxt)}"></div>
         <div class="field full"><label>Tempat &amp; Tanggal Laporan <span class="sub-t">(format: Jakarta, 10 Oktober 2026)</span></label><input class="input" name="tglTxt" value="${esc(M.tglTxt)}"></div>
-        <div class="field full"><div class="note" style="margin:0">${icon('alert')} <b>Billing &amp; NTPN</b> diisi dari <b>Coretax</b> setelah memilih <b>Lapor &amp; Bayar</b> pada SPT Masa (PPh 21/26 dan PPh Unifikasi). Jumlah pegawai/transaksi, DPP, dan PPh pada sheet REKAP terisi otomatis dari sheet lainnya.</div></div>
         <div class="field"><label>Kode Billing PPh 21</label><input class="input" name="bil21" value="${esc(M.bil21)}" placeholder="dari Coretax"></div>
         <div class="field"><label>NTPN PPh 21</label><input class="input" name="ntpn21" value="${esc(M.ntpn21)}" placeholder="dari Coretax"></div>
         <div class="field"><label>Kode Billing PPh Unifikasi (23 &amp; 4 ayat 2)</label><input class="input" name="bilU" value="${esc(M.bilU)}" placeholder="dari Coretax"></div>
         <div class="field"><label>NTPN PPh Unifikasi</label><input class="input" name="ntpnU" value="${esc(M.ntpnU)}" placeholder="dari Coretax"></div>
+        <div class="field full"><div class="note" style="margin:0">${icon('alert')} <b>Billing &amp; NTPN</b> diisi dari <b>Coretax</b> setelah memilih <b>Lapor &amp; Bayar</b> pada SPT Masa (PPh 21/26 dan PPh Unifikasi). Jumlah pegawai/transaksi, DPP, dan PPh pada sheet REKAP terisi otomatis dari sheet lainnya.</div></div>
       </div></div>
     <div class="modal-f"><button type="button" class="btn btn-outline" onclick="vprTemplate()" title="Template Excel berisi kolom sama dengan form Tambah Data, untuk diisi lalu diimport">${icon('file')} Template kosong</button><span style="flex:1"></span>
       <button type="button" class="btn btn-outline" onclick="lapGo('pdf')">${icon('download')} Unduh PDF</button><button type="button" class="btn btn-primary" onclick="lapGo('xlsx')">${icon('download')} Unduh Excel</button></div></form>`,'lg');
@@ -3715,7 +3715,7 @@ async function lapPdf(rows,M,y,m){
   const K=22; /* tinggi kop (logo + KSO + proyek) */
   const TT={}; let CUR=null; const mark=()=>{ TT[doc.internal.getCurrentPageInfo().pageNumber]=CUR; };
   const head=(t1,t2)=>{ doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('LAPORAN PEMOTONGAN DAN PENYETORAN PPh',W/2,K+6,{align:'center'}); doc.setFontSize(11); doc.text(t1,W/2,K+12,{align:'center'}); doc.text(M.masaTxt,W/2,K+18,{align:'center'}); doc.setDrawColor(0); doc.setLineWidth(.6); doc.line(10,K+21,W-10,K+21); };
-  const ttd=(y0,cols)=>{ let yy=Math.max(y0,150); if(yy>180){ doc.addPage(); yy=K+27; } doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  const ttd=(y0,cols)=>{ let yy=cols.noMin?y0:Math.max(y0,150); if(yy>180){ doc.addPage(); yy=K+27; } doc.setFont('helvetica','normal'); doc.setFontSize(9);
     mark(); if(cols.tgl) doc.text(M.tglTxt,cols.tgl,yy,{align:'center'}); (cols.lbls||[]).forEach(([x,l])=>{ doc.setFont('helvetica','bold'); doc.text(l,x,yy+5,{align:'center'}); }); cols.list.forEach(([x,l,n,j])=>{ doc.setFont('helvetica','bold'); doc.text(l,x,yy+5,{align:'center'}); doc.text(n,x,yy+27,{align:'center'}); doc.setLineWidth(.2); doc.line(x-18,yy+28,x+18,yy+28); doc.setFont('helvetica','normal'); doc.text(j,x,yy+32,{align:'center'}); }); };
   const th={fillColor:[214,255,51],textColor:0,fontStyle:'bold',halign:'center',valign:'middle',lineColor:0,lineWidth:.2,fontSize:7.5}, bd={lineColor:0,lineWidth:.2,fontSize:7.5,cellPadding:1.2,textColor:0};
   const tot={fillColor:[214,255,51],fontStyle:'bold'};
@@ -3728,8 +3728,10 @@ async function lapPdf(rows,M,y,m){
         if(i===0) c.push({content:M.bil21,rowSpan:2,styles:mid}); if(i===2) c.push({content:M.bilU,rowSpan:3,styles:mid}); c.push(''); return c; }),
       [{content:'TOTAL',colSpan:2,styles:tot},{content:String(rows.length),styles:tot},{content:fmt(sum(rows,'dpp')),styles:tot},{content:fmt(sum(rows,'pph')),styles:tot},{content:'',colSpan:2,styles:tot}]],
     columnStyles:{0:{halign:'center',cellWidth:10},1:{cellWidth:62},2:{halign:'center',cellWidth:22},3:{halign:'right',cellWidth:36},4:{halign:'right',cellWidth:32},5:{cellWidth:45},6:{cellWidth:30}}});
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.text('Billing diisi dari Coretax setelah memilih Lapor & Bayar.',30,doc.lastAutoTable.finalY+5);
-  ttd(doc.lastAutoTable.finalY+14,{tgl:212.5,lbls:[[77.5,'Mengetahui,'],[212.5,'Dibuat Oleh,']],list:[[45,'','Indra A. Nugroho','Project Manager'],[110,'','Saud Manurung','Deputy Project Manager'],[180,'','Ahsan Nashrudin Bashori','Finance Manager'],[245,'','Bayu Dwi Herlambang','Deputy Finance Manager']]});
+  /* catatan hanya tampil bila kode billing belum diisi */
+  const need21=[...S('PKWT'),...S('BORONGAN'),...S('HARIAN')].length>0, needU=[...S('P23'),...S('SEWA'),...S('KONS')].length>0;
+  if((need21&&!M.bil21)||(needU&&!M.bilU)||(!need21&&!needU)){ doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.text('Billing diisi dari Coretax setelah memilih Lapor & Bayar.',30,doc.lastAutoTable.finalY+5); }
+  ttd(doc.lastAutoTable.finalY+14,{noMin:1,tgl:212.5,lbls:[[77.5,'Mengetahui,'],[212.5,'Dibuat Oleh,']],list:[[45,'','Indra A. Nugroho','Project Manager'],[110,'','Saud Manurung','Deputy Project Manager'],[180,'','Ahsan Nashrudin Bashori','Finance Manager'],[245,'','Bayu Dwi Herlambang','Deputy Finance Manager']]});
   /* DAFTAR PKWT & SELAIN PEGAWAI — susunan sama dengan sheet Excel */
   doc.addPage(); CUR='PPH 21 PEGAWAI TETAP DAN PPH 21 SELAIN PEGAWAI TETAP'; mark();
   const BL=[142,180,227], z0=v=>+v?fmt(v):'-', bar={fillColor:BL,fontStyle:'bold',lineWidth:0,textColor:0,fontSize:8};
