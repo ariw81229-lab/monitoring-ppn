@@ -3438,7 +3438,7 @@ const LAP_SHEETS={REKAP:'REKAP',DAF:'DAFTAR PKWT DAN SELAIN PEGAWAI ',P23:'PPH P
 const LAP_SEC={PKWT:{sh:'DAF',a:7,z:148},BORONGAN:{sh:'DAF',a:152,z:159},HARIAN:{sh:'DAF',a:163,z:174},P23:{sh:'P23',a:10,z:19},SEWA:{sh:'SEWA',a:9,z:11},KONS:{sh:'KONS',a:9,z:18}};
 const lapName=(y,m)=>`1. LAPORAN PPH DUSEM (${MONTHS[m].toUpperCase()} ${y})`;
 function lapMeta(y,m){ const o=(((DB.settings||{}).vpr||{}).lap||{})[key(y,m)]||{}, d=new Date();
-  return {masaTxt:o.masaTxt||`MASA PAJAK ${MONTHS[m].toUpperCase()} ${y}`,tglTxt:o.tglTxt||`Jakarta, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`,bil21:o.bil21||'',ntpn21:o.ntpn21||'',bilU:o.bilU||'',ntpnU:o.ntpnU||''}; }
+  return {masaTxt:o.masaTxt||`MASA PAJAK ${MONTHS[m].toUpperCase()} ${y}`,tglTxt:o.tglTxt||`Jakarta, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`,bil21:'',ntpn21:'',bilU:'',ntpnU:''}; } /* billing & NTPN tidak disimpan — selalu kosong saat form dibuka */
 const lapRows=(y,m)=>vprAll().filter(r=>r.status!=='BATAL'&&r.masaPajak===key(y,m)).sort((a,b)=>seqOf(a)-seqOf(b));
 function lapDefYM(){ const s=vprAll().filter(r=>!r.lapor).map(r=>r.masaPajak).filter(Boolean).sort(); return s[s.length-1]||nowYM(); }
 function openLapPph(ym){
@@ -3465,12 +3465,13 @@ function openLapPph(ym){
 }
 async function lapGo(kind){
   const ym=state.lapYM||lapDefYM(), y=+ym.slice(0,4), m=+ym.slice(5)-1, fd=new FormData($('#lapForm')), M=Object.fromEntries(['masaTxt','tglTxt','bil21','ntpn21','bilU','ntpnU'].map(k=>[k,String(fd.get(k)||'').trim()]));
-  if(isAdmin()){ DB.settings.vpr=DB.settings.vpr||{}; DB.settings.vpr.lap=DB.settings.vpr.lap||{}; const old=JSON.stringify(DB.settings.vpr.lap[key(y,m)]||{});
-    if(old!==JSON.stringify(M)){ DB.settings.vpr.lap[key(y,m)]=M; await save(); } }
+  if(isAdmin()){ DB.settings.vpr=DB.settings.vpr||{}; DB.settings.vpr.lap=DB.settings.vpr.lap||{}; const keep={masaTxt:M.masaTxt,tglTxt:M.tglTxt}, old=JSON.stringify(DB.settings.vpr.lap[key(y,m)]||{});
+    if(old!==JSON.stringify(keep)){ DB.settings.vpr.lap[key(y,m)]=keep; await save(); } }
   if(kind==='tpl') return vprTemplate();
   const rows=lapRows(y,m);
   try{ if(kind==='pdf') await lapPdf(rows,M,y,m); else { const b=await lapXlsx(rows,M,y,m); saveBytes(b,(kind==='tpl'?`Template ${lapName(y,m)}`:lapName(y,m))+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); }
     toast(kind==='pdf'?'PDF laporan diunduh':'Excel laporan diunduh','success');
+    ['bil21','ntpn21','bilU','ntpnU'].forEach(k=>{ const el=$(`#lapForm [name=${k}]`); if(el) el.value=''; }); /* kosongkan kode billing/NTPN setelah unduh */
   }catch(e){ console.error(e); toast('Gagal membuat laporan: '+e.message,'error'); }
 }
 /* --- penulis xlsx langsung di level XML agar format template tetap utuh --- */
@@ -3579,11 +3580,11 @@ class XBook{
     if(!logos||!logos.length) return;
     /* gambar logo (drawing) */
     const di=(this.drawN=(this.drawN||0)+1), path=this.sh[n].path, relP=path.replace('worksheets/','worksheets/_rels/')+'.rels', EMU=9525, H=80;
-    let x=x0||8, pics='', rels='';
-    logos.forEach((l,i)=>{ const w=Math.round(Math.min(230,H*l.w/l.h)), img=`kop${di}_${i+1}.png`; this.z.file('xl/media/'+img,l.data.split(',')[1],{base64:true});
+    let x=x0||8, pics='', rels=''; const K=(this.kop=this.kop||{})[n]={di,pics:[],rows:[0]};
+    logos.forEach((l,i)=>{ const w=Math.round(l.strip?H*l.w/l.h:Math.min(230,H*l.w/l.h)), img=`kop${di}_${i+1}.png`; this.z.file('xl/media/'+img,l.data.split(',')[1],{base64:true});
       rels+=`<Relationship Id="rIdL${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${img}"/>`;
       pics+=`<xdr:absoluteAnchor><xdr:pos x="${x*EMU}" y="${4*EMU}"/><xdr:ext cx="${w*EMU}" cy="${H*EMU}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${i+2}" name="Logo ${i+1}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rIdL${i+1}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="${x*EMU}" y="${4*EMU}"/><a:ext cx="${w*EMU}" cy="${H*EMU}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:absoluteAnchor>`;
-      x+=w+16; });
+      K.pics.push({rid:`rIdL${i+1}`,x,w,h:H}); x+=w+16; });
     this.z.file(`xl/drawings/drawing${di}.xml`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${pics}</xdr:wsDr>`);
     this.z.file(`xl/drawings/_rels/drawing${di}.xml.rels`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels}</Relationships>`);
     this.relAdd=this.relAdd||{}; (this.relAdd[relP]=this.relAdd[relP]||[]).push(`<Relationship Id="rIdKop" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing${di}.xml"/>`);
@@ -3641,7 +3642,37 @@ class XBook{
     for(const o of fns){ const v=this.cache[o.n+'!'+o.c.getAttribute('r')]; const d=this.sh[o.n].doc; for(const x of [...o.c.getElementsByTagName('v')]) o.c.removeChild(x); o.c.removeAttribute('t');
       if(v==null) continue; const e=d.createElementNS(XNS,'v'); if(typeof v==='number'){ e.textContent=String(Math.round(v*1e6)/1e6); } else { o.c.setAttribute('t','str'); e.textContent=String(v); } o.c.appendChild(e); }
   }
-  async out(){ const S=new XMLSerializer(); for(const n of this.order) this.z.file(this.sh[n].path,S.serializeToString(this.sh[n].doc)); this.z.file('xl/workbook.xml',S.serializeToString(this.wb));
+  kopDrawings(){ /* tulis ulang drawing kop: logo di baris 1 + di setiap salinan kop halaman berikutnya (oneCellAnchor) */
+    const EMU=9525; for(const [n,K] of Object.entries(this.kop||{})){ if(!K.pics.length) continue; let xml='', id=2;
+      const colPx=c=>this.colPt(n,colL(c))/.75;
+      for(const r0 of K.rows) for(const p of K.pics){ let c=1, rem=p.x; while(rem>=colPx(c)&&c<60){ rem-=colPx(c); c++; }
+        xml+=`<xdr:oneCellAnchor><xdr:from><xdr:col>${c-1}</xdr:col><xdr:colOff>${Math.round(rem*EMU)}</xdr:colOff><xdr:row>${r0}</xdr:row><xdr:rowOff>${4*EMU}</xdr:rowOff></xdr:from><xdr:ext cx="${p.w*EMU}" cy="${p.h*EMU}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${id}" name="Logo ${id++}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="${p.rid}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${p.w*EMU}" cy="${p.h*EMU}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`; }
+      this.z.file(`xl/drawings/drawing${K.di}.xml`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${xml}</xdr:wsDr>`); } }
+  /* pemenggalan halaman manual: kop + judul + header kolom (baris 1..hEnd) disalin di awal setiap halaman, blok tanda tangan tidak terpotong */
+  paginate(n,{hEnd,last,keepFrom,c2}){
+    const d=this.sh[n].doc, pm=this.sheetEl(n,'pageMargins'); let wPt=0; for(let c=1;c<=colN(c2);c++) wPt+=this.colPt(n,colL(c));
+    const L=+pm.getAttribute('left')||0, Rr=+pm.getAttribute('right')||0, T=+pm.getAttribute('top')||0, B=+pm.getAttribute('bottom')||0, hd=+pm.getAttribute('header')||0, ft=+pm.getAttribute('footer')||0;
+    const sc=Math.max(.1,Math.min(1,Math.floor((842-(L+Rr)*72)/wPt*100)/100)), cap=(595-(Math.max(T,hd)+Math.max(B,ft))*72)/sc*.93;
+    let hdrH=0; for(let r=1;r<=hEnd;r++) hdrH+=this.rowPt(n,r);
+    const hdrMerges=[...d.getElementsByTagName('mergeCell')].map(m=>m.getAttribute('ref')).filter(ref=>{ const m=/^[A-Z]+(\d+):[A-Z]+(\d+)$/.exec(ref); return m&&+m[1]>=1&&+m[2]<=hEnd; });
+    const srcRows=[]; for(let r=1;r<=hEnd;r++){ const e=this.rowEl(n,r,false); srcRows.push(e?e.cloneNode(true):null); }
+    const brks=[]; let used=0, r=1;
+    const doBreak=at=>{ this.insertRows(n,at,hEnd);
+      for(let i=1;i<=hEnd;i++){ const rr=at+i-1, old=this.rowEl(n,rr,true), src=srcRows[i-1]; const nr=src?src.cloneNode(true):d.createElementNS(XNS,'row'); nr.setAttribute('r',rr);
+        for(const c of [...nr.getElementsByTagName('c')]){ c.setAttribute('r',c.getAttribute('r').replace(/\d+$/,'')+rr); for(const v of [...c.getElementsByTagName('v')]) if(c.getElementsByTagName('f').length) v.parentNode.removeChild(v); }
+        old.parentNode.replaceChild(nr,old); }
+      hdrMerges.forEach(ref=>this.merge(n,ref.replace(/(\d+)/g,x=>+x+at-1)));
+      if(this.kop&&this.kop[n]) this.kop[n].rows.push(at-1);
+      brks.push(at-1); last+=hEnd; if(keepFrom&&keepFrom>=at) keepFrom+=hEnd; used=hdrH; r=at+hEnd; };
+    while(r<=last){
+      if(keepFrom&&r===keepFrom){ let bh=0; for(let q=keepFrom;q<=last;q++) bh+=this.rowPt(n,q); if(used+bh>cap&&used>hdrH+1) doBreak(r); }
+      const h=this.rowPt(n,r); if(used+h>cap&&used>hdrH+1) doBreak(r);
+      used+=this.rowPt(n,r); r++; }
+    for(const rb of [...d.getElementsByTagName('rowBreaks')]) rb.parentNode.removeChild(rb);
+    if(brks.length){ const rb=this.sheetEl(n,'rowBreaks'); brks.forEach(id=>{ const b=d.createElementNS(XNS,'brk'); b.setAttribute('id',id); b.setAttribute('max','16383'); b.setAttribute('man','1'); rb.appendChild(b); }); rb.setAttribute('count',brks.length); rb.setAttribute('manualBreakCount',brks.length); }
+    /* tanpa baris judul berulang (kop sudah disalin per halaman) */
+    const idx=this.order.indexOf(n); for(const dn of [...this.wb.getElementsByTagName('definedName')]) if(dn.getAttribute('name')==='_xlnm.Print_Titles'&&+dn.getAttribute('localSheetId')===idx) dn.parentNode.removeChild(dn); }
+  async out(){ this.kopDrawings(); const S=new XMLSerializer(); for(const n of this.order) this.z.file(this.sh[n].path,S.serializeToString(this.sh[n].doc)); this.z.file('xl/workbook.xml',S.serializeToString(this.wb));
     this.z.file('xl/styles.xml',S.serializeToString(this.st)); this.z.file('[Content_Types].xml',S.serializeToString(this.ct));
     for(const [rp,arr] of Object.entries(this.relAdd||{})){ const f=this.z.file(rp); let x=f?await f.async('string'):'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
       x=x.replace('<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>').replace('</Relationships>',arr.join('')+'</Relationships>'); this.z.file(rp,x); }
@@ -3680,9 +3711,10 @@ async function lapXlsx(rows,M,y,m){
   if(M.bil21) X.set('REKAP','I9',M.bil21); if(M.ntpn21) X.set('REKAP','J9',M.ntpn21); if(M.bilU) X.set('REKAP','I11',M.bilU); if(M.ntpnU) X.set('REKAP','J11',M.ntpnU);
   /* kop: logo, nama KSO & nama proyek sesuai menu Pengaturan */
   const logos=await logoImagesForPdf(), L=[brandKso().toUpperCase(),brandProyek().toUpperCase()];
-  X.addKop('REKAP','B','K',L,logos,80); X.addKop(sh('DAF'),'A','K',L,logos,8); X.addKop(sh('P23'),'A','O',L,logos,8); X.addKop(sh('SEWA'),'A','O',L,logos,8); X.addKop(sh('KONS'),'A','O',L,logos,8);
+  const strip=await lapLogoStrip(logos);
+  X.addKop('REKAP','B','K',L,strip,80); X.addKop(sh('DAF'),'A','K',L,strip,8); X.addKop(sh('P23'),'A','O',L,strip,8); X.addKop(sh('SEWA'),'A','O',L,strip,8); X.addKop(sh('KONS'),'A','O',L,strip,8);
   /* judul laporan + header kolom diulang di setiap halaman cetak */
-  X.printTitles(sh('DAF'),4,pos.PKWT+2); X.printTitles(sh('P23'),4,pos.P23+2); X.printTitles(sh('SEWA'),4,pos.SEWA+2); X.printTitles(sh('KONS'),4,pos.KONS+2);
+
   X.fitWidth('REKAP',1); ['DAF','P23','SEWA','KONS'].forEach(k=>X.fitWidth(sh(k)));
   /* REKAP: tempat/tanggal & "Dibuat Oleh" di tengah atas 2 penandatangan kanan, nama/jabatan rata tengah */
   { const R1='REKAP', fr=r=>X.rows(R1).map(e=>+e.getAttribute('r')).find(rr=>r(rr)); const rDb=fr(rr=>/Dibuat Oleh/i.test(String(X.val(R1,'J'+rr)||''))), rNm=fr(rr=>/Ahsan|Finance Manager/i.test(String(X.val(R1,'I'+rr)||'')));
@@ -3692,15 +3724,22 @@ async function lapXlsx(rows,M,y,m){
       X.set(R1,'I'+rDb,'Dibuat Oleh,'); X.cell(R1,'I'+rDb).setAttribute('s',cJ); X.set(R1,'J'+rDb,''); X.merge(R1,`I${rDb}:K${rDb}`); }
     if(rNm) for(const rr of [rNm,rNm+1]) for(const c of ['B','F','I','K']){ const el=X.cell(R1,c+rr,false); if(el) el.setAttribute('s',X.xfAlign(el.getAttribute('s'),'center')); }
     if(rNm) for(const rr of [rNm,rNm+1]){ X.merge(R1,`B${rr}:D${rr}`); } }
-  /* kop di header halaman 2 dst. + blok tanda tangan tidak terpotong */
+  /* setiap halaman cetak diawali kop (logo + KSO + proyek), judul & header kolom; blok tanda tangan tidak terpotong */
   for(const k of ['DAF','P23','SEWA','KONS']){ const n=sh(k), c2=k==='DAF'?'K':'O', rows=X.rows(n).map(e=>+e.getAttribute('r'));
-    const rTgl=rows.find(rr=>[...X.rowEl(n,rr).getElementsByTagName('c')].some(c=>/Jakarta|REKAP!J\d+|PASAL 23'!K\d+/.test((c.getElementsByTagName('f')[0]||{}).textContent||X.val(n,c.getAttribute('r'))||'')&&+rr>12));
+    const rTgl=rows.find(rr=>rr>12&&[...X.rowEl(n,rr).getElementsByTagName('c')].some(c=>/Jakarta|REKAP!J\d+|PASAL 23'!K\d+/.test((c.getElementsByTagName('f')[0]||{}).textContent||X.val(n,c.getAttribute('r'))||'')));
     const rEnd=rows.filter(rr=>[...X.rowEl(n,rr).getElementsByTagName('c')].some(c=>/Tax Staff/i.test(String(X.val(n,c.getAttribute('r'))||'')))).pop();
-    const wPt=(()=>{ let t=0; for(let c=1;c<=colN(c2);c++) t+=X.colPt(n,colL(c)); return t; })();
-    const kop=await lapKopImg(L,logos,wPt,8);
-    X.pageLayout(n,{c1:'A',c2,last:rEnd||rows[rows.length-1],titles:[4,pos[k==='DAF'?'PKWT':k]+2],keep:rTgl&&rEnd?[[rTgl,rEnd]]:[],kopImg:kop,kopH:70}); }
+    /* aturan "nilai duplikat" bawaan template dibuang: header yang diulang per halaman tidak ikut tersorot merah */
+    for(const cf of [...X.sh[n].doc.getElementsByTagName('conditionalFormatting')]){ for(const ru of [...cf.getElementsByTagName('cfRule')]) if(ru.getAttribute('type')==='duplicateValues') cf.removeChild(ru); if(!cf.getElementsByTagName('cfRule').length) cf.parentNode.removeChild(cf); }
+    X.paginate(n,{hEnd:pos[k==='DAF'?'PKWT':k]+2,last:rEnd||rows[rows.length-1],keepFrom:rTgl,c2}); }
+  /* jumlah transaksi REKAP sebagai nilai (salinan header di sheet lain tidak ikut terhitung) */
+  [['PKWT'],['BORONGAN','HARIAN'],['P23'],['SEWA'],['KONS']].forEach((ks,i)=>X.set('REKAP','E'+(12+i),ks.reduce((a,k)=>a+(G[k]||[]).length,0)));
   X.evaluate(); return X.out();
 }
+/* semua logo digabung jadi 1 gambar (jarak antar-logo tetap) agar posisinya presisi di setiap viewer */
+async function lapLogoStrip(logos){ if(!logos||!logos.length) return []; const Z=3, H=80, G=16, ws=logos.map(l=>Math.min(230,H*l.w/l.h)), W=ws.reduce((a,b)=>a+b,0)+G*(logos.length-1);
+  const cv=document.createElement('canvas'); cv.width=Math.round(W*Z); cv.height=H*Z; const g=cv.getContext('2d'); let x=0;
+  for(let i=0;i<logos.length;i++){ const im=await loadImg(logos[i].data); if(im) g.drawImage(im,x*Z,0,ws[i]*Z,H*Z); x+=ws[i]+G; }
+  return [{data:cv.toDataURL('image/png'),w:W,h:H,strip:true}]; }
 /* gambar kop gabungan (logo + nama KSO + nama proyek) untuk header Excel halaman 2 dst. — meniru kop di sel */
 async function lapKopImg(lines,logos,wPt,x0px){ const Z=3, hPt=70, cv=document.createElement('canvas'); cv.width=Math.round(wPt*Z); cv.height=Math.round(hPt*Z); const g=cv.getContext('2d');
   g.fillStyle='#fff'; g.fillRect(0,0,cv.width,cv.height); g.fillStyle='#000'; g.textAlign='center'; g.textBaseline='middle';
