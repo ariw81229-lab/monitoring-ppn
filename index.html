@@ -1503,7 +1503,7 @@ const TYPES = {
       desc:'Bukti Pemotongan Unifikasi <b>PPh Pasal 4 ayat 2 (Final)</b>, mis. jasa konstruksi subkontraktor dan sewa tanah/bangunan.',
       cols:unifCols, form:unifForm,
       tpl:[UNIF_TPL_H,['0123456789012345','CV Mitra Konstruksi','2600000101','20/01/2026','01','2026','28-409-11',100000000,'','','NORMAL','Tarif & PPh dihitung otomatis dari kode','Tanpa Fasilitas','Kontrak','-']]},
-  VPR:{group:'VPR',label:'Rekap PPh Rekanan',menu:'Rekap PPh Rekanan',party:'Rekanan',unit:'data rekanan',id:'nobukti',amount:'pph',base:'bruto',amountLabel:'PPh Dipotong',baseLabel:'Penghasilan Bruto',
+  VPR:{group:'VPR',label:'Pencatatan PPh Rekanan',menu:'Pencatatan PPh Rekanan',party:'Rekanan',unit:'data rekanan',id:'nobukti',amount:'pph',base:'bruto',amountLabel:'PPh Dipotong',baseLabel:'Penghasilan Bruto',
       need:['pph'],key:['nobukti','pph','bruto'],
       fields:{jenis:{t:'s',a:['jenispajak']},nobukti:{t:'s',a:['nomorbuktipotong']},tanggal:{t:'d',a:['tanggalbuktipotong']},kode:{t:'s',a:['kodeobjekpajak']},nama:{t:'s',a:['namarekanan']},bruto:{t:'n',a:['penghasilanbruto']},pph:{t:'n',a:['pphdipotong']}},
       desc:'Pencatatan PPh rekanan/vendor saat <b>verifikasi tagihan</b>: pilih jenis pajak (PPh 21 · 23 · 4 ayat 2), kode objek, dan bruto — nama objek, tarif, dan PPh terhitung otomatis. Data langsung masuk ke <b>Laporan PPh</b> (format 1. LAPORAN PPH DUSEM) dan bisa dicetak sebagai <b>bupot dummy</b> per rekanan.',
@@ -1550,7 +1550,7 @@ function normalizeDB(d){
   const users=(d.users&&d.users.length)?d.users:def.users; users.forEach(u=>{ if(!u.recovery) u.recovery=genCode(); if(!u.role) u.role='admin'; if(u.active===undefined) u.active=true; });
   const s=d.settings||{};
   const data={...def.data,...(d.data||{})};
-  if(data.VPR){ /* Rekap PPh Rekanan: satu daftar gabungan (bukan per bulan) */
+  if(data.VPR){ /* Pencatatan PPh Rekanan: satu daftar gabungan (bukan per bulan) */
     const all=Array.isArray(data.VPR.all)?data.VPR.all:[];
     for(const [k,rows] of Object.entries(data.VPR)){ if(k==='all'||!Array.isArray(rows)) continue; rows.forEach(r=>{ if(!r.masaPajak) r.masaPajak=/^\d{4}-\d{2}$/.test(k)?k:''; all.push(r); }); }
     data.VPR={all:all.filter(r=>!r.lapor)}; /* data yang sudah dilapor sudah dipindah ke menu PPh */
@@ -2089,14 +2089,14 @@ const NAV=[
   {sec:'Utama'},{id:'dashboard',label:'Dashboard',ic:'grid'},
   {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP','GL','RPM']},{grp:'Pajak Keluaran',ic:'out',items:['PK','BPS']},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
   {sec:'Restitusi PPN'},{id:'rest',label:'Alur Proses Restitusi',ic:'refund'},{id:'flow',label:'Flowchart Restitusi',ic:'flow'},
-  {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},{id:'VPR',label:'Rekap PPh Rekanan',ic:'clip'},
+  {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},{id:'VPR',label:'Pencatatan PPh Rekanan',ic:'clip'},
   {sec:'Sistem'},{id:'settings',label:'Pengaturan',ic:'gear'},
 ];
 const NAV_LBL={PK:'Monitoring Pajak Keluaran',BPS:'Bukti Potong ESDM',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
 const TITLES={RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PP:'Prepopulated Pajak Masukan (Belum Dikreditkan)',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
   rest:'Alur Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Akun Saya',BPS:'Bukti Potong ESDM',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
-  PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)',VPR:'PPh · Rekap PPh Rekanan & Bupot Dummy'};
+  PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)',VPR:'PPh · Pencatatan PPh Rekanan & Bupot Dummy'};
 const COMB={dashboard:'dashComb',rest:'restComb',flow:'restComb',PM:'dataComb',PP:'dataComb',PK:'dataComb',spt:'dataComb',PPH21NP:'dataComb',PPH21A1:'dataComb',PPH21:'dataComb',PPH23:'dataComb',PPH42:'dataComb'};
 /* Mode "Semua Tahun (Gabungan)" untuk menu data: tampilan baca-saja seluruh tahun & masa */
 const MASA_OF=new WeakMap();
@@ -2914,7 +2914,7 @@ function renderData(t){
     <div class="card mini"><small>Jumlah Data Rekanan</small><b>${fmt(ok.length)}</b><span class="sub">PPh 21 ${by('21').length} · PPh 23 ${by('23').length} · PPh 4(2) ${by('42').length}</span></div>
     <div class="card mini"><small>Total Penghasilan Bruto</small><b>${rp(sumF(ok,'bruto'))}</b><span class="sub">DPP ${rp(sumF(ok,'dpp'))}</span></div>
     <div class="card mini"><small>Total PPh Dipotong</small><b style="color:var(--primary)">${rp(sumF(ok,'pph'))}</b><span class="sub">21: ${short(sumF(by('21'),'pph'))} · 23: ${short(sumF(by('23'),'pph'))} · 4(2): ${short(sumF(by('42'),'pph'))}</span></div>
-    <div class="card mini"><small>Belum Dilapor</small><b style="color:var(--warning)">${fmt(ok.length)} data</b><span class="sub">Centang data lalu klik “Tandai sudah dilapor” — data pindah ke menu PPh 21 / PPh Unifikasi dan keluar dari rekap ini</span></div>`;
+    <div class="card mini"><small>Belum Dilapor</small><b style="color:var(--warning)">${fmt(ok.length)} data</b><span class="sub">Centang data lalu klik “Tandai sudah dilapor” — data pindah ke menu PPh 21 / PPh Unifikasi dan keluar dari daftar pencatatan ini</span></div>`;
   } else {
     const nf=rows.filter(r=>r.file).length;
     minis=`
@@ -3097,7 +3097,7 @@ async function vprLapor(){
   const ym=($('#vprMasaL')||{}).value; if(!/^\d{4}-\d{2}$/.test(ym||'')) return toast('Pilih masa pajak pelaporan','error');
   const rows=vprAll().filter(r=>state.sel.has(r.id)&&!r.lapor); if(!rows.length) return;
   const noNo=rows.filter(r=>!r.nobukti).length;
-  confirmBox('Tandai sudah dilapor?',`<b>${rows.length} data</b> akan <b>dipindahkan</b> ke menu PPh 21 / PPh Unifikasi masa <b>${masaLabel(ym)}</b> sesuai jenis pajaknya, lalu <b>dihapus dari Rekap PPh Rekanan</b>. Pastikan bupot dummy / laporan PPh yang dibutuhkan sudah diunduh.${noNo?`<br><br><span style="color:var(--warning)">${noNo} data belum punya nomor bukti potong — sebaiknya isi nomor dari Coretax terlebih dahulu.</span>`:''}`,'Pindahkan',async()=>{
+  confirmBox('Tandai sudah dilapor?',`<b>${rows.length} data</b> akan <b>dipindahkan</b> ke menu PPh 21 / PPh Unifikasi masa <b>${masaLabel(ym)}</b> sesuai jenis pajaknya, lalu <b>dihapus dari Pencatatan PPh Rekanan</b>. Pastikan bupot dummy / laporan PPh yang dibutuhkan sudah diunduh.${noNo?`<br><br><span style="color:var(--warning)">${noNo} data belum punya nomor bukti potong — sebaiknya isi nomor dari Coretax terlebih dahulu.</span>`:''}`,'Pindahkan',async()=>{
     let n=0; const cnt={};
     const moved=new Set();
     rows.forEach(r=>{ const t=VPR_TGT(r), arr=DB.data[t][ym]||(DB.data[t][ym]=[]), id=uid(); const {vprId,...rec}=vprTargetRec(r); arr.push({id,masa:+ym.slice(5)-1,tahun:+ym.slice(0,4),...rec}); moved.add(r.id); n++; cnt[TYPES[t].menu]=(cnt[TYPES[t].menu]||0)+1; });
@@ -3108,7 +3108,7 @@ async function vprUnlapor(id){ const r=vprAll().find(x=>x.id===id); if(!r||!r.la
     const L=r.lapor, arr=DB.data[L.t][L.k]||[]; DB.data[L.t][L.k]=arr.filter(x=>x.id!==L.id); if(!DB.data[L.t][L.k].length) delete DB.data[L.t][L.k]; delete r.lapor;
     if(await save()){ toast('Status lapor dibatalkan','success'); refreshDataView(); } }); }
 function vprDelete(id){ const r=vprAll().find(x=>x.id===id); if(!r) return;
-  confirmBox('Hapus data?',`Data <b>${esc(r.nama||'-')}</b> (${esc(r.jenis)}) akan dihapus dari Rekap PPh Rekanan.${r.lapor?' Salinan yang sudah dipindahkan ke menu PPh tetap disimpan.':''}`,'Hapus',async()=>{
+  confirmBox('Hapus data?',`Data <b>${esc(r.nama||'-')}</b> (${esc(r.jenis)}) akan dihapus dari Pencatatan PPh Rekanan.${r.lapor?' Salinan yang sudah dipindahkan ke menu PPh tetap disimpan.':''}`,'Hapus',async()=>{
     DB.data.VPR.all=vprAll().filter(x=>x.id!==id); state.sel.delete(id); if(await save()){ toast('Data dihapus','success'); refreshDataView(); } }); }
 const vprPemotong=()=>({...VPR_PEMOTONG_DEF,...(((DB.settings||{}).vpr||{}).pemotong||{})});
 const vprNitku=npwp=>{ const d=String(npwp||'').replace(/\D/g,''); return d.length===16?d+'000000':d.length===15?'0'+d+'000000':''; };
@@ -3120,7 +3120,7 @@ let VPR_FORM=null;
 function openVprForm(id){
   const r=id?vprAll().find(x=>x.id===id):null;
   VPR_FORM={id:id||'',r:r?{...r}:{jenis:'PPh Pasal 23',kel21:'PKWT',status:'NORMAL',tanggal:todayISO(),masaPajak:nowYM()}};
-  openModal(`<div class="modal-h"><div><h3>${r?'Ubah':'Tambah'} Data Rekap PPh Rekanan</h3><p>Hasilnya otomatis masuk ke Laporan PPh sesuai masa pajak &amp; bisa dicetak sebagai bupot dummy</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+  openModal(`<div class="modal-h"><div><h3>${r?'Ubah':'Tambah'} Data Pencatatan PPh Rekanan</h3><p>Hasilnya otomatis masuk ke Laporan PPh sesuai masa pajak &amp; bisa dicetak sebagai bupot dummy</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <form id="vprForm" onsubmit="saveVprForm(event)" autocomplete="off"><div class="modal-b" id="vprBody"></div>
     <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`,'lg');
   vprFormRender();
@@ -3267,7 +3267,7 @@ const BUPOT_FILE={'21':'PPh Pasal 21_Ebupot_2126_BP21_','23':'PPh Pasal 23_SPT_U
 const safeName=s=>String(s||'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim()||'Tanpa Nama';
 const bupotName=r=>BUPOT_FILE[vprJ(r.jenis)]+safeName(r.nama)+'.pdf';
 async function bupotDoc(r){
-  const jsPDF=await ensurePdfLib(), doc=new jsPDF({unit:'pt',format:'a4',compress:true}), j=vprJ(r.jenis), P=vprPemotong(), K=vprKopList(r).find(x=>x[0]===r.kode);
+  await ensureQR(); const jsPDF=await ensurePdfLib(), doc=new jsPDF({unit:'pt',format:'a4',compress:true}), j=vprJ(r.jenis), P=vprPemotong(), K=vprKopList(r).find(x=>x[0]===r.kode);
   const N=0.8, txt=(s,x,y,o={})=>{ doc.setFont('helvetica',o.b?'bold':'normal'); doc.setFontSize(o.s||9); doc.setTextColor(...(o.c||[0,0,0])); doc.text(String(s==null?'':s),x,y,{baseline:'top',horizontalScale:o.h||N,align:o.al||'left',maxWidth:o.w}); };
   const rect=(x,y,w,h,c)=>{ doc.setFillColor(...c); doc.rect(x,y,w,h,'F'); };
   const wrap=(s,w,size=9)=>{ doc.setFont('helvetica','normal'); doc.setFontSize(size); return doc.splitTextToSize(String(s||''),w/N); };
@@ -3303,7 +3303,7 @@ async function bupotDoc(r){
     C.forEach(([a,l,v],i)=>{ const y=yc+18+i*13.6; txt(a,31.2,y); txt(l,59.5,y); txt(':',232.8,y); if(v) txt(v,243.8,y); });
     const yp=yc+18+5*13.6; ['Dengan ini saya menyatakan bahwa Bukti Pemotongan ini telah saya isi dengan benar dan telah','saya tandatangani secara elektronik.'].forEach((s,i)=>txt(s,243.8,yp+i*10.8));
     ['Sesuai dengan ketentuan yang berlaku, Direktorat Jenderal Pajak mengatur bahwa Bukti','Pemotongan ini dinyatakan sah dan  tidak diperlukan tanda tangan basah.'].forEach((s,i)=>txt(s,243.8,yp+24.4+i*10.8));
-    bupotDummyMark(doc,txt,59.5,yp+25.5);
+    bupotDummyMark(doc,txt,59.5,yp+25.5,r);
   } else {
     txt('BUKTI PEMOTONGAN DAN/ATAU PEMUNGUTAN PPh',209.7,44.1,{b:1,s:11}); txt('UNIFIKASI BERFORMAT STANDAR',209.7,56.7,{b:1,s:11});
     rect(457.2,42.5,113.4,41,[255,215,0]); txt('BPPU',513.9,52.3,{b:1,s:20,al:'center'});
@@ -3333,14 +3333,20 @@ async function bupotDoc(r){
     C.forEach(([a,ls,v,y])=>{ txt(a,31.2,y); ls.forEach((s,i)=>txt(s,59.5,y+i*10.8)); txt(':',218.7,y); if(v) txt(v,229.6,y); });
     ['Dengan ini saya menyatakan bahwa Bukti Pemotongan dan/atau Pemungutan PPh Unifikasi telah','saya isi dengan benar dan telah saya tandatangani secara elektronik.'].forEach((s,i)=>txt(s,229.6,588.1+i*10.8));
     ['Sesuai dengan ketentuan yang berlaku, Direktorat Jenderal Pajak mengatur bahwa Bukti Pemotongan','dan/atau Pemungutan PPh Unifikasi ini dinyatakan sah dan tidak diperlukan tanda tangan basah pada','Bukti Pemotongan dan/atau Pemungutan PPh Unifikasi ini.'].forEach((s,i)=>txt(s,229.6,615.4+i*10.8));
-    bupotDummyMark(doc,txt,59.5,616.5);
+    bupotDummyMark(doc,txt,59.5,616.5,r);
   }
   doc.setProperties({title:bupotName(r).replace(/\.pdf$/,''),subject:'Bupot dummy (draf verifikasi rekanan)',creator:'Monitoring Data Pajak'});
   return doc;
 }
-function bupotDummyMark(doc,txt,x,y){ /* pengganti QR: penanda draf agar tidak tertukar dengan bukti potong resmi */
-  doc.setDrawColor(150,150,150); doc.setLineWidth(.6); doc.setLineDashPattern([2,2],0); doc.rect(x,y,48.2,48.2); doc.setLineDashPattern([],0);
-  txt('DUMMY',x+24.1,y+17,{b:1,s:9,c:[120,120,120],al:'center',h:1}); txt('draf',x+24.1,y+28,{s:7,c:[120,120,120],al:'center',h:1});
+function bupotDummyMark(doc,txt,x,y,r){ /* QR code buatan sendiri: berisi ringkasan data bupot dummy (bukan QR verifikasi DJP) */
+  const size=48.2; let ok=false;
+  try{ if(window.qrcode&&r){ const P=vprPemotong(), j=vprJ(r.jenis), MI=vprMasaIdx(r);
+      const info=['BUPOT DUMMY - BUKAN BUKTI POTONG RESMI',`Jenis: ${j==='21'?'BP21 PPh Pasal 21':j==='23'?'BPPU PPh Pasal 23':'BPPU PPh Pasal 4 ayat 2'}`,`Nomor: ${r.nobukti||(r.tanggal?fmtDate(r.tanggal).replace(/\//g,''):'-')}`,`Masa: ${String(MI.m+1).padStart(2,'0')}-${MI.y}`,
+        `Penerima: ${r.npwp||'-'} ${r.nama||''}`,`Kode objek: ${r.kode||'-'}`,`Bruto: ${fmt(r.bruto)}`,`Tarif: ${r.tarif||'-'}`,`PPh: ${fmt(r.pph)}`,`Pemotong: ${P.npwp} ${P.nama}`].join('\n').normalize('NFKD').replace(/[^\x20-\x7E\n]/g,'');
+      const q=qrcode(0,'L'); q.addData(info); q.make(); const n=q.getModuleCount(), c=size/n; doc.setFillColor(0,0,0);
+      for(let rr=0;rr<n;rr++) for(let cc=0;cc<n;cc++) if(q.isDark(rr,cc)) doc.rect(x+cc*c,y+rr*c,c+.02,c+.02,'F'); ok=true; } }catch(e){ console.warn('QR gagal',e); }
+  if(!ok){ doc.setDrawColor(150,150,150); doc.setLineWidth(.6); doc.setLineDashPattern([2,2],0); doc.rect(x,y,size,size); doc.setLineDashPattern([],0);
+    txt('DUMMY',x+24.1,y+17,{b:1,s:9,c:[120,120,120],al:'center',h:1}); txt('draf',x+24.1,y+28,{s:7,c:[120,120,120],al:'center',h:1}); }
   txt('Bupot dummy untuk verifikasi rekanan — bukan bukti potong resmi. Bukti potong resmi diterbitkan melalui Coretax DJP.',28.3,800,{s:7,c:[130,130,130],h:1});
 }
 async function downloadBupot(id){
@@ -3360,6 +3366,10 @@ async function downloadAllBupot(){
     const b=await z.generateAsync({type:'uint8array'}); saveBytes(b,`Bupot Dummy Rekanan (${todayISO()}).zip`,'application/zip'); toast(`${rows.length} bupot dummy diunduh (ZIP)`,'success');
   }catch(e){ toast('Gagal: '+e.message,'error'); }
 }
+let QR_READY=null;
+function ensureQR(){ if(window.qrcode) return Promise.resolve(true);
+  if(!QR_READY) QR_READY=loadLib('qrcode',['https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js','https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js','https://unpkg.com/qrcode-generator@1.4.4/qrcode.js'],()=>!!window.qrcode).then(ok=>{ if(!ok) QR_READY=null; return ok; }).catch(()=>{ QR_READY=null; return false; });
+  return QR_READY; }
 let JSZIP_READY=null;
 function ensureJSZip(){ if(window.JSZip) return Promise.resolve(window.JSZip);
   if(!JSZIP_READY) JSZIP_READY=loadLib('jszip',['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js','https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'],()=>!!window.JSZip)
@@ -3617,7 +3627,7 @@ async function vprTemplate(){
   try{ const ExcelJS=await ensureExcelJS(), wb=new ExcelJS.Workbook(); wb.creator='Monitoring Data Pajak';
     const ws=wb.addWorksheet('INPUT REKAP PPH',{views:[{showGridLines:true}]}), last=600;
     ws.columns=VPR_TCOLS.map(([k,l,w])=>({key:k,width:w}));
-    ws.getRow(1).values=['TEMPLATE INPUT REKAP PPh REKANAN — kolom sama dengan form Tambah Data. Nama objek, tarif, DPP, dan PPh dihitung otomatis saat diimport. Baris contoh (baris 3) boleh dihapus.'];
+    ws.getRow(1).values=['TEMPLATE INPUT PENCATATAN PPh REKANAN — kolom sama dengan form Tambah Data. Nama objek, tarif, DPP, dan PPh dihitung otomatis saat diimport. Baris contoh (baris 3) boleh dihapus.'];
     ws.getRow(1).font={bold:true,color:{argb:'FF1E3A8A'}};
     const h=ws.getRow(2); h.values=VPR_TCOLS.map(c=>c[1]); h.font={bold:true}; h.alignment={wrapText:true,vertical:'middle',horizontal:'center'}; h.height=42;
     h.eachCell(c=>{ c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD6FF33'}}; c.border={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}}; });
@@ -3634,13 +3644,13 @@ async function vprTemplate(){
       const L=R.getColumn(col).letter, ref=`'DAFTAR PILIHAN'!$${L}$2:$${L}$${arr.length+1}`, tc=ws.getColumn(k).letter;
       for(let r=3;r<=last;r++) ws.getCell(`${tc}${r}`).dataValidation={type:'list',allowBlank:true,formulae:[ref],showErrorMessage:k!=='kode'&&k!=='fasilitas',errorTitle:'Pilih dari daftar',error:'Pilih nilai dari daftar'};
       col+=k==='kode'?3:2; }
-    const buf=await wb.xlsx.writeBuffer(); saveBytes(new Uint8Array(buf),'Template Input Rekap PPh Rekanan.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    const buf=await wb.xlsx.writeBuffer(); saveBytes(new Uint8Array(buf),'Template Input Pencatatan PPh Rekanan.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     toast('Template input diunduh','success');
   }catch(e){ toast('Gagal membuat template: '+e.message,'error'); }
 }
 let VPR_IMP=null;
 function openImportVpr(){
-  openModal(`<div class="modal-h"><div><h3>Import Rekap PPh Rekanan (Excel)</h3><p>Gunakan <b>Template Input</b> (kolom sama dengan form Tambah Data) atau file <b>1. LAPORAN PPH DUSEM</b></p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+  openModal(`<div class="modal-h"><div><h3>Import Pencatatan PPh Rekanan (Excel)</h3><p>Gunakan <b>Template Input</b> (kolom sama dengan form Tambah Data) atau file <b>1. LAPORAN PPH DUSEM</b></p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Nama objek, tarif, DPP, dan PPh dihitung ulang otomatis dari kode objek pajak &amp; bruto. Untuk file Laporan PPh (yang tidak memuat masa pajak per baris), masa pajak diambil dari isian di bawah.</div>
       <div class="form-grid"><div class="field"><label>Masa pajak (untuk file Laporan PPh / baris tanpa masa)</label><input class="input" type="month" id="vprImpYM" value="${lapDefYM()}"></div>
       <div class="field"><label>&nbsp;</label><button type="button" class="btn btn-outline" onclick="vprTemplate()">${icon('file')} Unduh Template Input</button></div></div>
