@@ -3271,23 +3271,26 @@ async function saveVprForm(e){
 let TBY=null;
 const fpKey=x=>String(x||'').replace(/\D/g,'').replace(/^0+/,'');
 function pmAllRows(){ const out=[]; for(const [k,a] of Object.entries(DB.data.PM||{})) (a||[]).forEach(r=>out.push({k,r})); return out; }
-async function tbyTemplate(){
-  try{ const rows=filteredRows('PM'); if(!rows.length) return toast('Tidak ada faktur pada daftar','error');
+async function tbyTemplate(all){
+  try{ const items=all?pmAllRows().filter(o=>!o.r.bayar&&!isCanceled(o.r)).sort((a,b)=>a.k.localeCompare(b.k)||String(a.r.tanggal||'').localeCompare(String(b.r.tanggal||''))):filteredRows('PM').map(r=>({k:key(state.year,state.month),r}));
+    if(!items.length) return toast(all?'Semua faktur Pajak Masukan sudah dibayar':'Tidak ada faktur pada daftar','error');
     const ExcelJS=await ensureExcelJS(), wb=new ExcelJS.Workbook(), ws=wb.addWorksheet('TANGGAL BUKTI BAYAR');
     const C=[['NOMOR FAKTUR PAJAK',24],['NPWP PENJUAL',22],['NAMA PENJUAL',38],['TANGGAL FAKTUR',15],['MASA PAJAK',15],['DPP',17],['PPN',16],['TANGGAL BUKTI BAYAR (DD/MM/YYYY)',22]];
     ws.columns=C.map(([,w])=>({width:w})); ws.getRow(1).values=['Isi kolom TANGGAL BUKTI BAYAR, lalu import lewat Monitoring Pajak Masukan → Import Tgl Bayar. Baris yang tanggalnya kosong dilewati. Faktur dicocokkan lewat nomor faktur.'];
     ws.getRow(1).font={bold:true,color:{argb:'FF1E3A8A'}}; const h=ws.getRow(2); h.values=C.map(c=>c[0]); h.font={bold:true}; h.alignment={wrapText:true,vertical:'middle',horizontal:'center'}; h.height=32;
     const bd={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
     C.forEach((c,i)=>{ h.getCell(i+1).fill={type:'pattern',pattern:'solid',fgColor:{argb:i===7?'FFFDE68A':'FFDBEAFE'}}; h.getCell(i+1).border=bd; });
-    rows.forEach((r,i)=>{ const x=ws.getRow(3+i); x.values=[String(r.nofaktur||''),String(r.npwp||''),r.nama||'',r.tanggal?fmtDate(r.tanggal):'',masaLabel(key(state.year,state.month)),+r.dpp||0,+r.ppn||0,r.tglBayar?fmtDate(r.tglBayar):''];
+    items.forEach(({k,r},i)=>{ const x=ws.getRow(3+i); x.values=[String(r.nofaktur||''),String(r.npwp||''),r.nama||'',r.tanggal?fmtDate(r.tanggal):'',masaLabel(k),+r.dpp||0,+r.ppn||0,r.tglBayar?fmtDate(r.tglBayar):''];
       x.getCell(1).numFmt='@'; x.getCell(2).numFmt='@'; [6,7].forEach(c=>x.getCell(c).numFmt='#,##0'); for(let c=1;c<=8;c++) x.getCell(c).border=bd; x.getCell(8).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFBEB'}}; });
-    ws.views=[{state:'frozen',ySplit:2}];
-    saveBytes(new Uint8Array(await wb.xlsx.writeBuffer()),`Template Tanggal Bukti Bayar PM (${MONTHS[state.month]} ${state.year}).xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); toast('Template diunduh','success');
+    ws.views=[{state:'frozen',ySplit:2}]; ws.autoFilter={from:'A2',to:'H2'};
+    saveBytes(new Uint8Array(await wb.xlsx.writeBuffer()),all?`Template Tanggal Bukti Bayar PM - Semua Belum Dibayar (${todayISO()}).xlsx`:`Template Tanggal Bukti Bayar PM (${MONTHS[state.month]} ${state.year}).xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); toast(all?`Template diunduh · ${fmt(items.length)} faktur belum dibayar dari ${new Set(items.map(o=>o.k)).size} masa pajak`:'Template diunduh','success');
   }catch(e){ toast('Gagal: '+e.message,'error'); } }
 function openTglBayar(){ TBY=null;
   openModal(`<div class="modal-h"><div><h3>Import Tanggal Bukti Bayar</h3><p>Status pembayaran &amp; tanggal bayar terisi otomatis untuk faktur yang cocok — tetap bisa diubah manual lewat tombol Ubah</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
-    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Unduh template (berisi faktur pada daftar saat ini), isi kolom <b>Tanggal Bukti Bayar</b>, lalu upload. Bisa juga file Excel lain yang memuat kolom <b>Nomor Faktur</b> dan <b>Tanggal Bayar</b>. Faktur dicocokkan ke seluruh masa Pajak Masukan.</div>
-      <button type="button" class="btn btn-outline" onclick="tbyTemplate()">${icon('download')} Unduh Template Tgl Bayar</button>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Unduh template <b>semua faktur belum dibayar (semua masa)</b> atau template masa yang sedang dibuka, isi kolom <b>Tanggal Bukti Bayar</b>, lalu upload — tanggal otomatis masuk ke faktur di masa pajaknya masing-masing. Bisa juga file Excel lain yang memuat kolom <b>Nomor Faktur</b> dan <b>Tanggal Bayar</b>. Faktur dicocokkan ke seluruh masa Pajak Masukan.</div>
+      <div class="toolbar" style="gap:8px">${(()=>{ const u=pmAllRows().filter(o=>!o.r.bayar&&!isCanceled(o.r)), nm=new Set(u.map(o=>o.k)).size;
+        return `<button type="button" class="btn btn-primary" onclick="tbyTemplate(true)" ${u.length?'':'disabled'}>${icon('download')} Semua faktur belum dibayar (semua masa) · ${fmt(u.length)} faktur${nm?` / ${nm} masa`:''}</button>`; })()}
+      <button type="button" class="btn btn-outline" onclick="tbyTemplate()">${icon('download')} Template masa ${MONTHS[state.month]} ${state.year}</button></div>
       <input type="file" class="input" id="tbyFile" accept=".xlsx,.xls,.csv" style="margin-top:12px">
       <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" id="tbyOver" checked onchange="TBY&&tbyShow()"> Ganti tanggal bayar yang sudah terisi bila berbeda</label>
       <div id="tbyInfo" style="margin-top:12px"></div></div>
