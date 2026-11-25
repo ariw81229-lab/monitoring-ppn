@@ -311,7 +311,10 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .kr-hd>svg{flex:none;width:22px;height:22px;color:var(--c);margin-top:2px}
 .kr-hd b{display:block;font-size:14.5px;letter-spacing:.01em;margin-bottom:2px}.kr-hd span{font-size:12.8px;color:var(--muted);line-height:1.55}.kr-hd strong{color:var(--c)}
 .kr-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-right:10px;vertical-align:2px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
-.kr-chip.ok{--c:var(--success)}.kr-chip.wait{--c:var(--warning)}
+.kr-chip.ok{--c:var(--success)}
+.kri-guide{margin-top:12px;padding:12px 16px;border:1px dashed color-mix(in srgb,var(--warning) 55%,var(--border));border-radius:12px;background:color-mix(in srgb,var(--warning) 6%,var(--surface));font-size:12.8px;line-height:1.6}
+.kri-guide>b{display:flex;align-items:center;gap:6px;font-size:13.5px}.kri-guide>b svg{width:15px;height:15px;color:var(--warning)}
+.kri-guide ol{margin:6px 0 0;padding-left:20px}.kri-guide code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-weight:700;font-size:12px}.kr-chip.wait{--c:var(--warning)}
 .bpc-t td,.bpc-t th{white-space:normal!important;vertical-align:top}
 .filters .select{width:auto;min-width:150px}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
@@ -3004,6 +3007,7 @@ function renderData(t){
         <button class="btn btn-outline adm" onclick="openVprCfg()" title="Identitas pemotong pada bupot dummy">${icon('gear')}</button>
       </div>`:comb?`<div class="toolbar"><button class="btn btn-outline" onclick="openExport('${t}')">${icon('download')}<span class="hide-sm">Export</span></button></div>`:`<div class="toolbar">
         <button class="btn btn-primary" onclick="openImport('${t}')">${icon('upload')} Import Excel</button>
+        ${t==='PP'?`<button class="btn btn-outline adm p-edit" onclick="openKrImp()" title="Kreditkan banyak faktur sekaligus dari Excel — otomatis pindah ke Monitoring Pajak Masukan sesuai masa dikreditkan">${icon('check')}<span class="hide-sm">Import Dikreditkan</span></button>`:''}
         ${t==='PM'?`<button class="btn btn-outline adm p-edit" onclick="openTglBayar()" title="Isi tanggal bukti bayar banyak faktur sekaligus dari Excel">${icon('calendar')}<span class="hide-sm">Import Tgl Bayar</span></button>`:''}
         <button class="btn btn-outline" onclick="openRowForm('${t}')">${icon('plus')}<span class="hide-sm">Tambah</span></button>
         <button class="btn btn-outline" onclick="downloadTemplate('${t}')">${icon('file')}<span class="hide-sm">Template</span></button>
@@ -3329,6 +3333,98 @@ function tbyShow(){ const over=$('#tbyOver').checked, ok=TBY.filter(x=>x.st==='o
   $('#tbyBtn').disabled=!n; $('#tbyBtn').innerHTML=`${icon('check')} Simpan Tanggal Bayar${n?` (${fmt(n)})`:''}`; }
 async function tbyGo(){ let n=0; (TBY||[]).filter(x=>x.st==='ok').forEach(x=>(x.chg||[]).forEach(o=>{ o.r.bayar=true; o.r.tglBayar=x.tgl; n++; })); if(!n) return;
   if(await save()){ closeModal(); toast(`Tanggal bukti bayar terisi untuk ${fmt(n)} faktur`,'success'); refreshDataView(); } }
+
+/* ---------- Import faktur yang sudah dikreditkan (Prepopulated → Monitoring Pajak Masukan) ---------- */
+let KRI=null;
+function ppAllOpen(){ const out=[]; for(const [k,a] of Object.entries(DB.data.PP||{})) (a||[]).forEach(r=>{ if(ppOpen(r)) out.push({k,r}); }); return out.sort((a,b)=>a.k.localeCompare(b.k)||String(a.r.tanggal||'').localeCompare(String(b.r.tanggal||''))); }
+async function kriTemplate(all){
+  try{ const items=all?ppAllOpen():filteredRows('PP').filter(ppOpen).map(r=>({k:key(state.year,state.month),r}));
+    if(!items.length) return toast(all?'Tidak ada faktur yang belum dikreditkan':'Tidak ada faktur APPROVED pada daftar','error');
+    const ExcelJS=await ensureExcelJS(), wb=new ExcelJS.Workbook(), ws=wb.addWorksheet('FAKTUR DIKREDITKAN');
+    const C=[['NOMOR FAKTUR PAJAK',24],['NPWP PENJUAL',22],['NAMA PENJUAL',38],['TANGGAL FAKTUR',15],['MASA FAKTUR (PREPOPULATED)',17],['BATAS PENGKREDITAN',17],['DPP',17],['PPN',16],['MASA DIKREDITKAN (MM-YYYY)',19]];
+    ws.columns=C.map(([,w])=>({width:w})); ws.getRow(1).values=['Isi kolom kuning MASA DIKREDITKAN dengan format MM-YYYY (contoh 11-2026 = November 2026), harus di antara Masa Faktur dan Batas Pengkreditan. Kosongkan bila belum dikreditkan. Lihat sheet PETUNJUK.'];
+    ws.getRow(1).font={bold:true,color:{argb:'FF1E3A8A'}}; const h=ws.getRow(2); h.values=C.map(c=>c[0]); h.font={bold:true}; h.alignment={wrapText:true,vertical:'middle',horizontal:'center'}; h.height=32;
+    const bd={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+    C.forEach((c,i)=>{ h.getCell(i+1).fill={type:'pattern',pattern:'solid',fgColor:{argb:i===8?'FFFDE68A':'FFDBEAFE'}}; h.getCell(i+1).border=bd; });
+    items.forEach(({k,r},i)=>{ const x=ws.getRow(3+i), b=batasInfo(r,k); x.values=[String(r.nofaktur||''),String(r.npwp||''),r.nama||'',r.tanggal?fmtDate(r.tanggal):'',masaLabel(k),b?masaLabel(b.bm):'',+r.dpp||0,+r.ppn||0,''];
+      x.getCell(1).numFmt='@'; x.getCell(2).numFmt='@'; x.getCell(9).numFmt='@'; [7,8].forEach(c=>x.getCell(c).numFmt='#,##0'); for(let c=1;c<=9;c++) x.getCell(c).border=bd; x.getCell(9).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFBEB'}}; });
+    ws.views=[{state:'frozen',ySplit:2}]; ws.autoFilter={from:'A2',to:'I2'};
+    h.getCell(9).note={texts:[{text:'Cara mengisi:\nKetik bulan-tahun masa faktur ini DIKREDITKAN di SPT Masa PPN, format MM-YYYY.\nContoh: 11-2026 = November 2026.\nKosongkan bila belum dikreditkan.'}]};
+    for(let r=3;r<3+items.length;r++) ws.getCell('I'+r).dataValidation={type:'textLength',operator:'lessThanOrEqual',formulae:[20],allowBlank:true,showInputMessage:true,promptTitle:'Masa Dikreditkan (MM-YYYY)',prompt:'Contoh: 11-2026 untuk November 2026. Harus antara Masa Faktur dan Batas Pengkreditan. Kosongkan bila belum dikreditkan.'};
+    const g=wb.addWorksheet('PETUNJUK'); g.columns=[{width:30},{width:22},{width:60}];
+    g.addRow(['PETUNJUK MENGISI KOLOM "MASA DIKREDITKAN"']).font={bold:true,size:13,color:{argb:'FF1E3A8A'}};
+    g.addRow(['Masa Dikreditkan = bulan & tahun SPT Masa PPN tempat faktur ini dikreditkan (bukan tanggal faktur).']);
+    g.addRow([]); const gh=g.addRow(['Contoh isian','Dibaca sebagai','Keterangan']); gh.font={bold:true}; gh.eachCell(c=>c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDBEAFE'}});
+    [['11-2026','November 2026','Format utama yang disarankan (MM-YYYY)'],['11/2026','November 2026','Garis miring juga boleh'],['2026-11','November 2026','Tahun di depan juga boleh'],['November 2026','November 2026','Nama bulan lengkap / singkat (Nov 2026)'],['(kosong)','—','Baris dilewati: faktur tetap di Prepopulated (belum dikreditkan)']].forEach(x=>g.addRow(x));
+    g.addRow([]); g.addRow(['ATURAN']).font={bold:true};
+    ['1. Masa dikreditkan tidak boleh sebelum Masa Faktur.','2. Masa dikreditkan paling lambat sama dengan Batas Pengkreditan (3 masa setelah masa faktur). Lewat dari itu hak kredit hangus.','3. Contoh: faktur masa September 2026, batas Desember 2026 → isi 09-2026, 10-2026, 11-2026, atau 12-2026.','4. Setelah diimport, faktur otomatis pindah ke Monitoring Pajak Masukan pada masa yang diisi — boleh berbeda-beda tiap baris.'].forEach(t=>g.addRow([t]));
+    saveBytes(new Uint8Array(await wb.xlsx.writeBuffer()),all?`Template Faktur Dikreditkan - Semua Belum Dikreditkan (${todayISO()}).xlsx`:`Template Faktur Dikreditkan (${MONTHS[state.month]} ${state.year}).xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    toast(all?`Template diunduh · ${fmt(items.length)} faktur belum dikreditkan dari ${new Set(items.map(o=>o.k)).size} masa`:'Template diunduh','success');
+  }catch(e){ toast('Gagal: '+e.message,'error'); } }
+function openKrImp(){ KRI=null; const u=ppAllOpen(), nm=new Set(u.map(o=>o.k)).size;
+  openModal(`<div class="modal-h"><div><h3>Import Faktur yang Sudah Dikreditkan</h3><p>Faktur yang cocok berstatus CREDITED dan otomatis pindah ke Monitoring Pajak Masukan pada masa dikreditkan masing-masing</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Unduh template <b>semua faktur belum dikreditkan (semua masa)</b> atau template masa yang sedang dibuka, isi kolom <b>Masa Dikreditkan</b> (mis. <b>11-2026</b>), lalu upload — setiap faktur masuk ke <b>masa Pajak Masukan sesuai isian</b>, walaupun masanya berbeda-beda. Bisa juga file Excel lain yang memuat kolom <b>Nomor Faktur</b> dan <b>Masa Pengkreditan</b> (atau kolom Masa + Tahun).</div>
+      <div class="toolbar" style="gap:8px"><button type="button" class="btn btn-primary" onclick="kriTemplate(true)" ${u.length?'':'disabled'}>${icon('download')} Semua faktur belum dikreditkan (semua masa) · ${fmt(u.length)} faktur${nm?` / ${nm} masa`:''}</button>
+      <button type="button" class="btn btn-outline" onclick="kriTemplate()">${icon('download')} Template masa ${MONTHS[state.month]} ${state.year}</button></div>
+      <div class="kri-guide"><b>${icon('edit')} Cara mengisi kolom Masa Dikreditkan</b>
+        <ol><li>Isi dengan <b>bulan-tahun SPT Masa PPN</b> tempat faktur tersebut dikreditkan — <u>bukan</u> tanggal faktur.</li>
+        <li>Format yang disarankan <code>MM-YYYY</code>, contoh <code>11-2026</code> = November 2026. Format <code>11/2026</code>, <code>2026-11</code>, <code>November 2026</code>, atau <code>Nov 2026</code> juga terbaca.</li>
+        <li>Pilih masa <b>antara Masa Faktur dan Batas Pengkreditan</b> (kolom tersedia di template). Contoh: faktur masa September 2026 → batas Desember 2026 → isi <code>09-2026</code> s.d. <code>12-2026</code>.</li>
+        <li><b>Kosongkan</b> baris faktur yang belum dikreditkan — baris itu dilewati dan tetap di Prepopulated.</li></ol></div>
+      <input type="file" class="input" id="kriFile" accept=".xlsx,.xls,.csv" style="margin-top:12px"><div id="kriInfo" style="margin-top:12px"></div></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-success" id="kriBtn" disabled onclick="kriGo()">${icon('check')} Kreditkan &amp; Pindahkan</button></div>`,'xl');
+  $('#kriFile').addEventListener('change',async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ KRI=kriParse(XLSX.read(await f.arrayBuffer(),{type:'array'})); kriShow(); }catch(err){ $('#kriInfo').innerHTML=`<div class="tax-info warn">${icon('alert')}<div>${esc(err.message)}</div></div>`; $('#kriBtn').disabled=true; } }); }
+function kriMasa(v,thn){ /* → 'YYYY-MM' */
+  if(typeof v==='number'){ if(v>=1&&v<=12&&thn) return key(+thn,v-1); if(v>20000){ const t=new Date(Math.round((Math.floor(v)-25569)*864e5)); return key(t.getUTCFullYear(),t.getUTCMonth()); } return ''; }
+  const t=String(v||'').trim(); if(!t) return ''; let m;
+  if((m=/^(\d{1,2})\s*[\/\-.]\s*(\d{4})$/.exec(t))&&+m[1]>=1&&+m[1]<=12) return key(+m[2],+m[1]-1);
+  if((m=/^(\d{4})\s*[\/\-.]\s*(\d{1,2})$/.exec(t))&&+m[2]>=1&&+m[2]<=12) return key(+m[1],+m[2]-1);
+  if((m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(t))) return key(+m[3],+m[2]-1);
+  if((m=/^(\d{1,2})$/.exec(t))&&thn&&+m[1]>=1&&+m[1]<=12) return key(+thn,+m[1]-1);
+  const low=t.toLowerCase(), i=MONTHS.findIndex(n=>low.startsWith(n.toLowerCase())||low.startsWith(n.toLowerCase().slice(0,3))), y=/(\d{4})/.exec(t);
+  return i>=0&&(y||thn)?key(+(y?y[1]:thn),i):''; }
+function kriParse(wb){
+  const nh=x=>String(x||'').toLowerCase().replace(/\s+/g,' ').trim(); let H=null;
+  for(const sn of wb.SheetNames){ const A=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:true});
+    for(let hr=0;hr<Math.min(A.length,15);hr++){ const h=A[hr].map(nh), c={};
+      h.forEach((x,i)=>{ if(/kredit/.test(x)&&/masa|periode/.test(x)) c.kr??=i;
+        else if(/(nomor|no\.?)\s*(faktur|fp|seri)|faktur pajak|nofaktur|nsfp/.test(x)&&!/tanggal|tgl|masa/.test(x)) c.no??=i;
+        else if(/^masa( pajak)?$|^masa pajak \(|^periode/.test(x)&&!/faktur/.test(x)) c.masa??=i;
+        else if(/^tahun/.test(x)) c.th??=i; else if(/npwp/.test(x)) c.npwp??=i; });
+      if(c.no!=null&&(c.kr!=null||c.masa!=null)){ H={A,hr,c}; break; } }
+    if(H) break; }
+  if(!H) throw new Error('Kolom "Nomor Faktur" dan "Masa Dikreditkan" (atau Masa Pajak) tidak ditemukan pada file.');
+  const open=new Map(), done=new Map(); for(const [k,a] of Object.entries(DB.data.PP||{})) (a||[]).forEach(r=>{ const f=fakturKey(r.nofaktur); if(!f) return; (ppOpen(r)?open:done).set(f,{k,r}); });
+  const inPM=new Map(); for(const [k,a] of Object.entries(DB.data.PM||{})) (a||[]).forEach(r=>{ const f=fakturKey(r.nofaktur); if(f) inPM.set(f,k); });
+  const out=[], seen=new Set(), mc=H.c.kr??H.c.masa;
+  for(let i=H.hr+1;i<H.A.length;i++){ const row=H.A[i], no=String(row[H.c.no]||'').trim(), raw=row[mc]; if(!no||!String(raw??'').trim()) continue;
+    const f=fakturKey(no), tk=kriMasa(raw,H.c.th!=null?row[H.c.th]:''), it={line:i+1,no,raw:String(raw),tk};
+    if(!tk){ it.st='bad'; it.msg='Format masa tidak dikenali (contoh: 11-2026)'; }
+    else if(+tk.slice(0,4)<START_YEAR){ it.st='bad'; it.msg=`Masa sebelum ${START_YEAR} tidak didukung`; }
+    else if(seen.has(f)){ it.st='dup'; it.msg='Nomor faktur ganda di file'; }
+    else if(open.has(f)){ const o=open.get(f); it.k=o.k; it.r=o.r; const b=batasInfo(o.r,o.k);
+      if(b&&masaDiff(tk,b.bm)>0){ it.st='warn'; it.msg=`Melewati batas pengkreditan (${masaLabel(b.bm)}) — hak kredit hangus, mohon dicek`; }
+      else if(b&&masaDiff(tk,b.fm)<0){ it.st='warn'; it.msg=`Lebih awal dari masa faktur (${masaLabel(b.fm)}) — mohon dicek`; }
+      else it.st='ok'; }
+    else if(inPM.has(f)||done.has(f)){ it.st='done'; it.msg=`Sudah dikreditkan${inPM.has(f)?' · ada di Pajak Masukan '+masaLabel(inPM.get(f)):''}`; }
+    else { it.st='none'; it.msg='Faktur tidak ditemukan di Prepopulated (belum dikreditkan)'; }
+    seen.add(f); out.push(it); }
+  return out; }
+function kriShow(){ const ok=KRI.filter(x=>x.st==='ok'||x.st==='warn'), bad=KRI.filter(x=>!ok.includes(x)), warn=KRI.filter(x=>x.st==='warn');
+  const byM={}; ok.forEach(x=>byM[x.tk]=(byM[x.tk]||0)+1);
+  const ST={ok:['b-success','Cocok'],warn:['b-warning','Cocok — cek'],done:['b-muted','Sudah dikreditkan'],none:['b-danger','Tidak ditemukan'],dup:['b-danger','Ganda'],bad:['b-danger','Masa salah']};
+  $('#kriInfo').innerHTML=!KRI.length?`<div class="tax-info warn">${icon('alert')}<div>Tidak ada baris yang berisi masa dikreditkan.</div></div>`:`<div class="tax-info ${bad.length||warn.length?'warn':'ok'}">${icon(bad.length||warn.length?'alert':'check')}<div><b>${fmt(ok.length)} faktur</b> siap dikreditkan${warn.length?` (${warn.length} perlu dicek)`:''}${bad.length?` · <b>${bad.length} baris dilewati</b>`:''}.
+      ${ok.length?`<div style="margin-top:4px;font-size:12px">Masuk ke Pajak Masukan: ${Object.keys(byM).sort().map(k=>`${masaLabel(k)} (${byM[k]})`).join(' · ')}</div>`:''}</div></div>
+    <div class="table-wrap" style="max-height:320px;overflow:auto;margin-top:10px"><table class="bpc-t" style="font-size:12.5px"><thead><tr><th style="width:28px"></th><th>Baris</th><th>Nomor Faktur</th><th>Penjual</th><th>Masa Faktur</th><th>Masa Dikreditkan</th><th>Status</th></tr></thead><tbody>${[...KRI].sort((a,b)=>({ok:0,warn:1}[a.st]??2)-({ok:0,warn:1}[b.st]??2)).map(x=>{ const i=KRI.indexOf(x);
+      return `<tr><td>${x.r?`<input type="checkbox" ${x.skip?'':'checked'} onchange="KRI[${i}].skip=!this.checked;kriCount()">`:''}</td><td>${x.line}</td><td><b>${esc(x.no)}</b></td><td>${x.r?`${esc(x.r.nama||'')}<br><small style="color:var(--muted)">PPN Rp ${fmt(x.r.ppn)}</small>`:'-'}</td><td>${x.k?masaLabel(x.k):'-'}</td><td>${x.tk?`<b>${masaLabel(x.tk)}</b>`:esc(x.raw)}</td><td><span class="badge ${ST[x.st][0]}">${ST[x.st][1]}</span>${x.msg?`<br><small style="color:var(--muted)">${esc(x.msg)}</small>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
+  kriCount(); }
+function kriCount(){ const n=(KRI||[]).filter(x=>(x.st==='ok'||x.st==='warn')&&!x.skip).length; $('#kriBtn').disabled=!n; $('#kriBtn').innerHTML=`${icon('check')} Kreditkan &amp; Pindahkan${n?` (${fmt(n)})`:''}`; }
+async function kriGo(){ const L=(KRI||[]).filter(x=>(x.st==='ok'||x.st==='warn')&&!x.skip&&ppOpen(x.r)); if(!L.length) return;
+  const bPM=JSON.parse(JSON.stringify(DB.data.PM)), bPP=JSON.parse(JSON.stringify(DB.data.PP||{}));
+  L.forEach(x=>{ x.r.status='CREDITED'; x.r.kredit=x.tk; }); const pr=ppProcess(); state.sel=new Set();
+  if(await save()){ closeModal(); toast(`${fmt(pr.moved)} faktur dikreditkan → Monitoring Pajak Masukan: ${Object.keys(pr.to).sort().map(k=>`${masaLabel(k)} (${pr.to[k]})`).join(', ')}`,'success'); refreshDataView(); }
+  else { DB.data.PM=bPM; DB.data.PP=bPP; } }
 
 /* ---------- Aksi massal (centang) ---------- */
 async function vprBulkDownload(){ const rows=vprAll().filter(r=>state.sel.has(r.id)); if(!rows.length) return;
@@ -7318,10 +7414,10 @@ const PERM_CHK={openImport:t=>can(t,'add'),commitImport:()=>IMPORT&&can(IMPORT.t
   openBupotCtx:()=>can('VPR','edit'),bpcGo:()=>can('VPR','edit'),openMrkForm:id=>can('MRK',id?'edit':'add'),saveMrkForm:()=>can('MRK',$('#mrkForm')&&$('#mrkForm').MRK_ID?'edit':'add'),mrkImportPph:()=>can('MRK','add'),
   openSptForm:rk=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),saveSpt:(e,rk)=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),deleteSpt:()=>can('spt','del'),
   openRestNew:()=>can('rest','add'),saveRest:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),resetRest:()=>can('rest','del'),
-  openTglBayar:()=>can('PM','edit'),tbyGo:()=>can('PM','edit'),
+  openTglBayar:()=>can('PM','edit'),tbyGo:()=>can('PM','edit'),openKrImp:()=>can('PP','edit'),kriGo:()=>can('PP','edit'),
   korAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),docAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add')};
 ['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
- 'openTglBayar','tbyGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
+ 'openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
  'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
  'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
  'downloadTemplate','saveIdentity','openRekonImport','saveRekonImport','delRekon','openRekonMap','saveRekonMap','saveRekonNote','openKredit','doKredit','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
