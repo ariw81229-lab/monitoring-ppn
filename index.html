@@ -507,6 +507,12 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .ro [onclick^="openReport"],.ro [onclick^="openSptForm"],.ro [onclick^="deleteSpt"],.ro [onclick^="openRestNew"],.ro [onclick^="openRestCfg"],
 .ro [onclick^="openPpnRep"],.ro [onclick^="resetRest"],.ro [onclick^="bulkBayar"],.ro .adm{display:none!important}
 .ro button.badge[onclick^="toggleBayar"]{pointer-events:none}
+/* akun pengunjung dengan hak akses dari admin: tombol sesuai izin menu yang sedang dibuka muncul kembali */
+.ro.pa [onclick^="openRowForm"]:not([title="Ubah"]),.ro.pa [onclick^="openImport"],.ro.pa [onclick^="downloadTemplate"],.ro.pa .p-add,
+.ro.pe [onclick^="openRowForm"][title="Ubah"],.ro.pe .p-edit,
+.ro.pd [onclick^="deleteRow"],.ro.pd [onclick^="clearMonth"],.ro.pd .p-del{display:inline-flex!important}
+.perm-t{width:100%;border-collapse:collapse;font-size:13px}.perm-t th,.perm-t td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:center}.perm-t th:first-child,.perm-t td:first-child{text-align:left}
+.perm-t td small{display:block;color:var(--muted);font-size:11.5px}.perm-t input{width:16px;height:16px;cursor:pointer}
 .role-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(var(--primary-rgb),.12);color:var(--primary)}
 .ro .role-pill{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
 .cred{font-family:ui-monospace,Consolas,monospace;font-size:14px;line-height:1.7;padding:12px 14px;border-radius:10px;background:var(--surface-2);border:1px dashed var(--primary);white-space:pre-wrap;word-break:break-all}
@@ -2075,12 +2081,22 @@ async function doReset(e){
 function currentUser(){ const u=session.get(); return DB.users.find(x=>x.username===u); }
 function logout(){ setTimeout(fitKso,60); try{ const t=themeOf(); if(!$('#app').hidden){ LOGIN_THEME={...t}; localStorage.setItem(THEME_KEY,JSON.stringify(t)); } }catch(e){} if(CLOUD_ON&&CLOUD.uid) cloudLogout(); session.clear(); $('#app').hidden=true; $('#login').hidden=false; document.body.classList.remove('ro'); closeSidebar(); applyTheme(); tickClock(); }
 function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
+/* Hak akses per menu untuk akun pengunjung (diatur admin): add = tambah/import, edit = ubah, del = hapus */
+const PERM_MENUS=[{k:'PM',l:'Pajak Masukan',d:'Monitoring & Prepopulated Pajak Masukan',t:['PM','PP']},{k:'PK',l:'Pajak Keluaran',d:'Monitoring Pajak Keluaran',t:['PK']},{k:'BPS',l:'Bukti Potong ESDM',t:['BPS']},
+  {k:'PPH21',l:'PPh 21',d:'Selain Pegawai Tetap · A1 · Bulanan Pegawai Tetap',t:['PPH21NP','PPH21A1','PPH21']},{k:'PPHU',l:'PPh Unifikasi',d:'PPh 23 & PPh 4 ayat 2',t:['PPH23','PPH42']},
+  {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'MRK',l:'Master Rekanan',t:['MRK']}];
+const PERM_ACT=[['add','Tambah'],['edit','Ubah'],['del','Hapus']];
+const permsOf=u=>(u&&u.perms&&typeof u.perms==='object')?u.perms:{};
+function can(t,a){ if(isAdmin()) return true; const u=currentUser(); return !!u&&u.active!==false&&(permsOf(u)[t]||[]).includes(a); }
+const canAny=t=>can(t,'add')||can(t,'edit')||can(t,'del');
+const permTypes=u=>Object.entries(permsOf(u)).filter(([,a])=>Array.isArray(a)&&a.length).map(([t])=>t);
+function permSummary(u){ const P=permsOf(u); return PERM_MENUS.filter(m=>(P[m.t[0]]||[]).length).map(m=>`${m.l} (${PERM_ACT.filter(([a])=>(P[m.t[0]]||[]).includes(a)).map(([,l])=>l).join('/')})`); }
 function showApp(){
   const u=currentUser(); if(!u){ logout(); return; }
   if(typeof idleOnShow==='function'&&idleOnShow()) return;
   $('#login').hidden=true; $('#app').hidden=false;
   $('#uName').textContent=u.name||u.username; $('#uAvatar').textContent=(u.name||u.username)[0].toUpperCase();
-  $('#uRole').innerHTML=`<span class="role-pill">${u.role==='user'?'Pengunjung · lihat & unduh':'Admin'}</span>`;
+  $('#uRole').innerHTML=`<span class="role-pill" title="${esc(u.role==='user'&&permSummary(u).length?'Akses edit: '+permSummary(u).join(', '):'')}">${u.role==='user'?(permSummary(u).length?'Pengunjung · akses terbatas':'Pengunjung · lihat & unduh'):'Admin'}</span>`;
   document.body.classList.toggle('ro',u.role==='user');
   if(u.role==='user'&&state.view==='settings') state.view='tema';
   applyTheme(); render();
@@ -2105,11 +2121,11 @@ const NAV=[
   {sec:'Utama'},{id:'dashboard',label:'Dashboard',ic:'grid'},
   {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP','GL','RPM']},{grp:'Pajak Keluaran',ic:'out',items:['PK','BPS']},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
   {sec:'Restitusi PPN'},{id:'rest',label:'Alur Proses Restitusi',ic:'refund'},{id:'flow',label:'Flowchart Restitusi',ic:'flow'},
-  {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},{id:'VPR',label:'Pencatatan PPh Rekanan',ic:'clip'},
+  {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},{grp:'Pencatatan PPh Rekanan',ic:'clip',items:['VPR','RPPH']},
   {sec:'Sistem'},{id:'MRK',label:'Master Rekanan',ic:'users'},{id:'settings',label:'Pengaturan',ic:'gear'},
 ];
-const NAV_LBL={PK:'Monitoring Pajak Keluaran',BPS:'Bukti Potong ESDM',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
-const TITLES={RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PP:'Prepopulated Pajak Masukan (Belum Dikreditkan)',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
+const NAV_LBL={VPR:'Pencatatan PPh Rekanan & Bupot Dummy',RPPH:'Rekonsiliasi PPh',PK:'Monitoring Pajak Keluaran',BPS:'Bukti Potong ESDM',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
+const TITLES={RPPH:'PPh · Rekonsiliasi Pajak Penghasilan (PPh)',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PP:'Prepopulated Pajak Masukan (Belum Dikreditkan)',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
   rest:'Alur Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Akun Saya',BPS:'Bukti Potong ESDM',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
   PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)',VPR:'PPh · Pencatatan PPh Rekanan & Bupot Dummy',MRK:'PPh · Master Rekanan'};
@@ -2180,8 +2196,9 @@ function render(){
   const comb=ck&&state[ck];
   $('#yearSel').innerHTML=(ck?`<option value="all" ${comb?'selected':''}>Semua Tahun (Gabungan)</option>`:'')
     +ys.map(y=>`<option value="${y}" ${!comb&&y===state.year?'selected':''}>Tahun ${y}</option>`).join('');
-  $('#yearSel').hidden=state.view==='settings'||state.view==='tema'||state.view==='RPM'||state.view==='GL'||state.view==='VPR'||state.view==='MRK';
+  $('#yearSel').hidden=state.view==='settings'||state.view==='tema'||state.view==='RPM'||state.view==='RPPH'||state.view==='GL'||state.view==='VPR'||state.view==='MRK';
   $('#pageTitle').textContent=TITLES[state.view]||'';
+  { const v=state.view, b=document.body.classList; b.toggle('pa',!isAdmin()&&can(v,'add')); b.toggle('pe',!isAdmin()&&can(v,'edit')); b.toggle('pd',!isAdmin()&&can(v,'del')); }
   if(state.view==='dashboard') renderDashboard();
   else if(state.view==='settings') renderSettings();
   else if(state.view==='tema') renderTema();
@@ -2189,13 +2206,14 @@ function render(){
   else if(state.view==='rest') renderRest();
   else if(state.view==='flow') renderFlow();
   else if(state.view==='RPM') renderRpm();
+  else if(state.view==='RPPH') renderRpph();
   else if(state.view==='GL') renderGL();
   else renderData(state.view);
   $('#view').classList.toggle('dash',state.view==='dashboard');
   const sg=NAV.find(n=>n.grp&&n.items.includes(state.view)); if(sg) $('#view').insertAdjacentHTML('afterbegin',subTabsHTML(sg));
 }
 /* Pemisah antar halaman dalam satu menu (pengganti sub menu di sidebar) */
-const SUB_IC={PM:'in',PP:'clock',GL:'file',RPM:'grid',PPH21NP:'users',PPH21A1:'file',PPH21:'user',PPH23:'receipt',PPH42:'receipt',PK:'out',BPS:'folder'};
+const SUB_IC={VPR:'clip',RPPH:'grid',PM:'in',PP:'clock',GL:'file',RPM:'grid',PPH21NP:'users',PPH21A1:'file',PPH21:'user',PPH23:'receipt',PPH42:'receipt',PK:'out',BPS:'folder'};
 function subTabsHTML(g){
   const urgent=g.items.includes('PP')?batasScan().akhir.n:0;
   return `<div class="subtabs" role="tablist" aria-label="${esc(g.grp)}">${g.items.map(id=>`<button type="button" role="tab" class="${id===state.view?'active':''}" aria-selected="${id===state.view}" onclick="go('${id}')">${icon(SUB_IC[id]||'file')}<span>${NAV_LBL[id]||(TYPES[id]?TYPES[id].sub||TYPES[id].menu:id)}</span>${id==='PP'&&urgent?`<i class="nav-cnt">${urgent}</i>`:''}</button>`).join('')}</div>`;
@@ -2944,7 +2962,7 @@ function renderData(t){
     <div class="card mini"><small>Jumlah Data Rekanan</small><b>${fmt(ok.length)}</b><span class="sub">PPh 21 ${by('21').length} · PPh 23 ${by('23').length} · PPh 4(2) ${by('42').length}</span></div>
     <div class="card mini"><small>Total Penghasilan Bruto</small><b>${rp(sumF(ok,'bruto'))}</b><span class="sub">DPP ${rp(sumF(ok,'dpp'))}</span></div>
     <div class="card mini"><small>Total PPh Dipotong</small><b style="color:var(--primary)">${rp(sumF(ok,'pph'))}</b><span class="sub">21: ${short(sumF(by('21'),'pph'))} · 23: ${short(sumF(by('23'),'pph'))} · 4(2): ${short(sumF(by('42'),'pph'))}</span></div>
-    <div class="card mini"><small>Belum Dilapor</small><b style="color:var(--warning)">${fmt(ok.length)} data</b><span class="sub">Submit nomor bukti potong Coretax (ikon ➜ di tiap baris atau <b>Import No. Bupot</b>) — data otomatis pindah ke menu PPh 21 / PPh Unifikasi sesuai jenis &amp; masa pajaknya</span></div>`;
+    <div class="card mini"><small>Belum Dilapor</small><b style="color:var(--warning)">${fmt(ok.length)} data</b><span class="sub">Submit nomor bukti potong Coretax (ikon ➜ di tiap baris atau <strong>Import No. Bupot</strong>) — data otomatis pindah ke menu PPh 21 / PPh Unifikasi sesuai jenis &amp; masa pajaknya</span></div>`;
   } else {
     const nf=rows.filter(r=>r.file).length;
     minis=`
@@ -2963,13 +2981,13 @@ function renderData(t){
     <div class="card-h">
       <div><h3>${T.label}${t==='MRK'?'':' — '}${t==='MRK'?'':t==='VPR'?'Gabungan Semua Masa':comb?combLabel():`${MONTHS[m]} ${y}`}</h3><p>${rows.length?`${fmt(rows.length)} ${T.unit} tersimpan${comb?' di seluruh tahun':''}`:comb?'Belum ada data di seluruh tahun':'Belum ada data untuk masa pajak ini'}</p></div>
       ${t==='MRK'?`<div class="toolbar">
-        <button class="btn btn-primary adm" onclick="openMrkForm()">${icon('plus')} Tambah Rekanan</button>
-        <button class="btn btn-outline adm" onclick="mrkImportPph()" title="Ambil rekanan dari menu PPh 23, PPh 4(2), dan BP 21 Selain Pegawai Tetap">${icon('upload')}<span class="hide-sm">Ambil dari Data PPh</span></button>
+        <button class="btn btn-primary adm p-add" onclick="openMrkForm()">${icon('plus')} Tambah Rekanan</button>
+        <button class="btn btn-outline adm p-add" onclick="mrkImportPph()" title="Ambil rekanan dari menu PPh 23, PPh 4(2), dan BP 21 Selain Pegawai Tetap">${icon('upload')}<span class="hide-sm">Ambil dari Data PPh</span></button>
         <button class="btn btn-outline" onclick="openExport('MRK')">${icon('download')}<span class="hide-sm">Export</span></button></div>`
       :t==='VPR'?`<div class="toolbar">
-        <button class="btn btn-primary adm" onclick="openRowForm('VPR')">${icon('plus')} Tambah Data</button>
-        <button class="btn btn-outline adm" onclick="openImportVpr()">${icon('upload')}<span class="hide-sm">Import Laporan</span></button>
-        <button class="btn btn-outline adm" onclick="openBupotCtx()" title="Import nomor bukti potong dari Coretax — data otomatis pindah ke menu PPh 21 / PPh Unifikasi">${icon('arrow')}<span class="hide-sm">Import No. Bupot</span></button>
+        <button class="btn btn-primary adm p-add" onclick="openRowForm('VPR')">${icon('plus')} Tambah Data</button>
+        <button class="btn btn-outline adm p-add" onclick="openImportVpr()">${icon('upload')}<span class="hide-sm">Import Laporan</span></button>
+        <button class="btn btn-outline adm p-edit" onclick="openBupotCtx()" title="Import nomor bukti potong dari Coretax — data otomatis pindah ke menu PPh 21 / PPh Unifikasi">${icon('arrow')}<span class="hide-sm">Import No. Bupot</span></button>
         <button class="btn btn-outline" onclick="openLapPph()">${icon('download')}<span class="hide-sm">Laporan PPh</span></button>
         ${rows.length?`<button class="btn btn-outline" onclick="downloadAllBupot()" title="Unduh semua bupot dummy masa ini (ZIP)">${icon('file')}<span class="hide-sm">Semua Bupot</span></button>`:''}
         <button class="btn btn-outline" onclick="openGrossUp()">${icon('calc')}<span class="hide-sm">Gross Up</span></button>
@@ -2998,7 +3016,7 @@ function renderData(t){
     </div>
     <div id="tableArea"></div>`
     :comb?`<div class="empty">${icon('file')}<b>Belum ada data ${T.label}</b>Pilih tahun tertentu untuk mengimport data.</div>`:`<div class="empty">${icon('file')}<b>Belum ada data ${T.label}${t==='VPR'||t==='MRK'?'':` ${MONTHS[m]} ${y}`}</b>Import dari Excel atau tambahkan data secara manual.<br><br>
-       <div class="toolbar" style="justify-content:center">${t==='MRK'?`<button class="btn btn-primary adm" onclick="openMrkForm()">${icon('plus')} Tambah Rekanan</button><button class="btn btn-outline adm" onclick="mrkImportPph()">${icon('upload')} Ambil dari Data PPh</button>`:t==='VPR'?`<button class="btn btn-primary adm" onclick="openRowForm('VPR')">${icon('plus')} Tambah Data Rekanan</button><button class="btn btn-outline adm" onclick="openImportVpr()">${icon('upload')} Import Laporan PPh</button><button class="btn btn-outline" onclick="openLapPph()">${icon('file')} Template Laporan</button><button class="btn btn-outline" onclick="openGrossUp()">${icon('calc')} Kalkulator Gross Up</button>`:`<button class="btn btn-primary" onclick="openImport('${t}')">${icon('upload')} Import Excel</button><button class="btn btn-outline" onclick="openRowForm('${t}')">${icon('plus')} Tambah Manual</button>`}</div></div>`}
+       <div class="toolbar" style="justify-content:center">${t==='MRK'?`<button class="btn btn-primary adm p-add" onclick="openMrkForm()">${icon('plus')} Tambah Rekanan</button><button class="btn btn-outline adm p-add" onclick="mrkImportPph()">${icon('upload')} Ambil dari Data PPh</button>`:t==='VPR'?`<button class="btn btn-primary adm p-add" onclick="openRowForm('VPR')">${icon('plus')} Tambah Data Rekanan</button><button class="btn btn-outline adm p-add" onclick="openImportVpr()">${icon('upload')} Import Laporan PPh</button><button class="btn btn-outline" onclick="openLapPph()">${icon('file')} Template Laporan</button><button class="btn btn-outline" onclick="openGrossUp()">${icon('calc')} Kalkulator Gross Up</button>`:`<button class="btn btn-primary" onclick="openImport('${t}')">${icon('upload')} Import Excel</button><button class="btn btn-outline" onclick="openRowForm('${t}')">${icon('plus')} Tambah Manual</button>`}</div></div>`}
   </div>`;
   if(rows.length) renderTableOnly();
 }
@@ -3026,7 +3044,7 @@ function cellHTML(c,r){
 }
 function renderTableOnly(){
   const area=$('#tableArea'); if(!area) return;
-  const t=state.view, T=TYPES[t], list=filteredRows(t), comb=isComb(t), selMode=(t==='PM'||t==='PP'||t==='VPR')&&isAdmin()&&!comb;
+  const t=state.view, T=TYPES[t], list=filteredRows(t), comb=isComb(t), selMode=((t==='PM'||t==='PP')&&isAdmin()||t==='VPR'&&canAny('VPR'))&&!comb;
   const pages=Math.max(1,Math.ceil(list.length/PER_PAGE)); if(state.page>pages) state.page=pages;
   const start=(state.page-1)*PER_PAGE, slice=list.slice(start,start+PER_PAGE);
   const allSel=slice.length&&slice.every(r=>state.sel.has(r.id));
@@ -3034,10 +3052,10 @@ function renderTableOnly(){
   const nameIdx=T.cols.findIndex(c=>c.k==='nama');
   area.innerHTML=(selMode&&state.sel.size&&t==='VPR'?`
     <div class="bulk">${state.sel.size} data dipilih<span class="sp"></span>
-      <label style="display:flex;align-items:center;gap:6px;font-weight:600">Dilapor pada masa <input type="month" class="input" id="vprMasaL" style="width:auto;height:34px" value="${esc(vprDefMasa())}"></label>
-      <button class="btn btn-success btn-sm" onclick="vprLapor()">${icon('check')} Tandai sudah dilapor &amp; pindahkan</button>
+      ${can('VPR','edit')?`<label style="display:flex;align-items:center;gap:6px;font-weight:600">Dilapor pada masa <input type="month" class="input" id="vprMasaL" style="width:auto;height:34px" value="${esc(vprDefMasa())}"></label>
+      <button class="btn btn-success btn-sm" onclick="vprLapor()">${icon('check')} Tandai sudah dilapor &amp; pindahkan</button>`:''}
       <button class="btn btn-outline btn-sm" onclick="vprBulkDownload()">${icon('download')} Unduh bupot</button>
-      <button class="btn btn-danger btn-sm" onclick="vprBulkDelete()">${icon('trash')} Hapus</button>
+      ${can('VPR','del')?`<button class="btn btn-danger btn-sm" onclick="vprBulkDelete()">${icon('trash')} Hapus</button>`:''}
       <button class="btn btn-ghost btn-sm" onclick="state.sel=new Set();renderTableOnly()">Batal pilih</button></div>`
   :selMode&&state.sel.size&&t==='PP'?`
     <div class="bulk">${state.sel.size} faktur dipilih<span class="sp"></span>
@@ -3054,7 +3072,7 @@ function renderTableOnly(){
       <tbody>${slice.map((r,i)=>`<tr class="${t==='PP'?(r.status==='CANCELED'?'pp-cancel':r.status==='AMENDED'?'pp-amend':r.jenisFP==='Normal'?'pp-normal':''):isCanceled(r)?'canceled':''} ${state.sel.has(r.id)?'sel':''}">
         ${selMode?`<td>${(t==='PP'&&!ppOpen(r))||(t==='VPR'&&r.lapor)?'':`<input type="checkbox" class="chk" ${state.sel.has(r.id)?'checked':''} onchange="selRow('${r.id}',this.checked)">`}</td>`:''}
         <td>${start+i+1}</td>${comb?`<td style="white-space:nowrap">${masaLabel(rowMasa(r))}</td>`:''}${T.cols.map(c=>cellHTML(c,r)).join('')}
-        ${comb?'':`<td><div class="row-act">${t==='PP'&&ppOpen(r)?`<button class="icon-btn xs" style="color:var(--success)" title="Kreditkan — tandai CREDITED & pindahkan ke Pajak Masukan" onclick="openKredit('${r.id}')">${icon('check')}</button>`:''}${t==='VPR'&&isAdmin()?`<button class="icon-btn xs" style="color:var(--success)" title="Submit nomor bukti potong Coretax → pindah ke menu PPh" onclick="openBupotSubmit('${r.id}')">${icon('arrow')}</button>`:''}${t==='VPR'?`<button class="icon-btn xs" title="Lihat bupot dummy" onclick="viewBupot('${r.id}')">${icon('eye')}</button><button class="icon-btn xs" style="color:var(--primary)" title="Unduh bupot dummy (PDF)" onclick="downloadBupot('${r.id}')">${icon('download')}</button><button class="icon-btn xs" title="Print bupot dummy" onclick="printBupot('${r.id}')">${icon('print')}</button>`:''}<button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button>${t==='MRK'?'':`<button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button>`}</div></td>`}</tr>`).join('')}</tbody>
+        ${comb?'':`<td><div class="row-act">${t==='PP'&&ppOpen(r)?`<button class="icon-btn xs" style="color:var(--success)" title="Kreditkan — tandai CREDITED & pindahkan ke Pajak Masukan" onclick="openKredit('${r.id}')">${icon('check')}</button>`:''}${t==='VPR'&&can('VPR','edit')?`<button class="icon-btn xs" style="color:var(--success)" title="Submit nomor bukti potong Coretax → pindah ke menu PPh" onclick="openBupotSubmit('${r.id}')">${icon('arrow')}</button>`:''}${t==='VPR'?`<button class="icon-btn xs" title="Lihat bupot dummy" onclick="viewBupot('${r.id}')">${icon('eye')}</button><button class="icon-btn xs" style="color:var(--primary)" title="Unduh bupot dummy (PDF)" onclick="downloadBupot('${r.id}')">${icon('download')}</button><button class="icon-btn xs" title="Print bupot dummy" onclick="printBupot('${r.id}')">${icon('print')}</button>`:''}<button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button>${t==='MRK'?'':`<button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button>`}</div></td>`}</tr>`).join('')}</tbody>
       <tfoot><tr>${selMode?'<td></td>':''}<td></td>${comb?'<td></td>':''}${T.cols.map((c,i)=>c.f==='num'?`<td class="num">${fmt(sum(c.k))}</td>`:i===nameIdx?`<td>${t==='PP'?'Total belum dikreditkan (APPROVED)':`Total (tanpa ${T.unit} batal)`}</td>`:'<td></td>').join('')}${comb?'':'<td></td>'}</tr></tfoot>
     </table></div>
     <div class="pager"><span class="per-wrap">Tampilkan <select class="select per-sel" onchange="setPer(this.value)" title="Jumlah baris per halaman">${PER_OPTS.map(v=>`<option ${v===PER_PAGE?'selected':''}>${v}</option>`).join('')}</select> · Menampilkan ${start+1}–${Math.min(start+PER_PAGE,list.length)} dari ${fmt(list.length)} ${T.unit}</span>
@@ -3133,7 +3151,7 @@ function vprTargetRec(r){ const t=VPR_TGT(r), base={nobukti:r.nobukti||'',tangga
   return {...base,stPtkp:r.stPtkp||'',bruto:+r.bruto||0}; }
 async function vprLapor(){
   const ym=($('#vprMasaL')||{}).value; if(!/^\d{4}-\d{2}$/.test(ym||'')) return toast('Pilih masa pajak pelaporan','error');
-  const rows=vprAll().filter(r=>state.sel.has(r.id)&&!r.lapor); if(!rows.length) return;
+  const rows=vprAll().filter(r=>state.sel.has(r.id)&&!r.lapor); if(!rows.length) return; if(vprMoveDenied(rows)) return;
   const noNo=rows.filter(r=>!r.nobukti).length;
   confirmBox('Tandai sudah dilapor?',`<b>${rows.length} data</b> akan <b>dipindahkan</b> ke menu PPh 21 / PPh Unifikasi masa <b>${masaLabel(ym)}</b> sesuai jenis pajaknya, lalu <b>dihapus dari Pencatatan PPh Rekanan</b>. Pastikan bupot dummy / laporan PPh yang dibutuhkan sudah diunduh.${noNo?`<br><br><span style="color:var(--warning)">${noNo} data belum punya nomor bukti potong — sebaiknya isi nomor dari Coretax terlebih dahulu.</span>`:''}`,'Pindahkan',async()=>{
     let n=0; const cnt={};
@@ -3184,7 +3202,7 @@ function vprFormRender(){
     ${t==='PPH21NP'?ro('deemed','Tarif (Norma)'):''}
     ${j==='21'?F('Status PTKP',`<select class="select" name="stPtkp"><option value="">— pilih —</option>${['TK/0','TK/1','TK/2','TK/3','K/0','K/1','K/2','K/3','HB/0','HB/1','HB/2','HB/3'].map(o=>`<option ${o===r.stPtkp?'selected':''}>${o}</option>`).join('')}</select>`):''}
     ${j==='21'&&r.kel21==='HARIAN'?F('Jumlah Hari Kerja',inp('hari','0','inputmode="decimal"')):''}
-    <div class="field full"><label>Nama Rekanan / Vendor <span class="req">*</span> <span class="sub-t">(ketik mis. A · ANI · ANIK lalu pilih dari Master Rekanan)</span></label><div class="inp-btn">${cbxHTML('rekId',r.rekId||'',r.nama||'','ketik nama rekanan…')}<button type="button" class="btn btn-outline adm" onclick="openMrkForm('',{nama:($('#vprForm .cbx[data-cbx=rekId] .cbx-in')||{}).value||''})" title="Tambah rekanan baru ke Master Rekanan">${icon('plus')} Rekanan baru</button></div></div>
+    <div class="field full"><label>Nama Rekanan / Vendor <span class="req">*</span> <span class="sub-t">(ketik mis. A · ANI · ANIK lalu pilih dari Master Rekanan)</span></label><div class="inp-btn">${cbxHTML('rekId',r.rekId||'',r.nama||'','ketik nama rekanan…')}${can('MRK','add')?'':'<!--'}<button type="button" class="btn btn-outline" onclick="openMrkForm('',{nama:($('#vprForm .cbx[data-cbx=rekId] .cbx-in')||{}).value||''})" title="Tambah rekanan baru ke Master Rekanan">${icon('plus')} Rekanan baru</button>${can('MRK','add')?'':'-->'}</div></div>
     ${F('NIK / NPWP <span class="lock-tag">dari master</span>',`<input class="input al-ro" readonly tabindex="-1" value="${esc(r.npwp||'')}" placeholder="otomatis">`)}
     ${F('NITKU <span class="lock-tag">dari master</span>',`<input class="input al-ro" readonly tabindex="-1" value="${esc(r.nitku||vprNitku(r.npwp))}" placeholder="otomatis">`)}
     ${F('Alamat <span class="lock-tag">dari master</span>',`<input class="input al-ro" readonly tabindex="-1" value="${esc(r.alamat||'')}" placeholder="otomatis">`,'full')}
@@ -3254,6 +3272,8 @@ const bpNorm=x=>String(x||'').replace(/\s+/g,'').toUpperCase();
 function bpUsed(nomor,exceptId){ const k=bpNorm(nomor); if(!k) return '';
   for(const t of ['PPH21','PPH21NP','PPH23','PPH42']) for(const [ym,a] of Object.entries(DB.data[t]||{})) for(const x of a||[]) if(bpNorm(x.nobukti)===k) return `${TYPES[t].menu} · ${masaLabel(ym)}`;
   const o=vprAll().find(x=>x.id!==exceptId&&bpNorm(x.nobukti)===k); return o?`Pencatatan PPh Rekanan (${o.nama})`:''; }
+function vprMoveDenied(rows){ /* pemindahan butuh izin Tambah di menu tujuan */ const bad=[...new Set(rows.map(r=>VPR_TGT(r)).filter(t=>!can(t,'add')))];
+  if(bad.length){ toast(`Akun Anda belum punya hak akses Tambah di menu ${bad.map(t=>TYPES[t].menu).join(', ')} — hubungi admin`,'error'); return true; } return false; }
 function vprMoveCtx(items){ /* items: [{r, nomor, tgl}] — pindah ke menu tujuan pada masa pajak masing-masing */
   const cnt={}, moved=new Set();
   items.forEach(({r,nomor,tgl})=>{ const ym=/^\d{4}-\d{2}$/.test(r.masaPajak||'')?r.masaPajak:nowYM(), t=VPR_TGT(r), arr=DB.data[t][ym]||(DB.data[t][ym]=[]);
@@ -3272,7 +3292,7 @@ function openBupotSubmit(id){ const r=vprAll().find(x=>x.id===id); if(!r) return
   setTimeout(()=>{ const el=$('#bpForm [name=nomor]'); if(el) el.focus(); },50); }
 async function saveBupotSubmit(e,id){ e.preventDefault(); const r=vprAll().find(x=>x.id===id); if(!r) return closeModal();
   const fd=new FormData(e.target), nomor=String(fd.get('nomor')||'').trim(), tgl=String(fd.get('tgl')||'');
-  if(!nomor) return; const u=bpUsed(nomor,id); if(u){ $('#bpWarn').textContent=`Nomor bukti potong ini sudah dipakai di ${u}.`; return; }
+  if(!nomor) return; if(vprMoveDenied([r])) return; const u=bpUsed(nomor,id); if(u){ $('#bpWarn').textContent=`Nomor bukti potong ini sudah dipakai di ${u}.`; return; }
   const info=vprMoveCtx([{r,nomor,tgl}]); if(await save()){ closeModal(); toast(`Nomor bupot tersimpan · data dipindahkan ke ${info}`,'success'); refreshDataView(); } }
 
 /* import nomor bupot massal: template dari sistem (kolom ID) atau file ekspor Coretax (dicocokkan lewat NPWP + DPP/bruto) */
@@ -3350,7 +3370,7 @@ function bpcShow(){ const ok=BPC.filter(x=>x.st==='ok'||x.st==='cek'), cek=BPC.f
       return `<tr><td>${x.r?`<input type="checkbox" ${x.skip?'':'checked'} title="Ikut dipindahkan" onchange="BPC[${k}].skip=!this.checked;bpcCount()">`:''}</td><td><small style="color:var(--muted)">${esc(x.sheet.replace(/import|coretax/ig,'').replace(/\s+/g,' ').trim())}</small><br>${x.line}</td><td><b>${esc(x.nomor)}</b></td><td>${x.r?`${esc(x.r.nama)}<br><small style="color:var(--muted)">${esc(x.r.npwp||'')} · Rp ${fmt(x.r.bruto)}</small>`:`<small style="color:var(--muted)">${esc(x.npwp||'-')} · Rp ${fmt(x.dpp)}</small>`}</td><td>${t?`${esc(TYPES[t].menu)}<br><small style="color:var(--muted)">${masaLabel(x.r.masaPajak||nowYM())}</small>`:'-'}</td><td style="white-space:normal;min-width:130px"><span class="badge ${ST[x.st][0]}">${ST[x.st][1]}</span>${x.msg?`<br><small style="color:var(--muted)">${esc(x.msg)}</small>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
   bpcCount(); }
 function bpcCount(){ const n=(BPC||[]).filter(x=>(x.st==='ok'||x.st==='cek')&&!x.skip).length; $('#bpcBtn').disabled=!n; $('#bpcBtn').innerHTML=`${icon('arrow')} Submit &amp; Pindahkan${n?` (${n})`:''}`; }
-async function bpcGo(){ const ok=(BPC||[]).filter(x=>(x.st==='ok'||x.st==='cek')&&!x.skip&&vprAll().includes(x.r)); if(!ok.length) return;
+async function bpcGo(){ const ok=(BPC||[]).filter(x=>(x.st==='ok'||x.st==='cek')&&!x.skip&&vprAll().includes(x.r)); if(!ok.length) return; if(vprMoveDenied(ok.map(x=>x.r))) return;
   const info=vprMoveCtx(ok.map(x=>({r:x.r,nomor:x.nomor,tgl:x.tgl}))); if(await save()){ closeModal(); toast(`${ok.length} nomor bupot tersimpan · dipindahkan ke ${info}`,'success'); refreshDataView(); } }
 
 /* ---------- Cegah pencatatan ganda: semua 5 unsur harus sama persis ---------- */
@@ -4011,7 +4031,7 @@ async function vprParse(buf){
     if(o.fasilitas==='Tanpa Fasilitas'||!o.fasilitas) o.fasilitas=o.fasilitas||''; delete o._calc; return o; });
 }
 async function vprImportGo(){ if(!VPR_IMP||!VPR_IMP.length) return; const arr=vprAll(), news=[]; let add=0, skip=0;
-  let dupN=0; VPR_IMP.forEach(r=>{ if(r.nobukti&&arr.some(x=>x.nobukti===r.nobukti)){ skip++; return; } if(vprDupFind(r,null).length||news.some(x=>vprDupKey(x.nama,x.npwp,x.noInv,x.tglInv,x.bruto)===vprDupKey(r.nama,r.npwp,r.noInv,r.tglInv,r.bruto))){ dupN++; return; } const {_warn,...o}=r; o.createdAt=todayISO(); if(o.tanggal) o.tglMode='manual'; else { o.tglMode='auto'; o.tanggal=o.createdAt; } news.push({id:uid(),seq:Date.now()+news.length,...o}); add++; }); arr.push(...news); mrkSync(); state.page=9999;
+  let dupN=0; VPR_IMP.forEach(r=>{ if(r.nobukti&&arr.some(x=>x.nobukti===r.nobukti)){ skip++; return; } if(vprDupFind(r,null).length||news.some(x=>vprDupKey(x.nama,x.npwp,x.noInv,x.tglInv,x.bruto)===vprDupKey(r.nama,r.npwp,r.noInv,r.tglInv,r.bruto))){ dupN++; return; } const {_warn,...o}=r; o.createdAt=todayISO(); if(o.tanggal) o.tglMode='manual'; else { o.tglMode='auto'; o.tanggal=o.createdAt; } news.push({id:uid(),seq:Date.now()+news.length,...o}); add++; }); arr.push(...news); if(can('MRK','add')) mrkSync(); state.page=9999;
   if(await save()){ closeModal(); toast(`${add} data diimport${skip?` · ${skip} dilewati (nomor bukti sudah ada)`:''}${dupN?` · ${dupN} dilewati (pencatatan ganda)`:''}`,dupN?'error':'success'); refreshDataView(); } }
 
 /* ---------- Combobox: ketik untuk menyaring, lalu pilih ---------- */
@@ -4073,7 +4093,7 @@ function mrkDup({id,nama,npwp}){ const L=mrkAll().filter(m=>m.id!==id), d=npwpDi
 async function saveMrkForm(e){ e.preventDefault(); const F=$('#mrkForm'), id=F.MRK_ID, v={nama:F.nama.value.trim().replace(/\s+/g,' '),alamat:F.alamat.value.trim(),npwp:F.npwp.value.trim()};
   if(!v.nama) return toast('Nama rekanan wajib diisi','error'); const dup=mrkDup({id,...v}); if(dup) return toast(dup,'error');
   v.nitku=vprNitku(v.npwp); const L=mrkAll(); let m=id?L.find(x=>x.id===id):null;
-  if(m){ Object.assign(m,v); let n=0; vprAll().forEach(r=>{ if(r.rekId===m.id){ Object.assign(r,{nama:m.nama,alamat:m.alamat,npwp:m.npwp,nitku:m.nitku}); n++; } }); m._n=n; }
+  if(m){ Object.assign(m,v); let n=0; if(can('VPR','edit')) vprAll().forEach(r=>{ if(r.rekId===m.id){ Object.assign(r,{nama:m.nama,alamat:m.alamat,npwp:m.npwp,nitku:m.nitku}); n++; } }); m._n=n; }
   else { m={id:uid(),seq:Date.now(),...v}; L.push(m); }
   if(!(await save())) return; const n=m._n; delete m._n;
   toast(id?`Rekanan diperbarui${n?` · ${n} data pencatatan ikut diperbarui`:''}`:'Rekanan ditambahkan','success');
@@ -5836,18 +5856,18 @@ function renderTema(){
 const adminCount=()=>DB.users.filter(u=>u.role!=='user'&&u.active!==false).length;
 function usersCard(){
   const me=currentUser();
-  return `<div class="card mb"><div class="card-h"><div><h3>Manajemen Akun</h3><p><b>Admin</b>: melihat, menambah, mengubah data & mengelola akun · <b>Pengunjung (user)</b>: hanya melihat & mengunduh</p></div>
+  return `<div class="card mb"><div class="card-h"><div><h3>Manajemen Akun</h3><p><b>Admin</b>: melihat, menambah, mengubah data & mengelola akun · <b>Pengunjung (user)</b>: melihat & mengunduh, bisa diberi hak akses tambah/ubah/hapus per menu</p></div>
     <div class="toolbar"><button class="btn btn-outline btn-sm" onclick="exportPackage()">${icon('download')} Unduh Paket Data</button><button class="btn btn-primary btn-sm" onclick="openUserForm()">${icon('plus')} Buat Akun</button></div></div>
     <div class="table-wrap"><table><thead><tr><th>Nama</th><th>Username</th><th>Hak Akses</th><th>Status</th><th>Dibuat</th><th></th></tr></thead><tbody>
     ${DB.users.map((u,i)=>`<tr><td><b>${esc(u.name||u.username)}</b>${u===me?' <span class="badge b-muted">Anda</span>':''}</td><td>${esc(u.username)}</td>
-      <td><span class="badge ${u.role==='user'?'b-muted':'b-primary'}">${u.role==='user'?'Pengunjung · lihat & unduh':'Admin · akses penuh'}</span></td>
+      <td><span class="badge ${u.role==='user'?(permSummary(u).length?'b-warning':'b-muted'):'b-primary'}">${u.role==='user'?(permSummary(u).length?'Pengunjung · akses terbatas':'Pengunjung · lihat & unduh'):'Admin · akses penuh'}</span>${u.role==='user'&&permSummary(u).length?`<div class="sub-t" style="margin-top:4px;white-space:normal;max-width:300px">${esc(permSummary(u).join(' · '))}</div>`:''}</td>
       <td><span class="badge ${u.active===false?'b-danger':'b-success'}">${u.active===false?'Nonaktif':'Aktif'}</span></td>
       <td>${u.created?fmtDate(u.created.slice(0,10)):'—'}</td>
       <td><div class="row-act">${u===me?'<span class="sub-t">ubah di kartu Akun Admin</span>':`<button class="btn btn-outline btn-sm" onclick="openUserForm(${i})">${icon('edit')} Ubah</button>
         <button class="icon-btn xs" title="${u.active===false?'Aktifkan':'Nonaktifkan'}" onclick="toggleUser(${i})">${icon(u.active===false?'check':'lock')}</button>
         <button class="icon-btn xs" title="Hapus akun" onclick="deleteUser(${i})">${icon('trash')}</button>`}</div></td></tr>`).join('')}
     </tbody></table></div>
-    <div class="card-b" style="padding-top:12px">${CLOUD_ON?`<div class="note" style="margin:0">${icon('alert')} Akun tersimpan di server — pengguna dapat masuk dari <b>komputer/HP mana saja</b> dengan username &amp; password yang Anda bagikan. Akun <b>Pengunjung</b> dikunci oleh database: hanya melihat &amp; mengunduh. Menonaktifkan akun langsung memutus aksesnya.</div>`:`<div class="note" style="margin:0">${icon('alert')} <b>Di browser ini</b>, akun pengunjung otomatis mengikuti data admin — tab yang sedang terbuka ikut diperbarui seketika setelah admin menyimpan. <b>Untuk komputer/HP lain</b>: klik <b>Unduh Paket Data</b> (berisi data, akun, dan semua file PDF), kirim ke pengguna, lalu pengguna memilih <b>“Muat paket data dari admin”</b> di halaman login atau di menu Tema. Ulangi setiap ada perubahan. Bagikan paket hanya kepada orang yang berwenang karena berisi akun login.</div>`}</div></div>`;
+    <div class="card-b" style="padding-top:12px">${CLOUD_ON?`<div class="note" style="margin:0">${icon('alert')} Akun tersimpan di server — pengguna dapat masuk dari <b>komputer/HP mana saja</b> dengan username &amp; password yang Anda bagikan. Akun <b>Pengunjung</b> dikunci oleh database: hanya melihat &amp; mengunduh, kecuali menu yang diberi hak akses (perlu menjalankan <b>akses-menu-supabase.sql</b> sekali). Menonaktifkan akun langsung memutus aksesnya.</div>`:`<div class="note" style="margin:0">${icon('alert')} <b>Di browser ini</b>, akun pengunjung otomatis mengikuti data admin — tab yang sedang terbuka ikut diperbarui seketika setelah admin menyimpan. <b>Untuk komputer/HP lain</b>: klik <b>Unduh Paket Data</b> (berisi data, akun, dan semua file PDF), kirim ke pengguna, lalu pengguna memilih <b>“Muat paket data dari admin”</b> di halaman login atau di menu Tema. Ulangi setiap ada perubahan. Bagikan paket hanya kepada orang yang berwenang karena berisi akun login.</div>`}</div></div>`;
 }
 function genPass(){ const ch='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; for(;;){ const a=crypto.getRandomValues(new Uint32Array(12)), p=Array.from(a,v=>ch[v%ch.length]).join(''); if(!pwCheck(p)) return p; } }
 function openUserForm(i){
@@ -5855,8 +5875,13 @@ function openUserForm(i){
   openModal(`<div class="modal-h"><div><h3>${u?'Ubah Akun':'Buat Akun Baru'}</h3><p>${u?esc(u.username):'Akun untuk dibagikan kepada pengguna lain'}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
    <form id="userForm" onsubmit="saveUser(event,${u?i:'null'})"><div class="modal-b">
     <div class="field"><label>Hak Akses</label><div class="fmt-opts">
-      <label class="fmt"><input type="radio" name="role" value="user" ${!u||u.role==='user'?'checked':''}><span>${icon('eye')}<b>Pengunjung (User)</b><small>Hanya melihat &amp; mengunduh. Menu Pengaturan diganti menu Tema.</small></span></label>
-      <label class="fmt"><input type="radio" name="role" value="admin" ${u&&u.role!=='user'?'checked':''}><span>${icon('shield')}<b>Admin</b><small>Melihat, menambah, mengubah data &amp; mengelola akun</small></span></label></div></div>
+      <label class="fmt"><input type="radio" name="role" value="user" ${!u||u.role==='user'?'checked':''} onchange="$('#ufPerm').hidden=false"><span>${icon('eye')}<b>Pengunjung (User)</b><small>Melihat &amp; mengunduh, plus hak akses menu yang dicentang di bawah. Menu Pengaturan diganti menu Tema.</small></span></label>
+      <label class="fmt"><input type="radio" name="role" value="admin" ${u&&u.role!=='user'?'checked':''} onchange="$('#ufPerm').hidden=true"><span>${icon('shield')}<b>Admin</b><small>Melihat, menambah, mengubah data &amp; mengelola akun</small></span></label></div></div>
+    <div class="field" id="ufPerm" ${u&&u.role!=='user'?'hidden':''}><label>Hak Akses Menu untuk Pengunjung <span class="sub-t">(menu yang tidak dicentang tetap hanya bisa dilihat &amp; diunduh)</span></label>
+      <div class="table-wrap" style="border:1px solid var(--border);border-radius:10px"><table class="perm-t"><thead><tr><th>Menu</th>${PERM_ACT.map(([,l])=>`<th>${l}</th>`).join('')}<th>Semua</th></tr></thead><tbody>
+      ${PERM_MENUS.map(m=>{ const P=permsOf(u)[m.t[0]]||[]; return `<tr><td><b>${esc(m.l)}</b>${m.d?`<small>${esc(m.d)}</small>`:''}</td>${PERM_ACT.map(([a])=>`<td><input type="checkbox" name="perm" value="${m.k}:${a}" ${P.includes(a)?'checked':''}></td>`).join('')}<td><input type="checkbox" title="Centang semua" ${P.length===3?'checked':''} onchange="this.closest('tr').querySelectorAll('[name=perm]').forEach(c=>c.checked=this.checked)"></td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="sub-t" style="margin-top:6px">Submit / import nomor bukti potong di Pencatatan PPh Rekanan memindahkan data ke menu PPh 21 / PPh Unifikasi, jadi butuh izin <b>Ubah</b> Pencatatan PPh Rekanan dan <b>Tambah</b> di menu tujuan.</div></div>
     <div class="form-grid">
       <div class="field"><label>Nama Tampilan</label><input class="input" name="name" required value="${esc(u?u.name||'':'')}"></div>
       <div class="field"><label>Username</label><input class="input" name="username" required value="${esc(u?u.username:'')}" autocomplete="off"></div>
@@ -5868,22 +5893,23 @@ function openUserForm(i){
 async function saveUser(e,i){
   e.preventDefault();
   const fd=new FormData($('#userForm')), name=(fd.get('name')||'').trim(), un=(fd.get('username')||'').trim(), pw=(fd.get('password')||'').toString(), role=fd.get('role');
+  const perms={}; if(role==='user') fd.getAll('perm').forEach(v=>{ const [k,a]=String(v).split(':'), m=PERM_MENUS.find(x=>x.k===k); if(m) m.t.forEach(t=>{ (perms[t]=perms[t]||[]).includes(a)||perms[t].push(a); }); });
   if(!/^[A-Za-z0-9._-]{3,}$/.test(un)){ toast('Username minimal 3 karakter (huruf, angka, titik, _ atau -)','error'); return; }
   if(DB.users.some((x,j)=>j!==i&&x.username.toLowerCase()===un.toLowerCase())){ toast('Username sudah dipakai','error'); return; }
   if(pw && pwCheck(pw)){ toast(pwCheck(pw),'error'); return; }
   if(i!=null){
     const u=DB.users[i];
     if(u.role!=='user'&&role==='user'&&u.active!==false&&adminCount()<=1){ toast('Minimal harus ada 1 admin aktif','error'); return; }
-    if(CLOUD_ON) return cloudSaveUser(i,{name,un,pw,role});
-    const self=u===currentUser(); u.name=name||un; u.username=un; u.role=role; if(pw) u.password=pw;
+    if(CLOUD_ON) return cloudSaveUser(i,{name,un,pw,role,perms});
+    const self=u===currentUser(); u.name=name||un; u.username=un; u.role=role; u.perms=perms; if(pw) u.password=pw;
     if(self){ const rem=(()=>{ try{ return !!localStorage.getItem('ppn_user_r'); }catch(_){ return false; } })(); session.clear(); session.set(un,rem); }
-  } else if(CLOUD_ON) return cloudSaveUser(null,{name,un,pw,role});
-  else DB.users.push({username:un,password:pw,name:name||un,role,active:true,recovery:genCode(),created:new Date().toISOString()});
+  } else if(CLOUD_ON) return cloudSaveUser(null,{name,un,pw,role,perms});
+  else DB.users.push({username:un,password:pw,name:name||un,role,perms,active:true,recovery:genCode(),created:new Date().toISOString()});
   await save(); render();
   if(pw) showCred(un,pw,role); else { closeModal(); toast('Akun diperbarui','success'); }
 }
 function showCred(un,pw,role){
-  const txt=`Monitoring Data Pajak - ${brandProyek()}\nUsername : ${un}\nPassword : ${pw}\nHak akses: ${role==='user'?'Pengunjung (lihat & unduh)':'Admin'}`;
+  const txt=`Monitoring Data Pajak - ${brandProyek()}\nUsername : ${un}\nPassword : ${pw}\nHak akses: ${role==='user'?'Pengunjung (lihat & unduh'+(()=>{ const u=DB.users.find(x=>x.username.toLowerCase()===String(un).toLowerCase()); const ps=u?permSummary(u):[]; return ps.length?' · edit: '+ps.join(', '):''; })()+')':'Admin'}`;
   window.__cred=txt;
   openModal(`<div class="modal-h"><div><h3>Akun Siap Dibagikan</h3><p>Salin dan kirimkan informasi login berikut</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b"><div class="cred">${esc(txt)}</div><div class="note">Password tidak ditampilkan lagi setelah jendela ini ditutup. Pengguna dapat mengganti password melalui fitur "Lupa password" dengan kode pemulihan dari admin.</div></div>
@@ -6143,10 +6169,13 @@ function cloudBuild(rows){
 async function cloudSave(){
   if(!SB||!CLOUD.uid||!CLOUD.loaded) return true;
   const me=currentUser();
-  if(!me||me.role==='user') return true; /* pengunjung tidak menyimpan apa pun ke server */
+  if(!me) return true;
+  /* pengunjung hanya menyimpan data menu yang diberi hak akses oleh admin (server juga memeriksa lewat RLS) */
+  const allow=me.role==='user'?new Set(permTypes(me)):null; if(allow&&!allow.size) return true;
+  const okKey=k=>!allow||(k.startsWith('d|')&&allow.has(k.split('|')[1]));
   const cur=cloudSerialize(), ups=[];
-  for(const [k,x] of cur){ const h=hashStr(x.s); if(CLOUD_SYNCED.get(k)!==h) ups.push({k,v:x.v,h,len:x.s.length}); }
-  const dels=[...CLOUD_SYNCED.keys()].filter(k=>!cur.has(k));
+  for(const [k,x] of cur){ const h=hashStr(x.s); if(CLOUD_SYNCED.get(k)!==h&&okKey(k)) ups.push({k,v:x.v,h,len:x.s.length}); }
+  const dels=[...CLOUD_SYNCED.keys()].filter(k=>!cur.has(k)&&okKey(k));
   if(!ups.length&&!dels.length) return true;
   CLOUD.lastOwn=Date.now(); cloudStatus('saving');
   let batch=[],bs=0;
@@ -6168,10 +6197,10 @@ function cloudStatusText(){
 }
 /* ---------- Akun ---------- */
 async function cloudLoadUsers(){
-  const {data,error}=await withRetry(()=>SB.from('profiles').select('id,username,name,role,active,created_at').order('created_at'),'Memuat akun');
+  const {data,error}=await withRetry(()=>SB.from('profiles').select('*').order('created_at'),'Memuat akun');
   if(error) throw error;
   DB.users=(data||[]).map(p=>{ let theme; try{ theme=JSON.parse(localStorage.getItem('ppn_theme_'+p.username)||'null')||undefined; }catch(e){}
-    return {id:p.id,username:p.username,name:p.name||p.username,role:p.role,active:p.active,created:p.created_at,theme}; });
+    return {id:p.id,username:p.username,name:p.name||p.username,role:p.role,active:p.active,created:p.created_at,theme,perms:(p.perms&&typeof p.perms==='object')?p.perms:{}}; });
 }
 async function cloudAfterLogin(remember){
   const {data:{user}}=await withRetry(()=>SB.auth.getUser(),'Memeriksa sesi'); if(!user) throw new Error('Sesi tidak valid');
@@ -6236,10 +6265,11 @@ function cloudSubscribe(){
 function cloudScheduleReload(){ clearTimeout(CLOUD_TIMER); CLOUD_TIMER=setTimeout(()=>cloudReload(),1500+Math.random()*4500); }
 async function cloudCheckProfile(){
   if(!SB||!CLOUD.uid) return true;
-  const {data,error}=await SB.from('profiles').select('active,role,name').eq('id',CLOUD.uid).maybeSingle();
+  const {data,error}=await SB.from('profiles').select('*').eq('id',CLOUD.uid).maybeSingle();
   if(error) return true;
   if(!data||!data.active){ await cloudLogout(); logout(); toast('Sesi berakhir karena akun diubah atau dinonaktifkan oleh admin','error'); return false; }
   const me=currentUser(); if(me&&(me.role!==data.role)){ me.role=data.role; cloudScheduleReload(); }
+  if(me&&data.perms&&JSON.stringify(permsOf(me))!==JSON.stringify(data.perms)){ me.perms=data.perms; if(!$('#modalRoot').innerHTML) showApp(); toast('Hak akses akun Anda diperbarui oleh admin','success'); }
   return true;
 }
 async function cloudReload(manual){
@@ -6285,7 +6315,9 @@ async function cloudRename(u,nu){
     try{ await SB.auth.refreshSession(); }catch(e){} }
   return true;
 }
-async function cloudSaveUser(i,{name,un,pw,role}){
+const PERM_SQL_MSG='Kolom hak akses belum ada di server — jalankan file akses-menu-supabase.sql di Supabase → SQL Editor, lalu coba lagi.';
+async function cloudSavePerms(id,perms){ const {error}=await SB.from('profiles').update({perms}).eq('id',id); if(error) throw new Error(/perms/i.test(error.message||'')?PERM_SQL_MSG:cloudErr(error)); }
+async function cloudSaveUser(i,{name,un,pw,role,perms}){
   const btn=document.querySelector('#userForm button[type=submit]'); if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin-sm"></span> Menyimpan…'; }
   try{
     if(i!=null){
@@ -6294,6 +6326,7 @@ async function cloudSaveUser(i,{name,un,pw,role}){
         if(!await cloudRename(u,nu)){ if(btn){ btn.disabled=false; btn.innerHTML=icon('check')+' Simpan'; } return; }
       }
       const {data,error}=await SB.from('profiles').update({name:name||u.username,role}).eq('id',u.id).select('id');
+      if(!error&&JSON.stringify(perms||{})!==JSON.stringify(permsOf(u))) await cloudSavePerms(u.id,perms||{});
       if(error) throw new Error(cloudErr(error)); if(!data||!data.length) throw new Error('Akun tidak ditemukan atau akses ditolak');
       if(pw){ const r=await SB.rpc('admin_set_password',{uid:u.id,new_password:pw}); if(r.error) throw new Error(cloudErr(r.error)); }
       audit('ubah akun',`${ren?old+' → ':''}${u.username}${pw?' · password direset':''} · ${role==='admin'?'Admin':'Pengunjung'}`);
@@ -6304,7 +6337,9 @@ async function cloudSaveUser(i,{name,un,pw,role}){
     }
     if(!pw) throw new Error('Password wajib diisi');
     const rc=await SB.rpc('admin_create_user',{p_username:un.toLowerCase(),p_password:pw,p_name:name||un,p_role:role});
-    if(!rc.error){ audit('buat akun',`${un.toLowerCase()} (${role==='admin'?'Admin':'Pengunjung'})`); await cloudLoadUsers(); render(); showCred(un.toLowerCase(),pw,role); return; }
+    if(!rc.error){ audit('buat akun',`${un.toLowerCase()} (${role==='admin'?'Admin':'Pengunjung'})`); await cloudLoadUsers();
+      if(perms&&Object.keys(perms).length){ const nu=DB.users.find(x=>x.username===un.toLowerCase()); if(nu){ try{ await cloudSavePerms(nu.id,perms); await cloudLoadUsers(); }catch(err){ toast(err.message,'error'); } } }
+      render(); showCred(un.toLowerCase(),pw,role); return; }
     if(!/PGRST202|could not find the function|schema cache/i.test((rc.error.code||'')+' '+(rc.error.message||''))) throw new Error(cloudErr(rc.error));
     const tmp=cloudTmpClient();
     const r=await tmp.auth.signUp({email:toEmail(un),password:pw,options:{data:{username:un.toLowerCase(),name:name||un}}});
@@ -6312,6 +6347,7 @@ async function cloudSaveUser(i,{name,un,pw,role}){
     const nu=r.data&&r.data.user; if(!nu||(nu.identities&&!nu.identities.length)) throw new Error('Username sudah dipakai');
     try{ await tmp.auth.signOut({scope:'local'}); }catch(e){}
     const up=await SB.from('profiles').update({name:name||un,role,active:true}).eq('id',nu.id).select('id');
+    if(!up.error&&perms&&Object.keys(perms).length){ try{ await cloudSavePerms(nu.id,perms); }catch(err){ toast(err.message,'error'); } }
     if(up.error) throw new Error(cloudErr(up.error));
     if(!up.data||!up.data.length) throw new Error('Profil akun tidak terbentuk. Pastikan setup-supabase.sql sudah dijalankan.');
     if(!r.data.session){ const c=await SB.rpc('admin_set_password',{uid:nu.id,new_password:pw}); if(c.error) console.warn(c.error); }
@@ -6514,6 +6550,11 @@ function rekonCompute(j,to,tol){
 }
 
 /* ---------- Halaman ---------- */
+function renderRpph(){ /* placeholder — flow & data rekonsiliasi PPh sedang disiapkan */
+  $('#view').innerHTML=`<div class="card"><div class="empty rpm-soon">${icon('grid')}<b>Rekonsiliasi Pajak Penghasilan (PPh) sedang disiapkan</b>
+    Alur dan format data rekonsiliasi PPh sedang disusun dan akan ditambahkan setelah final.<br>Sementara itu, pencatatan PPh rekanan tetap dapat dilakukan di <strong>Pencatatan PPh Rekanan &amp; Bupot Dummy</strong>.<br><br>
+    <button class="btn btn-primary" onclick="go('VPR')">Buka Pencatatan PPh Rekanan</button></div></div>`;
+}
 function renderRpm(){
   $('#view').innerHTML=`<div class="card"><div class="empty rpm-soon">${icon('grid')}<b>Rekonsiliasi Pajak Masukan sedang disiapkan</b>
     Fitur rekonsiliasi sedang diuji coba secara manual dan akan ditambahkan kembali setelah formatnya final.<br>Untuk melihat saldo dan mutasi seluruh vendor/rekanan, gunakan menu <b>Buku Besar / GL</b>.<br><br>
@@ -7193,12 +7234,21 @@ async function openAudit(){
 /* =========================================================
    HAK AKSES — akun pengunjung hanya dapat melihat & mengunduh
 ========================================================= */
+/* fungsi yang boleh dijalankan pengunjung bila punya izin menu terkait */
+const PERM_CHK={openImport:t=>can(t,'add'),commitImport:()=>IMPORT&&can(IMPORT.type,'add'),downloadTemplate:t=>can(t,'add'),
+  openRowForm:(t,id)=>can(t,id?'edit':'add'),saveRowForm:(e,t,id)=>can(t,id?'edit':'add'),deleteRow:t=>can(t,'del'),clearMonth:t=>can(t,'del'),
+  selRow:()=>state.view==='VPR'&&canAny('VPR'),selPage:()=>state.view==='VPR'&&canAny('VPR'),
+  saveVprForm:()=>can('VPR',VPR_FORM&&VPR_FORM.id?'edit':'add'),vprDelete:()=>can('VPR','del'),vprBulkDelete:()=>can('VPR','del'),
+  openImportVpr:()=>can('VPR','add'),vprImportGo:()=>can('VPR','add'),vprLapor:()=>can('VPR','edit'),openBupotSubmit:()=>can('VPR','edit'),saveBupotSubmit:()=>can('VPR','edit'),
+  openBupotCtx:()=>can('VPR','edit'),bpcGo:()=>can('VPR','edit'),openMrkForm:id=>can('MRK',id?'edit':'add'),saveMrkForm:()=>can('MRK',$('#mrkForm')&&$('#mrkForm').MRK_ID?'edit':'add'),mrkImportPph:()=>can('MRK','add')};
 ['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
+ 'saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
  'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
  'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
  'downloadTemplate','saveIdentity','openRekonImport','saveRekonImport','delRekon','openRekonMap','saveRekonMap','saveRekonNote','openKredit','doKredit','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
   const f=window[n]; if(typeof f!=='function') return;
-  window[n]=function(...a){ if(!isAdmin()){ toast('Akun pengunjung hanya dapat melihat dan mengunduh data','error'); return; } return f.apply(this,a); };
+  const chk=PERM_CHK[n];
+  window[n]=function(...a){ if(!isAdmin()&&!(chk&&chk(...a))){ toast(chk?'Akun Anda belum diberi hak akses untuk tindakan ini — hubungi admin':'Akun pengunjung hanya dapat melihat dan mengunduh data','error'); return; } return f.apply(this,a); };
 });
 
 /* =========================================================
