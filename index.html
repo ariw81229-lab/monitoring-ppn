@@ -312,6 +312,10 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .kr-hd b{display:block;font-size:14.5px;letter-spacing:.01em;margin-bottom:2px}.kr-hd span{font-size:12.8px;color:var(--muted);line-height:1.55}.kr-hd strong{color:var(--c)}
 .kr-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-right:10px;vertical-align:2px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
 .kr-chip.ok{--c:var(--success)}
+.rp-chips{display:flex;flex-wrap:wrap;gap:8px}.rp-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:6px 12px;font:600 12.5px inherit;color:var(--text);cursor:pointer}
+.rp-chip b{background:var(--surface-2);border-radius:999px;padding:1px 8px;font-size:11.5px}.rp-chip.on{background:var(--primary);border-color:var(--primary);color:#fff}.rp-chip.on b{background:rgba(255,255,255,.22)}
+.rp-t th.rp-g{text-align:center;color:#fff}.rp-t th.rp-g.acc{background:#1e3a5f}.rp-t th.rp-g.tax{background:#0f5132}.rp-t td{vertical-align:top}.rp-t .rp-txt{max-width:280px;white-space:normal}
+.rp-t tfoot td{font-weight:800;background:var(--surface-2);border-top:2px solid var(--border)}.rp-t tr.rp-acc td:first-child{box-shadow:inset 3px 0 var(--danger)}.rp-t tr.rp-dev td:first-child{box-shadow:inset 3px 0 var(--warning)}.rp-t tr.rp-tax td:first-child{box-shadow:inset 3px 0 var(--primary)}.rp-t tr.rp-ok td:first-child{box-shadow:inset 3px 0 var(--success)}
 .kri-guide{margin-top:12px;padding:12px 16px;border:1px dashed color-mix(in srgb,var(--warning) 55%,var(--border));border-radius:12px;background:color-mix(in srgb,var(--warning) 6%,var(--surface));font-size:12.8px;line-height:1.6}
 .kri-guide>b{display:flex;align-items:center;gap:6px;font-size:13.5px}.kri-guide>b svg{width:15px;height:15px;color:var(--warning)}
 .kri-guide ol{margin:6px 0 0;padding-left:20px}.kri-guide code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-weight:700;font-size:12px}.kr-chip.wait{--c:var(--warning)}
@@ -2094,7 +2098,7 @@ function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 /* Hak akses per menu untuk akun pengunjung (diatur admin): add = tambah/import, edit = ubah, del = hapus */
 const PERM_MENUS=[{k:'PM',l:'Pajak Masukan',d:'Monitoring & Prepopulated Pajak Masukan',t:['PM','PP']},{k:'PK',l:'Pajak Keluaran',d:'Monitoring Pajak Keluaran',t:['PK']},{k:'BPS',l:'Bukti Potong ESDM',t:['BPS']},
   {k:'PPH21',l:'PPh 21',d:'Selain Pegawai Tetap · A1 · Bulanan Pegawai Tetap',t:['PPH21NP','PPH21A1','PPH21']},{k:'PPHU',l:'PPh Unifikasi',d:'PPh 23 & PPh 4 ayat 2',t:['PPH23','PPH42']},
-  {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'MRK',l:'Master Rekanan',t:['MRK']},
+  {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'RPPH',l:'Rekonsiliasi PPh',d:'import / input / hapus data laporan PPh akuntansi',t:['RPPH']},{k:'MRK',l:'Master Rekanan',t:['MRK']},
   {k:'spt',l:'Status SPT Rekanan',d:'upload / kelola / hapus bukti SPT PPN rekanan',t:['spt']},{k:'rest',l:'Restitusi PPN',d:'Alur Proses Restitusi: tambah masa, isi alur & dokumen, hapus data proses',t:['rest']}];
 const PERM_ACT=[['add','Tambah'],['edit','Ubah'],['del','Hapus']];
 const permsOf=u=>(u&&u.perms&&typeof u.perms==='object')?u.perms:{};
@@ -6721,11 +6725,238 @@ function rekonCompute(j,to,tol){
 }
 
 /* ---------- Halaman ---------- */
-function renderRpph(){ /* placeholder — flow & data rekonsiliasi PPh sedang disiapkan */
-  $('#view').innerHTML=`<div class="card"><div class="empty rpm-soon">${icon('grid')}<b>Rekonsiliasi Pajak Penghasilan (PPh) sedang disiapkan</b>
-    Alur dan format data rekonsiliasi PPh sedang disusun dan akan ditambahkan setelah final.<br>Sementara itu, pencatatan PPh rekanan tetap dapat dilakukan di <strong>Pencatatan PPh Rekanan &amp; Bupot Dummy</strong>.<br><br>
-    <button class="btn btn-primary" onclick="go('VPR')">Buka Pencatatan PPh Rekanan</button></div></div>`;
+/* =====================================================================
+   REKONSILIASI PPh — Buku Besar Utang PPh (Akuntansi) vs Pencatatan PPh Rekanan (Pajak)
+   Data akuntansi: DB.data.RPPH.all  ·  Rekon dihitung otomatis setiap kali data berubah
+   ===================================================================== */
+const RP_ST={ok:{l:'Cocok',c:'b-success',x:'FFDCFCE7',t:'FF166534'},dev:{l:'Selisih Nilai',c:'b-warning',x:'FFFEF3C7',t:'FF92400E'},
+  acc:{l:'Hanya di Akuntansi',c:'b-danger',x:'FFFEE2E2',t:'FF991B1B'},tax:{l:'Hanya di Pencatatan',c:'b-primary',x:'FFDBEAFE',t:'FF1E40AF'}};
+const RP_ACT={ok:'Sesuai — tidak perlu tindak lanjut',dev:'Periksa DPP, tarif & pembulatan PPh; koreksi jurnal atau pencatatan',
+  acc:'Sudah dibukukan akuntansi tetapi belum ada di Pencatatan PPh Rekanan — input pencatatan / cek apakah sudah dilaporkan',
+  tax:'Ada di Pencatatan PPh Rekanan tetapi belum dibukukan akuntansi — konfirmasi ke Accounting'};
+const RP_ACT_S={ok:'Sesuai',dev:'Cek DPP, tarif & pembulatan',acc:'Belum ada di pencatatan pajak',tax:'Belum dibukukan akuntansi'};
+if(!state.rp) state.rp={st:'all',q:'',scope:'all'};
+const rpAll=()=>{ const d=DB.data.RPPH||(DB.data.RPPH={}); if(!Array.isArray(d.all)) d.all=[]; return d.all; };
+const RP_STOP=new Set(['PT','CV','TBK','UD','PD','KSO','PERSERO','PERUSAHAAN','PERSEROAN','THE','DAN','&','KOPERASI_X']);
+function rpTokens(s){ return String(s||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim().split(' ').filter(w=>w&&!RP_STOP.has(w)); }
+/* nama rekanan dari kolom Text: "PN00000593--NAWALA BIMA KARYA", "PM00002069-4110107019-MUHAMMAD AHYAR", "PPH 23 SEWA MOBIL SYAHRUL ROSADI" */
+function rpNameOf(text){ const t=String(text||'').trim(); let m=/^[A-Z]{1,4}\d{4,}-[\dA-Z]*-+(.+)$/i.exec(t); if(m) return m[1].trim();
+  return t.replace(/^PPH\s*(PASAL\s*)?(21|22|23|26|4\s*\(?\s*2\s*\)?|42|FINAL)?\s*(AYAT\s*\(?2\)?)?\s*/i,'').trim(); }
+function rpJenis(gl,text){ const t=String(text||'').toUpperCase(), g=String(gl||'');
+  if(/PPH\s*21/.test(t)||g.startsWith('210511')) return 'PPh 21'; if(/PPH\s*(23|26)/.test(t)||g.startsWith('210513')) return 'PPh 23/26';
+  if(/PPH\s*(4|FINAL)/.test(t)||g.startsWith('210517')) return 'PPh 4(2) Final'; return '-'; }
+const rpFam=j=>/21/.test(j||'')?'21':/23|26/.test(j||'')?'23':/4/.test(j||'')?'42':'';
+/* cocok nama: semua kata pada nama yang lebih pendek ada di nama lainnya (kata terakhir boleh terpotong, mis. "PT.WIJAYA") */
+function rpNameMatch(a,b){ const A=rpTokens(a), B=rpTokens(b); if(!A.length||!B.length) return false;
+  const [S,L]=A.length<=B.length?[A,B]:[B,A];
+  return S.every((w,i)=>L.includes(w)||(i===S.length-1&&w.length>=3&&L.some(x=>x.startsWith(w)))); }
+const rpInvDate=r=>r.tglInv||r.tanggal||'9999-12-31';
+function rpCompute(){
+  const acc=rpAll().filter(a=>+a.amount), scope=state.rp.scope;
+  const tax=vprAll().filter(r=>!isCanceled(r)&&(scope==='all'||r.masaPajak===scope));
+  const used=new Set(), pairs=[], near=(x,y)=>Math.abs((+x||0)-(+y||0))<1;
+  const oldest=c=>c.sort((x,y)=>rpInvDate(x).localeCompare(rpInvDate(y))||seqOf(x)-seqOf(y))[0];
+  const res=new Map();
+  /* tahap 1: nama + nilai PPh sama → bila lebih dari satu, ambil tanggal invoice paling lama */
+  for(const a of acc){ const nm=a.nama||rpNameOf(a.text); let c=tax.filter(r=>!used.has(r)&&near(r.pph,a.amount)&&rpNameMatch(nm,r.nama));
+    if(!c.length) continue; const fam=rpFam(a.jenis); if(fam){ const f=c.filter(r=>rpFam(r.jenis)===fam); if(f.length) c=f; }
+    const r=oldest(c); used.add(r); res.set(a,{st:'ok',r,n:c.length}); }
+  /* tahap 2: nama sama, nilai berbeda → pasangkan dengan nilai terdekat (tanggal invoice terlama bila sama dekat) */
+  for(const a of acc){ if(res.has(a)) continue; const nm=a.nama||rpNameOf(a.text); let c=tax.filter(r=>!used.has(r)&&rpNameMatch(nm,r.nama));
+    if(!c.length){ res.set(a,{st:'acc'}); continue; } const fam=rpFam(a.jenis); if(fam){ const f=c.filter(r=>rpFam(r.jenis)===fam); if(f.length) c=f; }
+    const d=Math.min(...c.map(r=>Math.abs((+r.pph||0)-a.amount))), r=oldest(c.filter(r=>Math.abs((+r.pph||0)-a.amount)===d)); used.add(r); res.set(a,{st:'dev',r}); }
+  for(const a of acc){ const x=res.get(a); pairs.push({st:x.st,a,r:x.r||null,n:x.n||0,accAmt:a.amount,taxAmt:x.r?+x.r.pph||0:0}); }
+  tax.filter(r=>!used.has(r)).sort((x,y)=>rpInvDate(x).localeCompare(rpInvDate(y))).forEach(r=>pairs.push({st:'tax',a:null,r,accAmt:0,taxAmt:+r.pph||0}));
+  pairs.forEach(p=>p.dev=p.accAmt-p.taxAmt);
+  const S={}; Object.keys(RP_ST).forEach(k=>{ const L=pairs.filter(p=>p.st===k); S[k]={n:L.length,acc:L.reduce((s,p)=>s+p.accAmt,0),tax:L.reduce((s,p)=>s+p.taxAmt,0)}; S[k].dev=S[k].acc-S[k].tax; });
+  S.acc_total=pairs.reduce((s,p)=>s+p.accAmt,0); S.tax_total=pairs.reduce((s,p)=>s+p.taxAmt,0); S.selisih=S.acc_total-S.tax_total;
+  return {pairs,S,nTax:tax.length,nAcc:acc.length}; }
+function rpPeriode(){ const d=rpAll().map(a=>a.posting||a.docDate).filter(Boolean).sort(); return d.length?(d[0].slice(0,7)===d[d.length-1].slice(0,7)?masaLabel(d[0].slice(0,7)):`${fmtDate(d[0])} s.d. ${fmtDate(d[d.length-1])}`):'-'; }
+function rpRefresh(){ renderRpph(); const sg=NAV.find(n=>n.grp&&n.items.includes('RPPH')); if(sg) $('#view').insertAdjacentHTML('afterbegin',subTabsHTML(sg)); }
+function renderRpph(){
+  const R=rpCompute(), {S}=R, f=state.rp, q=(f.q||'').toLowerCase().trim();
+  const rows=R.pairs.filter(p=>(f.st==='all'||p.st===f.st)&&(!q||[p.a&&p.a.text,p.a&&p.a.docNo,p.a&&p.a.ref,p.r&&p.r.nama,p.r&&p.r.noInv,p.r&&p.r.npwp].some(v=>String(v||'').toLowerCase().includes(q))||(/^\d{3,}$/.test(q.replace(/[.,]/g,''))&&[p.accAmt,p.taxAmt].some(v=>String(Math.round(v)).includes(q.replace(/[.,]/g,''))))));
+  const masaOpts=[...new Set(vprAll().map(r=>r.masaPajak).filter(Boolean))].sort();
+  const chip=(k,l,n)=>`<button class="rp-chip ${f.st===k?'on':''}" onclick="state.rp.st='${k}';rpRefresh()">${l}<b>${n}</b></button>`;
+  const empty=!R.nAcc;
+  $('#view').innerHTML=`
+  <div class="kr-hd ok" style="--c:var(--primary)">${icon('grid')}<div><b>Rekonsiliasi PPh Otomatis — Akuntansi vs Pencatatan PPh Rekanan</b><span>Import laporan PPh dari akuntansi (buku besar utang PPh). Sistem otomatis mencocokkan <strong>nama rekanan (kolom Text)</strong> dan <strong>nilai PPh (kolom Amount in LC, tanda minus diabaikan)</strong> dengan data <a class="link" onclick="go('VPR')">Pencatatan PPh Rekanan</a> yang belum dilaporkan. Jika ada beberapa data dengan nama &amp; nilai yang sama, dipakai <strong>tanggal invoice paling lama</strong>.</span></div></div>
+  <div class="grid minis">
+    <div class="card mini"><small>PPh menurut Akuntansi</small><b>${rp(S.acc_total)}</b><span class="sub">${fmt(R.nAcc)} baris · periode ${esc(rpPeriode())}</span></div>
+    <div class="card mini"><small>PPh menurut Pencatatan</small><b>${rp(S.tax_total)}</b><span class="sub">${fmt(R.nTax)} data ${f.scope==='all'?'(semua masa)':'masa '+masaLabel(f.scope)}</span></div>
+    <div class="card mini"><small>Selisih (Akuntansi − Pencatatan)</small><b style="color:${Math.abs(S.selisih)<1?'var(--success)':'var(--danger)'}">${Math.abs(S.selisih)<1?'Rp 0':rp(S.selisih)}</b><span class="sub">${Math.abs(S.selisih)<1?'Seimbang':'Perlu ditindaklanjuti'}</span></div>
+    <div class="card mini"><small>Tingkat Kecocokan</small><b style="color:var(--primary)">${R.nAcc?Math.round(S.ok.n/R.nAcc*100):0}%</b><div class="progress" style="margin-top:6px"><span style="width:${R.nAcc?S.ok.n/R.nAcc*100:0}%;background:var(--success)"></span></div><span class="sub">${S.ok.n} dari ${R.nAcc} baris akuntansi cocok</span></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><div><h3>Hasil Rekonsiliasi PPh</h3><p>${empty?'Belum ada data akuntansi — import laporan PPh dari akuntansi untuk memulai':`Dihitung otomatis · ${fmt(R.pairs.length)} baris hasil`}</p></div>
+      <div class="toolbar">
+        <button class="btn btn-primary adm p-add" onclick="openRpImport()">${icon('upload')} Import Laporan Akuntansi</button>
+        <button class="btn btn-outline adm p-add" onclick="openRpForm()">${icon('plus')}<span class="hide-sm">Input Manual</span></button>
+        <button class="btn btn-outline" onclick="rpExport()" ${R.pairs.length?'':'disabled'}>${icon('download')}<span class="hide-sm">Export Excel</span></button>
+        ${R.nAcc?`<button class="btn btn-danger adm p-del" onclick="rpClear()" title="Hapus semua data akuntansi">${icon('trash')}</button>`:''}</div></div>
+    ${R.pairs.length?`<div class="card-b" style="padding-bottom:0">
+      <div class="rp-chips">${chip('all','Semua',R.pairs.length)}${Object.entries(RP_ST).map(([k,v])=>chip(k,v.l,S[k].n)).join('')}</div>
+      <div class="toolbar filters" style="margin-top:12px">
+        <div class="search">${icon('search')}<input class="input" id="rpSearch" placeholder="Cari nama rekanan, nomor dokumen, invoice, atau nilai…" value="${esc(f.q)}" oninput="state.rp.q=this.value;clearTimeout(window._rpT);window._rpT=setTimeout(()=>{rpRefresh();const e=$('#rpSearch');e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)">${f.q?`<button type="button" class="search-x" style="display:grid" onclick="state.rp.q='';rpRefresh()">${icon('x')}</button>`:''}</div>
+        <select class="select" onchange="state.rp.scope=this.value;rpRefresh()" title="Data Pencatatan PPh Rekanan yang ikut direkonsiliasi"><option value="all">Pencatatan: semua masa</option>${masaOpts.map(k=>`<option value="${k}" ${f.scope===k?'selected':''}>Pencatatan masa ${masaLabel(k)}</option>`).join('')}</select>
+      </div></div>
+    <div class="table-wrap"><table class="rp-t"><thead><tr><th rowspan="2">No</th><th rowspan="2">Status</th><th colspan="4" class="rp-g acc">Buku Besar Akuntansi</th><th colspan="4" class="rp-g tax">Pencatatan PPh Rekanan</th><th rowspan="2" class="num">Selisih</th>${isAdmin()||can('RPPH','edit')||can('RPPH','del')?'<th rowspan="2"></th>':''}</tr>
+      <tr><th>Tgl / No Dokumen</th><th>Keterangan (Text)</th><th>Jenis</th><th class="num">PPh</th><th>Nama Rekanan</th><th>Invoice</th><th>Masa</th><th class="num">PPh</th></tr></thead><tbody>
+      ${rows.map((p,i)=>{ const a=p.a, r=p.r, st=RP_ST[p.st]; return `<tr class="rp-${p.st}"><td>${i+1}</td><td><span class="badge ${st.c}">${st.l}</span>${p.n>1?`<br><small class="sub-t" title="Ada ${p.n} data dengan nama & nilai sama — dipakai tanggal invoice terlama">${p.n} kandidat · inv. terlama</small>`:''}</td>
+        <td>${a?`${fmtDate(a.docDate)}<br><small class="sub-t">${esc(a.docNo||'')}${a.gl?' · '+esc(a.gl):''}</small>`:'<span class="sub-t">—</span>'}</td>
+        <td class="rp-txt">${a?`${esc(a.text||'')}${a.ref?`<br><small class="sub-t">Ref ${esc(a.ref)}</small>`:''}`:'<span class="sub-t">belum dibukukan</span>'}</td>
+        <td>${a?esc(a.jenis||'-'):r?esc((r.jenis||'').replace(' (Final)','')):''}</td><td class="num">${a?fmt(p.accAmt):'—'}</td>
+        <td>${r?`<b>${esc(r.nama||'')}</b><br><small class="sub-t">${esc(r.npwp||'')}</small>`:'<span class="sub-t">belum dicatat</span>'}</td>
+        <td>${r?`${esc(r.noInv||'-')}<br><small class="sub-t">${r.tglInv?fmtDate(r.tglInv):'tgl inv. -'}</small>`:''}</td><td>${r&&r.masaPajak?masaLabel(r.masaPajak):''}</td><td class="num">${r?fmt(p.taxAmt):'—'}</td>
+        <td class="num" style="font-weight:700;color:${Math.abs(p.dev)<1?'var(--success)':'var(--danger)'}">${Math.abs(p.dev)<1?'0':fmt(p.dev)}</td>
+        ${isAdmin()||can('RPPH','edit')||can('RPPH','del')?`<td><div class="row-act">${a&&can('RPPH','edit')?`<button class="icon-btn xs" title="Ubah data akuntansi" onclick="openRpForm('${a.id}')">${icon('edit')}</button>`:''}${a&&can('RPPH','del')?`<button class="icon-btn xs" title="Hapus baris akuntansi" onclick="rpDel('${a.id}')">${icon('trash')}</button>`:''}</div></td>`:''}</tr>`; }).join('')||`<tr><td colspan="12" class="sub-t" style="text-align:center;padding:24px">Tidak ada data sesuai filter</td></tr>`}
+      </tbody><tfoot><tr><td colspan="5">TOTAL ${f.st==='all'&&!q?'':'(sesuai filter)'}</td><td class="num">${fmt(rows.reduce((s,p)=>s+p.accAmt,0))}</td><td colspan="3"></td><td class="num">${fmt(rows.reduce((s,p)=>s+p.taxAmt,0))}</td><td class="num">${fmt(rows.reduce((s,p)=>s+p.dev,0))}</td>${isAdmin()||can('RPPH','edit')||can('RPPH','del')?'<td></td>':''}</tr></tfoot></table></div>`
+    :`<div class="empty">${icon('upload')}<b>Belum ada data untuk direkonsiliasi</b>Import file laporan PPh dari akuntansi (Excel). Kolom yang dipakai: <b>Text</b> (nama rekanan) dan <b>Amount in LC</b> (nilai PPh).<br><br><button class="btn btn-primary adm p-add" onclick="openRpImport()">${icon('upload')} Import Laporan Akuntansi</button></div>`}
+  </div>`;
 }
+/* ---------- import laporan akuntansi ---------- */
+let RPI=null;
+function openRpImport(){ RPI=null;
+  openModal(`<div class="modal-h"><div><h3>Import Laporan PPh dari Akuntansi</h3><p>Rekonsiliasi dengan Pencatatan PPh Rekanan berjalan otomatis setelah data disimpan</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} File ekspor buku besar (mis. SAP FBL3N). Kolom yang dibaca: <b>Text</b> (kolom M — nama rekanan) dan <b>Amount in LC</b> (kolom N — nilai PPh; tanda minus otomatis dihilangkan), ditambah Document Date, Posting Date, G/L Account, Document Number &amp; Reference bila ada. Baris kosong dan baris total dilewati.</div>
+      <input type="file" class="input" id="rpFile" accept=".xlsx,.xls,.csv">
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" id="rpReplace" ${rpAll().length?'checked':''}> Ganti seluruh data akuntansi sebelumnya${rpAll().length?` (${fmt(rpAll().length)} baris)`:''}</label>
+      <div id="rpInfo" style="margin-top:12px"></div></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="rpBtn" disabled onclick="rpImportGo()">${icon('check')} Simpan &amp; Rekonsiliasi</button></div>`,'lg');
+  $('#rpFile').addEventListener('change',async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ RPI=rpParse(XLSX.read(await f.arrayBuffer(),{type:'array'})); const tot=RPI.reduce((s,a)=>s+a.amount,0), J={}; RPI.forEach(a=>J[a.jenis]=(J[a.jenis]||0)+1);
+      $('#rpInfo').innerHTML=RPI.length?`<div class="tax-info ok">${icon('check')}<div><b>${fmt(RPI.length)} baris PPh</b> terbaca · total ${rp(tot)}<div style="font-size:12px;margin-top:4px">${Object.entries(J).map(([k,v])=>`${esc(k)}: ${v}`).join(' · ')}</div></div></div>
+        <div class="table-wrap" style="max-height:260px;overflow:auto;margin-top:10px"><table class="bpc-t" style="font-size:12.5px"><thead><tr><th>Tgl Dok.</th><th>No Dokumen</th><th>Text</th><th>Nama terbaca</th><th class="num">PPh</th></tr></thead><tbody>${RPI.slice(0,200).map(a=>`<tr><td>${fmtDate(a.docDate)}</td><td>${esc(a.docNo||'')}</td><td>${esc(a.text)}</td><td><b>${esc(rpNameOf(a.text))}</b></td><td class="num">${fmt(a.amount)}</td></tr>`).join('')}</tbody></table></div>`
+        :`<div class="tax-info warn">${icon('alert')}<div>Tidak ada baris PPh yang terbaca.</div></div>`;
+      $('#rpBtn').disabled=!RPI.length;
+    }catch(err){ $('#rpInfo').innerHTML=`<div class="tax-info warn">${icon('alert')}<div>${esc(err.message)}</div></div>`; $('#rpBtn').disabled=true; } }); }
+function rpParse(wb){
+  const nh=x=>String(x||'').toLowerCase().replace(/\s+/g,' ').trim(), num=v=>typeof v==='number'?v:toNum(String(v||''))||0;
+  const iso=d=>{ if(typeof d==='number'){ const t=new Date(Math.round((Math.floor(d)-25569)*864e5)); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`; }
+    const t=String(d||'').trim(); let m=/^(\d{4})-(\d{2})-(\d{2})/.exec(t); if(m) return `${m[1]}-${m[2]}-${m[3]}`; m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/.exec(t); return m?`${m[3]}-${pad(+m[2])}-${pad(+m[1])}`:''; };
+  for(const sn of wb.SheetNames){ const A=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:true}); if(!A.length) continue;
+    let hr=-1, c={};
+    for(let i=0;i<Math.min(A.length,15);i++){ const h=A[i].map(nh), x={}; h.forEach((v,j)=>{ if(v==='text') x.text??=j; else if(v==='amount in lc') x.amt??=j; else if(/^document date/.test(v)) x.dd??=j; else if(/^posting date/.test(v)) x.pd??=j;
+        else if(/^g\/l account/.test(v)) x.gl??=j; else if(/^document number/.test(v)) x.dn??=j; else if(/^document type/.test(v)) x.dt??=j; else if(v==='reference') x.ref??=j; else if(v==='assignment') x.asg??=j; else if(/amount in local/.test(v)) x.amt2??=j; });
+      if(x.text!=null&&(x.amt!=null||x.amt2!=null)){ hr=i; c=x; break; } }
+    if(hr<0){ hr=0; c={text:12,amt:13}; } /* petunjuk: kolom M = Text, kolom N = Amount in LC */
+    const ac=c.amt??c.amt2, out=[];
+    for(let i=hr+1;i<A.length;i++){ const r=A[i], text=String(r[c.text]||'').trim(), amt=Math.abs(num(r[ac])); if(!text||!amt) continue;
+      const gl=c.gl!=null?String(r[c.gl]||'').trim():'';
+      out.push({id:uid(),text,amount:Math.round(amt*100)/100,docDate:c.dd!=null?iso(r[c.dd]):'',posting:c.pd!=null?iso(r[c.pd]):'',gl,docNo:c.dn!=null?String(r[c.dn]||'').trim():'',docType:c.dt!=null?String(r[c.dt]||'').trim():'',
+        ref:c.ref!=null?String(r[c.ref]||'').trim():'',asg:c.asg!=null?String(r[c.asg]||'').trim():'',jenis:rpJenis(gl,text)}); }
+    if(out.length) return out; }
+  throw new Error('Kolom "Text" dan "Amount in LC" tidak ditemukan / tidak berisi data.'); }
+async function rpImportGo(){ if(!RPI||!RPI.length) return; const d=DB.data.RPPH||(DB.data.RPPH={});
+  if($('#rpReplace').checked) d.all=RPI; else { const k=a=>[a.docNo,a.text,a.amount].join('|'), have=new Set(rpAll().map(k)); d.all=[...rpAll(),...RPI.filter(a=>!have.has(k(a)))]; }
+  if(await save()){ closeModal(); const R=rpCompute(); toast(`${fmt(RPI.length)} baris akuntansi tersimpan · ${R.S.ok.n} cocok, ${R.S.dev.n} selisih nilai, ${R.S.acc.n} hanya di akuntansi`,'success'); state.rp.st='all'; rpRefresh(); } }
+function openRpForm(id){ const a=id?rpAll().find(x=>x.id===id):null;
+  openModal(`<div class="modal-h"><div><h3>${a?'Ubah':'Input'} Data Akuntansi</h3><p>Baris buku besar utang PPh — rekonsiliasi dihitung ulang otomatis</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form id="rpForm" onsubmit="saveRpForm(event,'${id||''}')"><div class="modal-b"><div class="form-grid">
+      <div class="field"><label>Tanggal Dokumen</label><input class="input" type="date" name="docDate" value="${esc(a?a.docDate:todayISO())}"></div>
+      <div class="field"><label>Tanggal Posting</label><input class="input" type="date" name="posting" value="${esc(a?a.posting:todayISO())}"></div>
+      <div class="field"><label>Nomor Dokumen</label><input class="input" name="docNo" value="${esc(a?a.docNo:'')}"></div>
+      <div class="field"><label>Akun G/L</label><input class="input" name="gl" value="${esc(a?a.gl:'')}" placeholder="mis. 2105131000"></div>
+      <div class="field full"><label>Keterangan (Text) — memuat nama rekanan <span style="color:var(--danger)">*</span></label><input class="input" name="text" required value="${esc(a?a.text:'')}" placeholder="mis. PPH 23 UNIVERSITAS SUMATERA UTARA"></div>
+      <div class="field"><label>Referensi / No Invoice</label><input class="input" name="ref" value="${esc(a?a.ref:'')}"></div>
+      <div class="field"><label>Nilai PPh (Amount in LC) <span style="color:var(--danger)">*</span></label><input class="input" name="amount" required inputmode="decimal" value="${a?fmt(a.amount):''}" placeholder="mis. 221.250"></div>
+    </div></div><div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`);
+}
+async function saveRpForm(e,id){ e.preventDefault(); const fd=new FormData(e.target), v=k=>String(fd.get(k)||'').trim(), amt=Math.abs(toNum(v('amount'))||0);
+  if(!v('text')||!amt) return toast('Keterangan dan nilai PPh wajib diisi','error');
+  const rec={text:v('text'),amount:amt,docDate:v('docDate'),posting:v('posting'),docNo:v('docNo'),gl:v('gl'),ref:v('ref'),jenis:rpJenis(v('gl'),v('text'))};
+  if(id){ const a=rpAll().find(x=>x.id===id); if(a) Object.assign(a,rec); } else rpAll().push({id:uid(),manual:true,...rec});
+  if(await save()){ closeModal(); toast('Data akuntansi tersimpan · rekonsiliasi diperbarui','success'); rpRefresh(); } }
+function rpDel(id){ confirmBox('Hapus baris akuntansi?','Baris ini dihapus dari data rekonsiliasi.','Hapus',async()=>{ DB.data.RPPH.all=rpAll().filter(a=>a.id!==id); if(await save()){ toast('Baris dihapus','success'); rpRefresh(); } }); }
+function rpClear(){ confirmBox('Hapus semua data akuntansi?',`<b>${fmt(rpAll().length)} baris</b> data akuntansi dihapus. Data Pencatatan PPh Rekanan tidak terpengaruh.`,'Hapus semua',async()=>{ DB.data.RPPH.all=[]; if(await save()){ toast('Data akuntansi dihapus','success'); rpRefresh(); } }); }
+/* ---------- export Excel (kertas kerja rekonsiliasi) ---------- */
+async function rpExport(){
+  try{
+    const R=rpCompute(), {S}=R, ExcelJS=await ensureExcelJS(), wb=new ExcelJS.Workbook(); wb.creator='Monitoring Data Pajak'; wb.created=new Date();
+    const NF='#,##0;(#,##0);"-"', BL='FF1E3A5F', thin={style:'thin',color:{argb:'FFB6C2D1'}}, BD={top:thin,left:thin,bottom:thin,right:thin};
+    const kso=brandKso(), proy=brandProyek(), per=rpPeriode(), now=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    let strip=null; try{ const L=await logoImagesForPdf(); const s=await lapLogoStrip(L); if(s.length) strip=s[0]; }catch(e){}
+    const kop=(ws,lastCol,title,sub)=>{ const end=String.fromCharCode(64+lastCol);
+      ws.getRow(1).height=30; ws.getRow(2).height=20; ws.getRow(3).height=8;
+      if(strip){ const id=wb.addImage({base64:strip.data,extension:'png'}); const h=44, w=h*strip.w/strip.h; ws.addImage(id,{tl:{col:0.15,row:0.15},ext:{width:w,height:h}}); }
+      ws.mergeCells(`A1:${end}1`); ws.getCell('A1').value=kso||'KSO'; ws.getCell('A1').font={bold:true,size:15,color:{argb:BL}}; ws.getCell('A1').alignment={horizontal:'center',vertical:'middle'};
+      ws.mergeCells(`A2:${end}2`); ws.getCell('A2').value=proy; ws.getCell('A2').font={bold:true,size:12,color:{argb:'FF334155'}}; ws.getCell('A2').alignment={horizontal:'center'};
+      for(let c=1;c<=lastCol;c++) ws.getRow(3).getCell(c).border={bottom:{style:'medium',color:{argb:BL}}};
+      ws.mergeCells(`A5:${end}5`); ws.getCell('A5').value=title; ws.getCell('A5').font={bold:true,size:14}; ws.getCell('A5').alignment={horizontal:'center'};
+      ws.mergeCells(`A6:${end}6`); ws.getCell('A6').value=sub; ws.getCell('A6').font={italic:true,size:10,color:{argb:'FF475569'}}; ws.getCell('A6').alignment={horizontal:'center'}; };
+    const head=(ws,row,vals,fill)=>{ const r=ws.getRow(row); r.values=vals; r.height=30; r.eachCell(c=>{ c.font={bold:true,color:{argb:'FFFFFFFF'},size:10}; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:fill||BL}}; c.alignment={horizontal:'center',vertical:'middle',wrapText:true}; c.border=BD; }); };
+    const setup=(ws,titleRows)=>{ ws.pageSetup={paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.4,right:.4,top:.5,bottom:.5,header:.2,footer:.2},printTitlesRow:titleRows,horizontalCentered:true};
+      ws.headerFooter={oddFooter:`&L&8Rekonsiliasi PPh · ${proy}&R&8Halaman &P dari &N`}; };
+    /* ===== 1. RINGKASAN ===== */
+    const s1=wb.addWorksheet('RINGKASAN',{views:[{showGridLines:false}]}); s1.columns=[{width:5},{width:44},{width:14},{width:20},{width:20},{width:20},{width:4}];
+    kop(s1,6,'KERTAS KERJA REKONSILIASI PAJAK PENGHASILAN (PPh)','Buku Besar Utang PPh (Akuntansi) terhadap Pencatatan PPh Rekanan (Pajak)');
+    const info=[['Periode data akuntansi',per],['Cakupan pencatatan PPh rekanan',state.rp.scope==='all'?'Semua masa (data belum dilaporkan)':masaLabel(state.rp.scope)],['Metode pencocokan','Nama rekanan (Text) + nilai PPh; bila ganda dipakai tanggal invoice terlama'],['Tanggal disusun',now]];
+    info.forEach((x,i)=>{ const r=s1.getRow(8+i); r.getCell(2).value=x[0]; r.getCell(3).value=': '+x[1]; s1.mergeCells(`C${8+i}:F${8+i}`); r.getCell(2).font={bold:true,size:10}; r.getCell(3).font={size:10}; });
+    let y=13; s1.getCell(`B${y}`).value='A. IKHTISAR REKONSILIASI'; s1.getCell(`B${y}`).font={bold:true,size:11,color:{argb:BL}}; y++;
+    const stmt=[['Saldo utang PPh menurut Akuntansi',S.acc_total,1],['Dikurangi: dibukukan akuntansi, belum ada di pencatatan pajak',-S.acc.acc,0],['Ditambah: ada di pencatatan pajak, belum dibukukan akuntansi',S.tax.tax,0],['Penyesuaian selisih nilai (pencatatan − akuntansi)',S.dev.tax-S.dev.acc,0],['Saldo PPh menurut Pencatatan PPh Rekanan',S.tax_total,1]];
+    stmt.forEach(([l,v,b])=>{ const r=s1.getRow(y); r.getCell(2).value=l; s1.mergeCells(`B${y}:E${y}`); r.getCell(6).value=v; r.getCell(6).numFmt=NF; r.getCell(2).font={bold:!!b,size:10}; r.getCell(6).font={bold:!!b,size:10};
+      if(b){ [2,3,4,5,6].forEach(c=>r.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF1F5F9'}}); r.getCell(6).border={top:{style:'thin'},bottom:{style:'double'}}; } y++; });
+    const chk=s1.getRow(y); chk.getCell(2).value='Kontrol (harus nol)'; s1.mergeCells(`B${y}:E${y}`); chk.getCell(6).value={formula:`F${y-5}+F${y-4}+F${y-3}+F${y-2}-F${y-1}`,result:0}; chk.getCell(6).numFmt=NF; chk.getCell(2).font={italic:true,size:9,color:{argb:'FF64748B'}}; chk.getCell(6).font={italic:true,size:9,color:{argb:'FF64748B'}};
+    y+=2; s1.getCell(`B${y}`).value='B. RINGKASAN PER STATUS'; s1.getCell(`B${y}`).font={bold:true,size:11,color:{argb:BL}}; y++;
+    head(s1,y,[null,'Status','Jumlah Baris','PPh Akuntansi','PPh Pencatatan','Selisih']); const y0=++y;
+    Object.entries(RP_ST).forEach(([k,v])=>{ const r=s1.getRow(y); r.values=['',v.l,S[k].n,S[k].acc,S[k].tax,{formula:`D${y}-E${y}`,result:S[k].dev}];
+      [2,3,4,5,6].forEach(c=>{ const x=r.getCell(c); x.border=BD; x.font={size:10}; if(c>3) x.numFmt=NF; if(c===3) x.alignment={horizontal:'center'}; }); r.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:v.x}}; r.getCell(2).font={bold:true,size:10,color:{argb:v.t}}; y++; });
+    { const r=s1.getRow(y); r.values=['','TOTAL',{formula:`SUM(C${y0}:C${y-1})`,result:R.pairs.length},{formula:`SUM(D${y0}:D${y-1})`,result:S.acc_total},{formula:`SUM(E${y0}:E${y-1})`,result:S.tax_total},{formula:`SUM(F${y0}:F${y-1})`,result:S.selisih}];
+      [2,3,4,5,6].forEach(c=>{ const x=r.getCell(c); x.border={...BD,top:{style:'medium'},bottom:{style:'double'}}; x.font={bold:true,size:10}; if(c>3) x.numFmt=NF; if(c===3) x.alignment={horizontal:'center'}; x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2E8F0'}}; }); y++; }
+    y++; s1.getCell(`B${y}`).value='C. RINGKASAN PER JENIS PPh (AKUN G/L)'; s1.getCell(`B${y}`).font={bold:true,size:11,color:{argb:BL}}; y++;
+    head(s1,y,[null,'Jenis PPh · Akun G/L','Jumlah Baris','PPh Akuntansi','PPh Pencatatan','Selisih']); y++;
+    const G={}; R.pairs.forEach(p=>{ const k=p.a?`${p.a.jenis}${p.a.gl?' · '+p.a.gl:''}`:`${(p.r.jenis||'-').replace(' (Final)','')} · belum dibukukan`; const g=G[k]||(G[k]={n:0,a:0,t:0}); g.n++; g.a+=p.accAmt; g.t+=p.taxAmt; });
+    Object.keys(G).sort().forEach(k=>{ const g=G[k], r=s1.getRow(y); r.values=['',k,g.n,g.a,g.t,{formula:`D${y}-E${y}`,result:g.a-g.t}]; [2,3,4,5,6].forEach(c=>{ const x=r.getCell(c); x.border=BD; x.font={size:10}; if(c>3) x.numFmt=NF; if(c===3) x.alignment={horizontal:'center'}; }); y++; });
+    y+=2; const sg=[['Disiapkan oleh,','Tax Staff'],['Diperiksa oleh,','Accounting'],['Disetujui oleh,','Finance Manager']], cols=['B','D','F'];
+    s1.getCell(`F${y-1}`).value=`Jakarta, ${now}`; s1.getCell(`F${y-1}`).alignment={horizontal:'center'}; s1.getCell(`F${y-1}`).font={size:10};
+    sg.forEach(([a,b],i)=>{ const c=cols[i]; s1.getCell(`${c}${y}`).value=a; s1.getCell(`${c}${y+5}`).value='(..................................)'; s1.getCell(`${c}${y+6}`).value=b;
+      [y,y+5,y+6].forEach(r=>{ s1.getCell(`${c}${r}`).alignment={horizontal:'center'}; s1.getCell(`${c}${r}`).font={size:10,bold:r===y+6}; }); });
+    setup(s1,'1:6'); Object.assign(s1.pageSetup,{orientation:'portrait',fitToHeight:1});
+    /* ===== 2. DETAIL ===== */
+    const s2=wb.addWorksheet('DETAIL REKONSILIASI',{views:[{state:'frozen',xSplit:2,ySplit:9,showGridLines:false}]});
+    const W=[6,18,11.5,11.5,12,12,13,38,18,15,32,19,18,11.5,14,11,15,15,9,30]; s2.columns=W.map(w=>({width:w}));
+    kop(s2,20,'DETAIL REKONSILIASI PPh — AKUNTANSI vs PENCATATAN PPh REKANAN',`Periode akuntansi: ${per} · disusun ${now}`);
+    s2.mergeCells('A8:A9'); s2.mergeCells('B8:B9'); s2.mergeCells('C8:J8'); s2.mergeCells('K8:Q8'); s2.mergeCells('R8:R9'); s2.mergeCells('S8:S9'); s2.mergeCells('T8:T9');
+    const g8=s2.getRow(8); g8.getCell(1).value='No'; g8.getCell(2).value='Status'; g8.getCell(3).value='BUKU BESAR AKUNTANSI'; g8.getCell(11).value='PENCATATAN PPh REKANAN (PAJAK)'; g8.getCell(18).value='Selisih (Akt − Pjk)'; g8.getCell(19).value='Kandidat'; g8.getCell(20).value='Keterangan / Tindak Lanjut';
+    const h9=['','','Tgl Dokumen','Tgl Posting','No Dokumen','Akun G/L','Jenis PPh','Keterangan (Text)','Referensi','PPh Akuntansi','Nama Rekanan','NIK / NPWP','No Invoice','Tgl Invoice','Masa Pajak','Kode Objek','PPh Pencatatan'];
+    h9.forEach((v,i)=>{ if(v) s2.getRow(9).getCell(i+1).value=v; });
+    [8,9].forEach(rn=>{ const r=s2.getRow(rn); r.height=rn===8?20:30; for(let c=1;c<=20;c++){ const x=r.getCell(c); x.font={bold:true,color:{argb:'FFFFFFFF'},size:10}; x.alignment={horizontal:'center',vertical:'middle',wrapText:true}; x.border=BD;
+      x.fill={type:'pattern',pattern:'solid',fgColor:{argb:c>=3&&c<=10?'FF1E3A5F':c>=11&&c<=17?'FF0F5132':'FF334155'}}; } });
+    const dIso=d=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||''); return m?new Date(Date.UTC(+m[1],+m[2]-1,+m[3])):null; };
+    const order={acc:0,dev:1,tax:2,ok:3}; const P=[...R.pairs].sort((x,y)=>order[x.st]-order[y.st]);
+    let rr=10; P.forEach((p,i)=>{ const a=p.a||{}, t=p.r||{}, st=RP_ST[p.st], r=s2.getRow(rr);
+      r.values=[i+1,st.l,dIso(a.docDate),dIso(a.posting),a.docNo||'',a.gl||'',a.jenis||'',a.text||'',a.ref||'',p.a?p.accAmt:null,t.nama||'',t.npwp?String(t.npwp):'',t.noInv||'',dIso(t.tglInv),t.masaPajak?masaLabel(t.masaPajak):'',t.kode||'',p.r?p.taxAmt:null,{formula:`N(J${rr})-N(Q${rr})`,result:p.dev},p.n>1?p.n:null,
+        (p.st==='ok'&&p.n>1?`Dipilih inv. terlama dari ${p.n} data sama · `:'')+RP_ACT_S[p.st]];
+      for(let c=1;c<=20;c++){ const x=r.getCell(c); x.border=BD; x.font={size:9.5}; x.alignment={vertical:'top',wrapText:c===8||c===11||c===20}; }
+      [3,4,14].forEach(c=>r.getCell(c).numFmt='dd/mm/yyyy'); [10,17,18].forEach(c=>r.getCell(c).numFmt=NF); r.getCell(1).alignment={horizontal:'center',vertical:'top'}; r.getCell(19).alignment={horizontal:'center',vertical:'top'};
+      r.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:st.x}}; r.getCell(2).font={bold:true,size:9.5,color:{argb:st.t}};
+      if(Math.abs(p.dev)>=1) r.getCell(18).font={bold:true,size:9.5,color:{argb:'FFB91C1C'}};
+      if(i%2) [1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].forEach(c=>r.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8FAFC'}}); rr++; });
+    { const r=s2.getRow(rr); r.getCell(1).value='TOTAL'; s2.mergeCells(`A${rr}:I${rr}`); r.getCell(10).value={formula:`SUBTOTAL(9,J10:J${rr-1})`,result:S.acc_total}; r.getCell(17).value={formula:`SUBTOTAL(9,Q10:Q${rr-1})`,result:S.tax_total}; r.getCell(18).value={formula:`SUBTOTAL(9,R10:R${rr-1})`,result:S.selisih};
+      for(let c=1;c<=20;c++){ const x=r.getCell(c); x.font={bold:true,size:10}; x.border={...BD,top:{style:'medium'},bottom:{style:'double'}}; x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2E8F0'}}; if([10,17,18].includes(c)) x.numFmt=NF; } r.getCell(1).alignment={horizontal:'center'}; }
+    s2.autoFilter={from:'A9',to:`T${rr-1}`}; setup(s2,'8:9'); s2.pageSetup.paperSize=8; /* A3 */
+    /* ===== 3. PERLU TINDAK LANJUT ===== */
+    const s3=wb.addWorksheet('PERLU TINDAK LANJUT',{views:[{state:'frozen',ySplit:8,showGridLines:false}]}); s3.columns=[{width:6},{width:20},{width:36},{width:46},{width:16},{width:16},{width:16},{width:56}];
+    kop(s3,8,'DAFTAR PERBEDAAN YANG PERLU DITINDAKLANJUTI',`Selisih nilai, hanya di akuntansi, dan hanya di pencatatan · ${now}`);
+    head(s3,8,['No','Status','Nama Rekanan','Keterangan Akuntansi / Invoice','PPh Akuntansi','PPh Pencatatan','Selisih','Tindak Lanjut']);
+    let r3=9; P.filter(p=>p.st!=='ok').forEach((p,i)=>{ const st=RP_ST[p.st], r=s3.getRow(r3);
+      r.values=[i+1,st.l,p.r?p.r.nama:rpNameOf(p.a.text),p.a?`${p.a.text}${p.a.docNo?' · Dok '+p.a.docNo:''}`:`Inv ${p.r.noInv||'-'}${p.r.tglInv?' · '+fmtDate(p.r.tglInv):''}`,p.a?p.accAmt:null,p.r?p.taxAmt:null,{formula:`N(E${r3})-N(F${r3})`,result:p.dev},RP_ACT[p.st]];
+      for(let c=1;c<=8;c++){ const x=r.getCell(c); x.border=BD; x.font={size:9.5}; x.alignment={vertical:'top',wrapText:[3,4,8].includes(c)}; } [5,6,7].forEach(c=>r.getCell(c).numFmt=NF); r.getCell(1).alignment={horizontal:'center',vertical:'top'};
+      r.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:st.x}}; r.getCell(2).font={bold:true,size:9.5,color:{argb:st.t}}; r3++; });
+    if(r3===9){ s3.getCell('A9').value='Tidak ada perbedaan — seluruh data cocok.'; s3.mergeCells('A9:H9'); s3.getCell('A9').alignment={horizontal:'center'}; r3++; }
+    else { const r=s3.getRow(r3); r.getCell(1).value='TOTAL'; s3.mergeCells(`A${r3}:D${r3}`); ['E','F','G'].forEach(c=>{ r.getCell(c).value={formula:`SUM(${c}9:${c}${r3-1})`}; r.getCell(c).numFmt=NF; });
+      for(let c=1;c<=8;c++){ const x=r.getCell(c); x.font={bold:true,size:10}; x.border={...BD,top:{style:'medium'},bottom:{style:'double'}}; x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2E8F0'}}; } r.getCell(1).alignment={horizontal:'center'}; }
+    setup(s3,'8:8');
+    /* ===== 4. DATA AKUNTANSI (sumber) ===== */
+    const s4=wb.addWorksheet('DATA AKUNTANSI',{views:[{state:'frozen',ySplit:1}]}); s4.columns=[{width:6},{width:13},{width:13},{width:13},{width:9},{width:14},{width:44},{width:22},{width:16},{width:14},{width:18}];
+    head(s4,1,['No','Tgl Dokumen','Tgl Posting','Akun G/L','Tipe','No Dokumen','Text','Reference','Amount in LC (asli)','Jenis PPh','Status Rekon']);
+    rpAll().forEach((a,i)=>{ const p=R.pairs.find(x=>x.a===a), r=s4.getRow(i+2); r.values=[i+1,dIso(a.docDate),dIso(a.posting),a.gl,a.docType||'',a.docNo,a.text,a.ref,-a.amount,a.jenis,p?RP_ST[p.st].l:''];
+      for(let c=1;c<=11;c++){ r.getCell(c).border=BD; r.getCell(c).font={size:9.5}; } [2,3].forEach(c=>r.getCell(c).numFmt='dd/mm/yyyy'); r.getCell(9).numFmt=NF; });
+    s4.autoFilter={from:'A1',to:'K1'};
+    saveBytes(new Uint8Array(await wb.xlsx.writeBuffer()),`Rekonsiliasi PPh - Akuntansi vs Pencatatan (${per.replace(/\//g,'-')}).xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    toast('Kertas kerja rekonsiliasi PPh diunduh','success');
+  }catch(e){ console.error(e); toast('Gagal export: '+e.message,'error'); } }
+
 function renderRpm(){
   $('#view').innerHTML=`<div class="card"><div class="empty rpm-soon">${icon('grid')}<b>Rekonsiliasi Pajak Masukan sedang disiapkan</b>
     Fitur rekonsiliasi sedang diuji coba secara manual dan akan ditambahkan kembali setelah formatnya final.<br>Untuk melihat saldo dan mutasi seluruh vendor/rekanan, gunakan menu <b>Buku Besar / GL</b>.<br><br>
@@ -7414,10 +7645,11 @@ const PERM_CHK={openImport:t=>can(t,'add'),commitImport:()=>IMPORT&&can(IMPORT.t
   openBupotCtx:()=>can('VPR','edit'),bpcGo:()=>can('VPR','edit'),openMrkForm:id=>can('MRK',id?'edit':'add'),saveMrkForm:()=>can('MRK',$('#mrkForm')&&$('#mrkForm').MRK_ID?'edit':'add'),mrkImportPph:()=>can('MRK','add'),
   openSptForm:rk=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),saveSpt:(e,rk)=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),deleteSpt:()=>can('spt','del'),
   openRestNew:()=>can('rest','add'),saveRest:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),resetRest:()=>can('rest','del'),
+  openRpImport:()=>can('RPPH','add'),rpImportGo:()=>can('RPPH','add'),openRpForm:id=>can('RPPH',id?'edit':'add'),saveRpForm:(e,id)=>can('RPPH',id?'edit':'add'),rpDel:()=>can('RPPH','del'),rpClear:()=>can('RPPH','del'),
   openTglBayar:()=>can('PM','edit'),tbyGo:()=>can('PM','edit'),openKrImp:()=>can('PP','edit'),kriGo:()=>can('PP','edit'),
   korAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),docAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add')};
 ['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
- 'openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
+ 'openRpImport','rpImportGo','openRpForm','saveRpForm','rpDel','rpClear','openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
  'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
  'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
  'downloadTemplate','saveIdentity','openRekonImport','saveRekonImport','delRekon','openRekonMap','saveRekonMap','saveRekonNote','openKredit','doKredit','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
