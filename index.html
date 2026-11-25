@@ -306,6 +306,12 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .search .search-x:hover{background:var(--bg-soft,#f1f5f9);color:var(--text)}
 .search .search-x svg{position:static;transform:none;width:14px;height:14px}
 .search .input#mainSearch{padding-right:36px}
+.kr-hd{display:flex;gap:14px;align-items:flex-start;margin:0 0 18px;padding:14px 18px;border-radius:14px;border:1px solid var(--border);border-left:4px solid var(--c);background:linear-gradient(90deg,color-mix(in srgb,var(--c) 9%,var(--surface)),var(--surface) 70%)}
+.kr-hd.ok{--c:var(--success)}.kr-hd.wait{--c:var(--warning)}
+.kr-hd>svg{flex:none;width:22px;height:22px;color:var(--c);margin-top:2px}
+.kr-hd b{display:block;font-size:14.5px;letter-spacing:.01em;margin-bottom:2px}.kr-hd span{font-size:12.8px;color:var(--muted);line-height:1.55}.kr-hd strong{color:var(--c)}
+.kr-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-right:10px;vertical-align:2px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
+.kr-chip.ok{--c:var(--success)}.kr-chip.wait{--c:var(--warning)}
 .bpc-t td,.bpc-t th{white-space:normal!important;vertical-align:top}
 .filters .select{width:auto;min-width:150px}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
@@ -2127,7 +2133,7 @@ const NAV=[
   {sec:'Sistem'},{id:'MRK',label:'Master Rekanan',ic:'users'},{id:'settings',label:'Pengaturan',ic:'gear'},
 ];
 const NAV_LBL={VPR:'Pencatatan PPh Rekanan & Bupot Dummy',RPPH:'Rekonsiliasi PPh',PK:'Monitoring Pajak Keluaran',BPS:'Bukti Potong ESDM',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
-const TITLES={RPPH:'PPh · Rekonsiliasi Pajak Penghasilan (PPh)',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan',PP:'Prepopulated Pajak Masukan (Belum Dikreditkan)',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
+const TITLES={RPPH:'PPh · Rekonsiliasi Pajak Penghasilan (PPh)',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan · Telah Dikreditkan',PP:'Prepopulated Pajak Masukan · Belum Dikreditkan',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
   rest:'Alur Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Akun Saya',BPS:'Bukti Potong ESDM',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
   PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)',VPR:'PPh · Pencatatan PPh Rekanan & Bupot Dummy',MRK:'PPh · Master Rekanan'};
@@ -2973,7 +2979,9 @@ function renderData(t){
     <div class="card mini"><small>Total ${T.amountLabel}</small><b style="color:var(--primary)">${rp(sumF(rows,T.amount))}</b></div>
     <div class="card mini"><small>File Bukti Terunggah</small><b>${nf} / ${rows.length}</b><div class="progress" style="margin-top:6px"><span style="width:${rows.length?nf/rows.length*100:0}%;background:var(--success)"></span></div></div>`;
   }
-  const descNote=T.desc?`<div class="note" style="margin:0 0 18px">${icon('alert')} ${T.desc}</div>`:'';
+  const descNote=t==='PM'?`<div class="kr-hd ok">${icon('check')}<div><b>Pajak Masukan Telah Dikreditkan</b><span>Seluruh faktur pada halaman ini telah <strong>dikreditkan</strong> dalam SPT Masa PPN sesuai data Coretax — menjadi dasar perhitungan PPN lebih bayar dan restitusi.</span></div></div>`
+    :t==='PP'?`<div class="kr-hd wait">${icon('clock')}<div><b>Pajak Masukan Belum Dikreditkan</b><span>Faktur prepopulated dari Coretax yang <strong>belum dikreditkan</strong>. Setelah dikreditkan, faktur berpindah ke <a class="link" onclick="go('PM')">Monitoring Pajak Masukan</a>. Perhatikan batas waktu pengkreditan.</span></div></div>`
+    :T.desc?`<div class="note" style="margin:0 0 18px">${icon('alert')} ${T.desc}</div>`:'';
   $('#view').innerHTML=`
   ${t==='PP'?batasAlerts():''}
   ${t==='VPR'||t==='MRK'?'':comb?combTabs(t,yy=>{ let c=0; for(let i=0;i<12;i++) c+=getRows(t,yy,i).length; return c; }):monthTabs(t,y,m,flag)}
@@ -2981,7 +2989,7 @@ function renderData(t){
   ${T.report&&!comb?reportCard(t,y,m,rows):''}${t==='PM'&&!comb?ppnRekapCard(y):''}
   <div class="card">
     <div class="card-h">
-      <div><h3>${T.label}${t==='MRK'?'':' — '}${t==='MRK'?'':t==='VPR'?'Gabungan Semua Masa':comb?combLabel():`${MONTHS[m]} ${y}`}</h3><p>${rows.length?`${fmt(rows.length)} ${T.unit} tersimpan${comb?' di seluruh tahun':''}`:comb?'Belum ada data di seluruh tahun':'Belum ada data untuk masa pajak ini'}</p></div>
+      <div><h3>${t==='PM'?'<span class="kr-chip ok">Telah Dikreditkan</span>':t==='PP'?'<span class="kr-chip wait">Belum Dikreditkan</span>':''}${T.label}${t==='MRK'?'':' — '}${t==='MRK'?'':t==='VPR'?'Gabungan Semua Masa':comb?combLabel():`${MONTHS[m]} ${y}`}</h3><p>${rows.length?`${fmt(rows.length)} ${T.unit} tersimpan${comb?' di seluruh tahun':''}`:comb?'Belum ada data di seluruh tahun':'Belum ada data untuk masa pajak ini'}</p></div>
       ${t==='MRK'?`<div class="toolbar">
         <button class="btn btn-primary adm p-add" onclick="openMrkForm()">${icon('plus')} Tambah Rekanan</button>
         <button class="btn btn-outline adm p-add" onclick="mrkImportPph()" title="Ambil rekanan dari menu PPh 23, PPh 4(2), dan BP 21 Selain Pegawai Tetap">${icon('upload')}<span class="hide-sm">Ambil dari Data PPh</span></button>
@@ -2996,6 +3004,7 @@ function renderData(t){
         <button class="btn btn-outline adm" onclick="openVprCfg()" title="Identitas pemotong pada bupot dummy">${icon('gear')}</button>
       </div>`:comb?`<div class="toolbar"><button class="btn btn-outline" onclick="openExport('${t}')">${icon('download')}<span class="hide-sm">Export</span></button></div>`:`<div class="toolbar">
         <button class="btn btn-primary" onclick="openImport('${t}')">${icon('upload')} Import Excel</button>
+        ${t==='PM'?`<button class="btn btn-outline adm p-edit" onclick="openTglBayar()" title="Isi tanggal bukti bayar banyak faktur sekaligus dari Excel">${icon('calendar')}<span class="hide-sm">Import Tgl Bayar</span></button>`:''}
         <button class="btn btn-outline" onclick="openRowForm('${t}')">${icon('plus')}<span class="hide-sm">Tambah</span></button>
         <button class="btn btn-outline" onclick="downloadTemplate('${t}')">${icon('file')}<span class="hide-sm">Template</span></button>
         <button class="btn btn-outline" onclick="openExport('${t}')">${icon('download')}<span class="hide-sm">Export</span></button>
@@ -3257,6 +3266,66 @@ async function saveVprForm(e){
   if(cur) Object.assign(cur,rec); else { arr.push({id:uid(),seq:Date.now(),...rec}); state.page=9999; } /* data baru di urutan paling bawah */
   if(await save()){ closeModal(); toast(cur?'Data diperbarui':'Data ditambahkan','success'); refreshDataView(); }
 }
+
+/* ---------- Import tanggal bukti bayar (Pajak Masukan) ---------- */
+let TBY=null;
+const fpKey=x=>String(x||'').replace(/\D/g,'').replace(/^0+/,'');
+function pmAllRows(){ const out=[]; for(const [k,a] of Object.entries(DB.data.PM||{})) (a||[]).forEach(r=>out.push({k,r})); return out; }
+async function tbyTemplate(){
+  try{ const rows=filteredRows('PM'); if(!rows.length) return toast('Tidak ada faktur pada daftar','error');
+    const ExcelJS=await ensureExcelJS(), wb=new ExcelJS.Workbook(), ws=wb.addWorksheet('TANGGAL BUKTI BAYAR');
+    const C=[['NOMOR FAKTUR PAJAK',24],['NPWP PENJUAL',22],['NAMA PENJUAL',38],['TANGGAL FAKTUR',15],['MASA PAJAK',15],['DPP',17],['PPN',16],['TANGGAL BUKTI BAYAR (DD/MM/YYYY)',22]];
+    ws.columns=C.map(([,w])=>({width:w})); ws.getRow(1).values=['Isi kolom TANGGAL BUKTI BAYAR, lalu import lewat Monitoring Pajak Masukan → Import Tgl Bayar. Baris yang tanggalnya kosong dilewati. Faktur dicocokkan lewat nomor faktur.'];
+    ws.getRow(1).font={bold:true,color:{argb:'FF1E3A8A'}}; const h=ws.getRow(2); h.values=C.map(c=>c[0]); h.font={bold:true}; h.alignment={wrapText:true,vertical:'middle',horizontal:'center'}; h.height=32;
+    const bd={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+    C.forEach((c,i)=>{ h.getCell(i+1).fill={type:'pattern',pattern:'solid',fgColor:{argb:i===7?'FFFDE68A':'FFDBEAFE'}}; h.getCell(i+1).border=bd; });
+    rows.forEach((r,i)=>{ const x=ws.getRow(3+i); x.values=[String(r.nofaktur||''),String(r.npwp||''),r.nama||'',r.tanggal?fmtDate(r.tanggal):'',masaLabel(key(state.year,state.month)),+r.dpp||0,+r.ppn||0,r.tglBayar?fmtDate(r.tglBayar):''];
+      x.getCell(1).numFmt='@'; x.getCell(2).numFmt='@'; [6,7].forEach(c=>x.getCell(c).numFmt='#,##0'); for(let c=1;c<=8;c++) x.getCell(c).border=bd; x.getCell(8).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFBEB'}}; });
+    ws.views=[{state:'frozen',ySplit:2}];
+    saveBytes(new Uint8Array(await wb.xlsx.writeBuffer()),`Template Tanggal Bukti Bayar PM (${MONTHS[state.month]} ${state.year}).xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); toast('Template diunduh','success');
+  }catch(e){ toast('Gagal: '+e.message,'error'); } }
+function openTglBayar(){ TBY=null;
+  openModal(`<div class="modal-h"><div><h3>Import Tanggal Bukti Bayar</h3><p>Status pembayaran &amp; tanggal bayar terisi otomatis untuk faktur yang cocok — tetap bisa diubah manual lewat tombol Ubah</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Unduh template (berisi faktur pada daftar saat ini), isi kolom <b>Tanggal Bukti Bayar</b>, lalu upload. Bisa juga file Excel lain yang memuat kolom <b>Nomor Faktur</b> dan <b>Tanggal Bayar</b>. Faktur dicocokkan ke seluruh masa Pajak Masukan.</div>
+      <button type="button" class="btn btn-outline" onclick="tbyTemplate()">${icon('download')} Unduh Template Tgl Bayar</button>
+      <input type="file" class="input" id="tbyFile" accept=".xlsx,.xls,.csv" style="margin-top:12px">
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" id="tbyOver" checked onchange="TBY&&tbyShow()"> Ganti tanggal bayar yang sudah terisi bila berbeda</label>
+      <div id="tbyInfo" style="margin-top:12px"></div></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-success" id="tbyBtn" disabled onclick="tbyGo()">${icon('check')} Simpan Tanggal Bayar</button></div>`,'lg');
+  $('#tbyFile').addEventListener('change',async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ TBY=tbyParse(XLSX.read(await f.arrayBuffer(),{type:'array'})); tbyShow(); }catch(err){ $('#tbyInfo').innerHTML=`<div class="tax-info warn">${icon('alert')}<div>${esc(err.message)}</div></div>`; $('#tbyBtn').disabled=true; } }); }
+function tbyParse(wb){
+  const nh=x=>String(x||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const iso=d=>{ if(typeof d==='number'){ const t=new Date(Math.round((Math.floor(d)-25569)*864e5)); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`; }
+    const t=String(d||'').trim(); let m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/.exec(t); if(m) return `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`; m=/^(\d{4})-(\d{2})-(\d{2})/.exec(t); if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+    const i=MONTHS.findIndex(n=>t.toLowerCase().includes(n.toLowerCase())); m=/^(\d{1,2})\s+\D+\s+(\d{4})$/.exec(t); return i>=0&&m?`${m[2]}-${pad(i+1)}-${pad(+m[1])}`:''; };
+  let H=null;
+  for(const sn of wb.SheetNames){ const A=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:true});
+    for(let hr=0;hr<Math.min(A.length,15);hr++){ const h=A[hr].map(nh), c={};
+      h.forEach((x,i)=>{ if(/bayar|pembayaran|bukti bayar|tgl bukti/.test(x)&&/tanggal|tgl|date/.test(x)) c.tgl??=i; else if(/(nomor|no\.?)\s*(faktur|fp|seri)|faktur pajak|nofaktur|nsfp/.test(x)&&!/tanggal|tgl/.test(x)) c.no??=i; else if(/npwp/.test(x)) c.npwp??=i; });
+      if(c.tgl!=null&&c.no!=null){ H={A,hr,c}; break; } }
+    if(H) break; }
+  if(!H) throw new Error('Kolom "Nomor Faktur" dan "Tanggal (Bukti) Bayar" tidak ditemukan pada file.');
+  const idx=new Map(); pmAllRows().forEach(o=>{ const k=fpKey(o.r.nofaktur); if(k) (idx.get(k)||idx.set(k,[]).get(k)).push(o); });
+  const out=[], seen=new Set();
+  for(let i=H.hr+1;i<H.A.length;i++){ const row=H.A[i], no=String(row[H.c.no]||'').trim(), raw=row[H.c.tgl]; if(!no) continue;
+    const tgl=iso(raw), it={line:i+1,no,tgl,raw:String(raw||'')}; const k=fpKey(no);
+    if(!String(raw||'').trim()){ continue; }
+    if(!tgl){ it.st='bad'; it.msg='Format tanggal tidak dikenali'; }
+    else if(seen.has(k)){ it.st='dup'; it.msg='Nomor faktur ganda di file'; }
+    else { let c=idx.get(k)||[]; if(c.length>1&&H.c.npwp!=null){ const nd=String(row[H.c.npwp]||'').replace(/\D/g,'').replace(/^0+/,''); const x=c.filter(o=>String(o.r.npwp||'').replace(/\D/g,'').replace(/^0+/,'')===nd); if(x.length) c=x; }
+      if(!c.length){ it.st='none'; it.msg='Faktur tidak ditemukan di Monitoring Pajak Masukan'; } else { it.st='ok'; it.list=c; } }
+    seen.add(k); out.push(it); }
+  return out; }
+function tbyShow(){ const over=$('#tbyOver').checked, ok=TBY.filter(x=>x.st==='ok'), bad=TBY.filter(x=>x.st!=='ok');
+  ok.forEach(x=>{ x.chg=x.list.filter(o=>!o.r.bayar||!o.r.tglBayar||(o.r.tglBayar!==x.tgl&&over)); x.same=x.list.every(o=>o.r.bayar&&o.r.tglBayar===x.tgl); });
+  const n=ok.reduce((a,x)=>a+x.chg.length,0), keep=ok.filter(x=>!x.chg.length&&!x.same).length, same=ok.filter(x=>x.same).length;
+  $('#tbyInfo').innerHTML=!TBY.length?`<div class="tax-info warn">${icon('alert')}<div>Tidak ada baris yang berisi tanggal bayar.</div></div>`:`<div class="tax-info ${bad.length?'warn':'ok'}">${icon(bad.length?'alert':'check')}<div><b>${fmt(n)} faktur</b> akan diisi tanggal bayarnya${same?` · ${same} sudah sama`:''}${keep?` · ${keep} tidak diganti (tanggal lama dipertahankan)`:''}${bad.length?` · <b>${bad.length} baris dilewati</b>`:''}.</div></div>
+    <div class="table-wrap" style="max-height:300px;overflow:auto;margin-top:10px"><table class="bpc-t" style="font-size:12.5px"><thead><tr><th>Baris</th><th>Nomor Faktur</th><th>Penjual</th><th>Tgl Bayar</th><th>Status</th></tr></thead><tbody>${[...TBY].sort((a,b)=>(a.st==='ok'?0:1)-(b.st==='ok'?0:1)).map(x=>{ const r=x.list&&x.list[0].r;
+      return `<tr><td>${x.line}</td><td><b>${esc(x.no)}</b></td><td>${r?`${esc(r.nama||'')}<br><small style="color:var(--muted)">PPN Rp ${fmt(r.ppn)} · masa ${masaLabel(x.list[0].k)}</small>`:'-'}</td><td>${x.tgl?fmtDate(x.tgl):esc(x.raw)}${r&&r.tglBayar&&r.tglBayar!==x.tgl?`<br><small style="color:var(--muted)">sebelumnya ${fmtDate(r.tglBayar)}</small>`:''}</td><td><span class="badge ${x.st==='ok'?(x.same?'b-muted':'b-success'):'b-danger'}">${x.st==='ok'?(x.same?'Sudah sama':x.chg.length?'Cocok':'Dipertahankan'):x.st==='none'?'Tidak ditemukan':x.st==='dup'?'Ganda':'Tanggal salah'}</span>${x.msg?`<br><small style="color:var(--muted)">${esc(x.msg)}</small>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
+  $('#tbyBtn').disabled=!n; $('#tbyBtn').innerHTML=`${icon('check')} Simpan Tanggal Bayar${n?` (${fmt(n)})`:''}`; }
+async function tbyGo(){ let n=0; (TBY||[]).filter(x=>x.st==='ok').forEach(x=>(x.chg||[]).forEach(o=>{ o.r.bayar=true; o.r.tglBayar=x.tgl; n++; })); if(!n) return;
+  if(await save()){ closeModal(); toast(`Tanggal bukti bayar terisi untuk ${fmt(n)} faktur`,'success'); refreshDataView(); } }
 
 /* ---------- Aksi massal (centang) ---------- */
 async function vprBulkDownload(){ const rows=vprAll().filter(r=>state.sel.has(r.id)); if(!rows.length) return;
@@ -7246,9 +7315,10 @@ const PERM_CHK={openImport:t=>can(t,'add'),commitImport:()=>IMPORT&&can(IMPORT.t
   openBupotCtx:()=>can('VPR','edit'),bpcGo:()=>can('VPR','edit'),openMrkForm:id=>can('MRK',id?'edit':'add'),saveMrkForm:()=>can('MRK',$('#mrkForm')&&$('#mrkForm').MRK_ID?'edit':'add'),mrkImportPph:()=>can('MRK','add'),
   openSptForm:rk=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),saveSpt:(e,rk)=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),deleteSpt:()=>can('spt','del'),
   openRestNew:()=>can('rest','add'),saveRest:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),resetRest:()=>can('rest','del'),
+  openTglBayar:()=>can('PM','edit'),tbyGo:()=>can('PM','edit'),
   korAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),docAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add')};
 ['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
- 'saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
+ 'openTglBayar','tbyGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
  'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
  'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
  'downloadTemplate','saveIdentity','openRekonImport','saveRekonImport','delRekon','openRekonMap','saveRekonMap','saveRekonNote','openKredit','doKredit','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
