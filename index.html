@@ -312,6 +312,10 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .kr-hd b{display:block;font-size:14.5px;letter-spacing:.01em;margin-bottom:2px}.kr-hd span{font-size:12.8px;color:var(--muted);line-height:1.55}.kr-hd strong{color:var(--c)}
 .kr-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-right:10px;vertical-align:2px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
 .kr-chip.ok{--c:var(--success)}
+.rp-map{margin-top:12px;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--surface-2)}.rp-map-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}.rp-map-h svg{width:15px;height:15px;color:var(--primary)}.rp-map-h span{color:var(--muted);font-size:12px}
+.ars-file{display:inline-flex;align-items:center;gap:8px}.ars-file>svg{width:20px;height:20px;color:#dc2626;flex:none}.ars-file span{display:flex;flex-direction:column;font-size:12.5px;line-height:1.3;word-break:break-all}.ars-file small{color:var(--muted);font-size:11px}
+.ars-tabs .nav-cnt{background:var(--surface-2);color:var(--muted);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800}.ars-tabs button.active .nav-cnt{background:rgba(255,255,255,.25);color:#fff}
+.ars-up{border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px}.ars-up .ars-file{margin-bottom:8px}
 .rp-chips{display:flex;flex-wrap:wrap;gap:8px}.rp-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:6px 12px;font:600 12.5px inherit;color:var(--text);cursor:pointer}
 .rp-chip b{background:var(--surface-2);border-radius:999px;padding:1px 8px;font-size:11.5px}.rp-chip.on{background:var(--primary);border-color:var(--primary);color:#fff}.rp-chip.on b{background:rgba(255,255,255,.22)}
 .rp-t th.rp-g{text-align:center;color:#fff}.rp-t th.rp-g.acc{background:#1e3a5f}.rp-t th.rp-g.tax{background:#0f5132}.rp-t td{vertical-align:top}.rp-t .rp-txt{max-width:280px;white-space:normal}
@@ -2098,7 +2102,7 @@ function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 /* Hak akses per menu untuk akun pengunjung (diatur admin): add = tambah/import, edit = ubah, del = hapus */
 const PERM_MENUS=[{k:'PM',l:'Pajak Masukan',d:'Monitoring & Prepopulated Pajak Masukan',t:['PM','PP']},{k:'PK',l:'Pajak Keluaran',d:'Monitoring Pajak Keluaran',t:['PK']},{k:'BPS',l:'Bukti Potong ESDM',t:['BPS']},
   {k:'PPH21',l:'PPh 21',d:'Selain Pegawai Tetap · A1 · Bulanan Pegawai Tetap',t:['PPH21NP','PPH21A1','PPH21']},{k:'PPHU',l:'PPh Unifikasi',d:'PPh 23 & PPh 4 ayat 2',t:['PPH23','PPH42']},
-  {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'RPPH',l:'Rekonsiliasi PPh',d:'import / input / hapus data laporan PPh akuntansi',t:['RPPH']},{k:'MRK',l:'Master Rekanan',t:['MRK']},
+  {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'RPPH',l:'Rekonsiliasi PPh',d:'import / input / hapus data laporan PPh akuntansi',t:['RPPH']},{k:'MRK',l:'Master Rekanan',t:['MRK']},{k:'ARS',l:'Arsip',d:'upload / ubah / hapus dokumen PDF arsip pajak',t:['ARS']},
   {k:'spt',l:'Status SPT Rekanan',d:'upload / kelola / hapus bukti SPT PPN rekanan',t:['spt']},{k:'rest',l:'Restitusi PPN',d:'Alur Proses Restitusi: tambah masa, isi alur & dokumen, hapus data proses',t:['rest']}];
 const PERM_ACT=[['add','Tambah'],['edit','Ubah'],['del','Hapus']];
 const permsOf=u=>(u&&u.perms&&typeof u.perms==='object')?u.perms:{};
@@ -2137,10 +2141,10 @@ const NAV=[
   {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP','GL','RPM']},{grp:'Pajak Keluaran',ic:'out',items:['PK','BPS']},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
   {sec:'Restitusi PPN'},{id:'rest',label:'Alur Proses Restitusi',ic:'refund'},{id:'flow',label:'Flowchart Restitusi',ic:'flow'},
   {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},{grp:'Pencatatan PPh Rekanan',ic:'clip',items:['VPR','RPPH']},
-  {sec:'Sistem'},{id:'MRK',label:'Master Rekanan',ic:'users'},{id:'settings',label:'Pengaturan',ic:'gear'},
+  {sec:'Sistem'},{id:'MRK',label:'Master Rekanan',ic:'users'},{id:'ARS',label:'Arsip',ic:'folder'},{id:'settings',label:'Pengaturan',ic:'gear'},
 ];
 const NAV_LBL={VPR:'Pencatatan PPh Rekanan & Bupot Dummy',RPPH:'Rekonsiliasi PPh',PK:'Monitoring Pajak Keluaran',BPS:'Bukti Potong ESDM',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
-const TITLES={RPPH:'PPh · Rekonsiliasi Pajak Penghasilan (PPh)',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan · Telah Dikreditkan',PP:'Prepopulated Pajak Masukan · Belum Dikreditkan',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
+const TITLES={ARS:'Sistem · Arsip Pajak',RPPH:'PPh · Rekonsiliasi Pajak Penghasilan (PPh)',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan · Telah Dikreditkan',PP:'Prepopulated Pajak Masukan · Belum Dikreditkan',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
   rest:'Alur Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Akun Saya',BPS:'Bukti Potong ESDM',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
   PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)',VPR:'PPh · Pencatatan PPh Rekanan & Bupot Dummy',MRK:'PPh · Master Rekanan'};
@@ -2211,7 +2215,7 @@ function render(){
   const comb=ck&&state[ck];
   $('#yearSel').innerHTML=(ck?`<option value="all" ${comb?'selected':''}>Semua Tahun (Gabungan)</option>`:'')
     +ys.map(y=>`<option value="${y}" ${!comb&&y===state.year?'selected':''}>Tahun ${y}</option>`).join('');
-  $('#yearSel').hidden=state.view==='settings'||state.view==='tema'||state.view==='RPM'||state.view==='RPPH'||state.view==='GL'||state.view==='VPR'||state.view==='MRK';
+  $('#yearSel').hidden=state.view==='settings'||state.view==='tema'||state.view==='RPM'||state.view==='RPPH'||state.view==='ARS'||state.view==='GL'||state.view==='VPR'||state.view==='MRK';
   $('#pageTitle').textContent=TITLES[state.view]||'';
   { const v=state.view, b=document.body.classList; b.toggle('pa',!isAdmin()&&can(v,'add')); b.toggle('pe',!isAdmin()&&can(v,'edit')); b.toggle('pd',!isAdmin()&&can(v,'del')); }
   if(state.view==='dashboard') renderDashboard();
@@ -2222,6 +2226,7 @@ function render(){
   else if(state.view==='flow') renderFlow();
   else if(state.view==='RPM') renderRpm();
   else if(state.view==='RPPH') renderRpph();
+  else if(state.view==='ARS') renderArsip();
   else if(state.view==='GL') renderGL();
   else renderData(state.view);
   $('#view').classList.toggle('dash',state.view==='dashboard');
@@ -6141,7 +6146,7 @@ function resetData(){
     Object.values(DB.spt).forEach(s=>(s.files||[]).forEach(f=>ids.push(f.id)));
     Object.values(DB.reports).forEach(g=>Object.values(g).forEach(r=>[r.file,r.fileSpt,r.fBpe,r.fSpt].forEach(f=>f&&ids.push(f.id))));
     Object.values(DB.restitusi||{}).forEach(r=>(r.docs||[]).forEach(d=>ids.push(d.id)));
-    Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id)));
+    Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id))); ((DB.data.ARS||{}).all||[]).forEach(a=>a.fileId&&ids.push(a.fileId));
     for(const id of ids) await delFile(id);
     const def=defaultDB(); DB.data=def.data; DB.reports=def.reports; DB.spt={}; DB.restitusi={};
     await save(); render(); toast('Semua data dihapus','success');
@@ -6177,7 +6182,7 @@ function allFileIds(){
   Object.values(DB.spt||{}).forEach(s=>(s.files||[]).forEach(f=>ids.push(f.id)));
   Object.values(DB.reports||{}).forEach(g=>Object.values(g).forEach(r=>[r.file,r.fileSpt,r.fBpe,r.fSpt].forEach(f=>f&&ids.push(f.id))));
   Object.values(DB.restitusi||{}).forEach(r=>(r.docs||[]).forEach(d=>ids.push(d.id)));
-  Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id)));
+  Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id))); ((DB.data.ARS||{}).all||[]).forEach(a=>a.fileId&&ids.push(a.fileId));
   return [...new Set(ids)];
 }
 const blobToDataURL=b=>new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(fr.error); fr.readAsDataURL(b); });
@@ -6814,39 +6819,76 @@ function renderRpph(){
     :`<div class="empty">${icon('upload')}<b>Belum ada data untuk direkonsiliasi</b>Import file laporan PPh dari akuntansi (Excel). Kolom yang dipakai: <b>Text</b> (nama rekanan) dan <b>Amount in LC</b> (nilai PPh).<br><br><button class="btn btn-primary adm p-add" onclick="openRpImport()">${icon('upload')} Import Laporan Akuntansi</button></div>`}
   </div>`;
 }
-/* ---------- import laporan akuntansi ---------- */
-let RPI=null;
-function openRpImport(){ RPI=null;
-  openModal(`<div class="modal-h"><div><h3>Import Laporan PPh dari Akuntansi</h3><p>Rekonsiliasi dengan Pencatatan PPh Rekanan berjalan otomatis setelah data disimpan</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
-    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} File ekspor buku besar (mis. SAP FBL3N). Kolom yang dibaca: <b>Text</b> (kolom M — nama rekanan) dan <b>Amount in LC</b> (kolom N — nilai PPh; tanda minus otomatis dihilangkan), ditambah Document Date, Posting Date, G/L Account, Document Number &amp; Reference bila ada. Baris kosong dan baris total dilewati.</div>
-      <input type="file" class="input" id="rpFile" accept=".xlsx,.xls,.csv">
+/* ---------- import laporan akuntansi — format bebas: kolom dideteksi otomatis & bisa dipetakan manual ---------- */
+let RPI=null, RPW=null;
+const RP_MAP=[['name','Nama rekanan / Keterangan',1],['amt','Nilai PPh',1],['dd','Tanggal dokumen',0],['pd','Tanggal posting',0],['dn','Nomor dokumen',0],['gl','Akun G/L',0],['ref','Referensi / No invoice',0]];
+const rpColL=i=>{ let s=''; i++; while(i){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26); } return s; };
+function rpNum(v){ if(typeof v==='number') return v; let t=String(v??'').trim(); if(!t) return NaN; let neg=/^\(.*\)$/.test(t)||/^-|-$/.test(t)||/\bCR\b/i.test(t);
+  t=t.replace(/[^\d.,]/g,''); if(!t||!/\d/.test(t)) return NaN; const ld=t.lastIndexOf('.'), lc=t.lastIndexOf(',');
+  if(ld>=0&&lc>=0){ const dec=ld>lc?'.':','; t=t.split(dec==='.'?',':'.').join(''); if(dec===',') t=t.replace(',','.'); }
+  else if(lc>=0){ t=/^\d{1,3}(,\d{3})+$/.test(t)?t.replace(/,/g,''):t.replace(',','.'); }
+  else if(ld>=0){ if(/^\d{1,3}(\.\d{3})+$/.test(t)) t=t.replace(/\./g,''); }
+  const n=parseFloat(t); return isNaN(n)?NaN:(neg?-n:n); }
+function rpIso(d){ if(typeof d==='number'){ if(d<20000||d>80000) return ''; const t=new Date(Math.round((Math.floor(d)-25569)*864e5)); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`; }
+  const t=String(d||'').trim(); let m=/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/.exec(t); if(m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;
+  m=/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/.exec(t); if(m){ const y=m[3].length===2?'20'+m[3]:m[3]; return `${y}-${pad(+m[2])}-${pad(+m[1])}`; }
+  const i=MONTHS.findIndex(n=>t.toLowerCase().includes(n.toLowerCase().slice(0,3))); m=/^(\d{1,2})\s+\D+\s+(\d{4})/.exec(t); return i>=0&&m?`${m[2]}-${pad(i+1)}-${pad(+m[1])}`:''; }
+const RP_HDR={name:[/^text$/,/nama.*(vendor|rekanan|supplier|pemasok|lawan|penerima|wp)|(vendor|supplier) name|^nama$|^vendor$|^rekanan$|^supplier$/,/^keterangan$|uraian|deskripsi|description|narasi|memo|remark/,/text|keterangan|nama/],
+  amt:[/^amount in lc$/,/amount in local|amount in lc/,/pph|potong|withholding|wht/,/^amount$|jumlah|nilai|nominal|^total$|kredit|credit|debet|debit|saldo|amount/],
+  dd:[/document date|tgl\.? ?dok|tanggal dok|doc\.? ?date|^tanggal$|^tgl$|^date$|tanggal transaksi|tgl transaksi/],pd:[/posting|tgl\.? ?post|tanggal post|tanggal buku|tgl buku/],
+  dn:[/document number|doc\.? ?no|no\.? ?dok|nomor dok|no\.? ?bukti|nomor bukti|voucher|journal|jurnal|no\.? ?jv/],gl:[/^g\/l|g\/l account|^akun|^account$|coa|perkiraan|no\.? ?akun|kode akun/],ref:[/^reference$|referensi|^ref|invoice|faktur|no\.? ?inv/]};
+function rpGuess(A){
+  const nh=x=>String(x??'').toLowerCase().replace(/\s+/g,' ').trim(), all=Object.values(RP_HDR).flat();
+  let hr=-1, best=1; for(let i=0;i<Math.min(A.length,30);i++){ const sc=(A[i]||[]).map(nh).filter(v=>v&&v.length<45&&all.some(re=>re.test(v))).length; if(sc>best){ best=sc; hr=i; } }
+  const W=Math.max(...A.slice(0,Math.max(hr+60,60)).map(r=>(r||[]).length),0), H=hr>=0?(A[hr]||[]).map(nh):[], data=A.slice(hr+1,hr+1+400);
+  const st=[...Array(W)].map((_,c)=>{ let num=0,neg=0,txt=0,len=0,date=0,big=0; for(const r of data){ const v=(r||[])[c]; if(v===''||v==null) continue; const n=rpNum(v);
+      if(typeof v==='string'&&/[a-z]{2}/i.test(v)){ txt++; len+=v.length; } else if(!isNaN(n)){ num++; if(n<0) neg++; if(Math.abs(n)>=100) big++; if(typeof v==='number'&&v>30000&&v<60000&&Number.isInteger(v)) date++; } }
+    return {num,neg,txt,len:txt?len/txt:0,date,big}; });
+  const map={}, used=new Set(), pick=(k,ok)=>{ for(const re of RP_HDR[k]) for(let c=0;c<H.length;c++) if(!used.has(c)&&H[c]&&re.test(H[c])&&(!ok||ok(c))){ map[k]=c; used.add(c); return true; } return false; };
+  pick('amt',c=>st[c]&&st[c].num>0);
+  /* kolom nama: utamakan kolom teks yang isinya paling banyak cocok dengan nama di Pencatatan / Master Rekanan */
+  { const known=[...new Set([...vprAll(),...mrkAll()].map(r=>r.nama).filter(Boolean))].slice(0,600); let bc=-1, bs=0;
+    if(known.length) st.forEach((x,c)=>{ if(used.has(c)||!x.txt) return; let m=0, n=0; for(const r of data){ const v=(r||[])[c]; if(typeof v!=='string'||!/[a-z]{2}/i.test(v)) continue; if(++n>150) break; const nm=rpNameOf(v); if(known.some(k=>rpNameMatch(nm,k))) m++; } if(m>bs){ bs=m; bc=c; } });
+    if(bc>=0&&bs>=2){ map.name=bc; used.add(bc); } }
+  if(map.name==null) pick('name',c=>st[c]&&st[c].txt>0); pick('dd'); pick('pd'); pick('dn'); pick('gl',c=>!/offset|lawan/.test(H[c])); pick('ref');
+  if(map.name==null){ let b=-1; st.forEach((s,c)=>{ const v=s.txt*Math.min(s.len,40); if(!used.has(c)&&v>b){ b=v; map.name=c; } }); if(map.name!=null) used.add(map.name); }
+  if(map.amt==null){ let b=-1; st.forEach((s,c)=>{ const v=s.big*2+s.neg-s.date*3; if(!used.has(c)&&s.num&&v>b){ b=v; map.amt=c; } }); if(map.amt!=null) used.add(map.amt); }
+  return {hr,map,W,H}; }
+function rpExtract(A,hr,map){ const out=[], g=(r,k)=>map[k]!=null&&map[k]>=0?(r||[])[map[k]]:'';
+  for(let i=hr+1;i<A.length;i++){ const r=A[i]||[]; let name=String(g(r,'name')??'').trim(); const n=rpNum(g(r,'amt')), amt=Math.abs(n);
+    if(!name||!amt||isNaN(amt)) continue; if(/^(grand\s*)?(sub\s*)?total\b|^jumlah\b|^saldo\b/i.test(name)) continue;
+    const gl=String(g(r,'gl')??'').trim();
+    out.push({id:uid(),text:name,amount:Math.round(amt*100)/100,docDate:rpIso(g(r,'dd')),posting:rpIso(g(r,'pd')),gl,docNo:String(g(r,'dn')??'').trim(),ref:String(g(r,'ref')??'').trim(),jenis:rpJenis(gl,name),src:i+1}); }
+  return out; }
+function openRpImport(){ RPI=null; RPW=null;
+  openModal(`<div class="modal-h"><div><h3>Import Laporan PPh dari Akuntansi</h3><p>Format Excel bebas — kolom dikenali otomatis dan bisa disesuaikan. Rekonsiliasi berjalan otomatis setelah disimpan.</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Upload file Excel/CSV dari akuntansi dalam bentuk apa pun (ekspor SAP, Accurate, rekap manual, dll). Sistem mencari otomatis kolom <b>nama rekanan / keterangan</b> dan <b>nilai PPh</b> (tanda minus atau kurung diabaikan), serta tanggal, nomor dokumen, akun &amp; referensi bila ada. Jika tebakan kurang tepat, ubah pilihan kolom di bawah — pratinjau langsung diperbarui.</div>
+      <input type="file" class="input" id="rpFile" accept=".xlsx,.xls,.xlsm,.csv">
+      <div id="rpMapBox"></div>
       <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" id="rpReplace" ${rpAll().length?'checked':''}> Ganti seluruh data akuntansi sebelumnya${rpAll().length?` (${fmt(rpAll().length)} baris)`:''}</label>
       <div id="rpInfo" style="margin-top:12px"></div></div>
-    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="rpBtn" disabled onclick="rpImportGo()">${icon('check')} Simpan &amp; Rekonsiliasi</button></div>`,'lg');
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="rpBtn" disabled onclick="rpImportGo()">${icon('check')} Simpan &amp; Rekonsiliasi</button></div>`,'xl');
   $('#rpFile').addEventListener('change',async e=>{ const f=e.target.files[0]; if(!f) return;
-    try{ RPI=rpParse(XLSX.read(await f.arrayBuffer(),{type:'array'})); const tot=RPI.reduce((s,a)=>s+a.amount,0), J={}; RPI.forEach(a=>J[a.jenis]=(J[a.jenis]||0)+1);
-      $('#rpInfo').innerHTML=RPI.length?`<div class="tax-info ok">${icon('check')}<div><b>${fmt(RPI.length)} baris PPh</b> terbaca · total ${rp(tot)}<div style="font-size:12px;margin-top:4px">${Object.entries(J).map(([k,v])=>`${esc(k)}: ${v}`).join(' · ')}</div></div></div>
-        <div class="table-wrap" style="max-height:260px;overflow:auto;margin-top:10px"><table class="bpc-t" style="font-size:12.5px"><thead><tr><th>Tgl Dok.</th><th>No Dokumen</th><th>Text</th><th>Nama terbaca</th><th class="num">PPh</th></tr></thead><tbody>${RPI.slice(0,200).map(a=>`<tr><td>${fmtDate(a.docDate)}</td><td>${esc(a.docNo||'')}</td><td>${esc(a.text)}</td><td><b>${esc(rpNameOf(a.text))}</b></td><td class="num">${fmt(a.amount)}</td></tr>`).join('')}</tbody></table></div>`
-        :`<div class="tax-info warn">${icon('alert')}<div>Tidak ada baris PPh yang terbaca.</div></div>`;
-      $('#rpBtn').disabled=!RPI.length;
-    }catch(err){ $('#rpInfo').innerHTML=`<div class="tax-info warn">${icon('alert')}<div>${esc(err.message)}</div></div>`; $('#rpBtn').disabled=true; } }); }
-function rpParse(wb){
-  const nh=x=>String(x||'').toLowerCase().replace(/\s+/g,' ').trim(), num=v=>typeof v==='number'?v:toNum(String(v||''))||0;
-  const iso=d=>{ if(typeof d==='number'){ const t=new Date(Math.round((Math.floor(d)-25569)*864e5)); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`; }
-    const t=String(d||'').trim(); let m=/^(\d{4})-(\d{2})-(\d{2})/.exec(t); if(m) return `${m[1]}-${m[2]}-${m[3]}`; m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/.exec(t); return m?`${m[3]}-${pad(+m[2])}-${pad(+m[1])}`:''; };
-  for(const sn of wb.SheetNames){ const A=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:true}); if(!A.length) continue;
-    let hr=-1, c={};
-    for(let i=0;i<Math.min(A.length,15);i++){ const h=A[i].map(nh), x={}; h.forEach((v,j)=>{ if(v==='text') x.text??=j; else if(v==='amount in lc') x.amt??=j; else if(/^document date/.test(v)) x.dd??=j; else if(/^posting date/.test(v)) x.pd??=j;
-        else if(/^g\/l account/.test(v)) x.gl??=j; else if(/^document number/.test(v)) x.dn??=j; else if(/^document type/.test(v)) x.dt??=j; else if(v==='reference') x.ref??=j; else if(v==='assignment') x.asg??=j; else if(/amount in local/.test(v)) x.amt2??=j; });
-      if(x.text!=null&&(x.amt!=null||x.amt2!=null)){ hr=i; c=x; break; } }
-    if(hr<0){ hr=0; c={text:12,amt:13}; } /* petunjuk: kolom M = Text, kolom N = Amount in LC */
-    const ac=c.amt??c.amt2, out=[];
-    for(let i=hr+1;i<A.length;i++){ const r=A[i], text=String(r[c.text]||'').trim(), amt=Math.abs(num(r[ac])); if(!text||!amt) continue;
-      const gl=c.gl!=null?String(r[c.gl]||'').trim():'';
-      out.push({id:uid(),text,amount:Math.round(amt*100)/100,docDate:c.dd!=null?iso(r[c.dd]):'',posting:c.pd!=null?iso(r[c.pd]):'',gl,docNo:c.dn!=null?String(r[c.dn]||'').trim():'',docType:c.dt!=null?String(r[c.dt]||'').trim():'',
-        ref:c.ref!=null?String(r[c.ref]||'').trim():'',asg:c.asg!=null?String(r[c.asg]||'').trim():'',jenis:rpJenis(gl,text)}); }
-    if(out.length) return out; }
-  throw new Error('Kolom "Text" dan "Amount in LC" tidak ditemukan / tidak berisi data.'); }
+    try{ const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}); const sheets=wb.SheetNames.map(n=>({n,A:XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:true,blankrows:true})})).filter(s=>s.A.length);
+      if(!sheets.length) throw new Error('File kosong.');
+      /* pilih sheet yang paling banyak menghasilkan baris PPh */
+      let best=null; sheets.forEach((s,i)=>{ const g=rpGuess(s.A), n=rpExtract(s.A,g.hr,g.map).length; if(!best||n>best.n) best={i,n,g}; });
+      RPW={sheets,si:best.i,hr:best.g.hr,map:best.g.map}; rpMapUI(); }
+    catch(err){ $('#rpInfo').innerHTML=`<div class="tax-info warn">${icon('alert')}<div>${esc(err.message)}</div></div>`; $('#rpBtn').disabled=true; } }); }
+function rpMapUI(){ const S=RPW.sheets[RPW.si], A=S.A, W=Math.max(...A.slice(0,Math.max(RPW.hr+60,60)).map(r=>(r||[]).length),1), H=RPW.hr>=0?A[RPW.hr]||[]:[];
+  const lbl=c=>`${rpColL(c)}${H[c]!==undefined&&String(H[c]).trim()?' · '+String(H[c]).trim().slice(0,28):''}`;
+  const sel=(k,l,req)=>`<div class="field"><label>${l}${req?' <span style="color:var(--danger)">*</span>':''}</label><select class="select" onchange="RPW.map['${k}']=this.value===''?null:+this.value;rpMapUI()"><option value="">${req?'— pilih kolom —':'(tidak ada)'}</option>${[...Array(W)].map((_,c)=>`<option value="${c}" ${RPW.map[k]===c?'selected':''}>${esc(lbl(c))}</option>`).join('')}</select></div>`;
+  $('#rpMapBox').innerHTML=`<div class="rp-map"><div class="rp-map-h">${icon('grid')} <b>Pemetaan kolom</b><span>terdeteksi otomatis — sesuaikan bila perlu</span></div>
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr))">
+      ${RPW.sheets.length>1?`<div class="field"><label>Sheet</label><select class="select" onchange="RPW.si=+this.value;const g=rpGuess(RPW.sheets[RPW.si].A);RPW.hr=g.hr;RPW.map=g.map;rpMapUI()">${RPW.sheets.map((s,i)=>`<option value="${i}" ${i===RPW.si?'selected':''}>${esc(s.n)}</option>`).join('')}</select></div>`:''}
+      <div class="field"><label>Baris judul kolom</label><select class="select" onchange="RPW.hr=+this.value;rpMapUI()"><option value="-1" ${RPW.hr<0?'selected':''}>Tidak ada judul</option>${A.slice(0,30).map((r,i)=>`<option value="${i}" ${RPW.hr===i?'selected':''}>Baris ${i+1}: ${esc((r||[]).filter(x=>String(x).trim()).slice(0,3).join(' | ').slice(0,40))}</option>`).join('')}</select></div>
+      ${RP_MAP.map(([k,l,req])=>sel(k,l,req)).join('')}</div></div>`;
+  RPI=RPW.map.name!=null&&RPW.map.amt!=null?rpExtract(A,RPW.hr,RPW.map):[];
+  const tot=RPI.reduce((s,a)=>s+a.amount,0), J={}; RPI.forEach(a=>J[a.jenis]=(J[a.jenis]||0)+1);
+  $('#rpInfo').innerHTML=RPI.length?`<div class="tax-info ok">${icon('check')}<div><b>${fmt(RPI.length)} baris PPh</b> terbaca dari sheet <b>${esc(S.n)}</b> · total ${rp(tot)}<div style="font-size:12px;margin-top:4px">${Object.entries(J).map(([k,v])=>`${esc(k)}: ${v}`).join(' · ')}</div></div></div>
+    <div class="table-wrap" style="max-height:250px;overflow:auto;margin-top:10px"><table class="bpc-t" style="font-size:12.5px"><thead><tr><th>Baris</th><th>Tgl Dok.</th><th>No Dokumen</th><th>Keterangan</th><th>Nama terbaca</th><th class="num">PPh</th></tr></thead><tbody>${RPI.slice(0,150).map(a=>`<tr><td>${a.src}</td><td>${a.docDate?fmtDate(a.docDate):'-'}</td><td>${esc(a.docNo||'-')}</td><td>${esc(a.text)}</td><td><b>${esc(rpNameOf(a.text))}</b></td><td class="num">${fmt(a.amount)}</td></tr>`).join('')}</tbody></table></div>`
+    :`<div class="tax-info warn">${icon('alert')}<div>Belum ada baris yang terbaca. Pastikan kolom <b>Nama rekanan / Keterangan</b> dan <b>Nilai PPh</b> sudah dipilih dengan benar.</div></div>`;
+  $('#rpBtn').disabled=!RPI.length; }
 async function rpImportGo(){ if(!RPI||!RPI.length) return; const d=DB.data.RPPH||(DB.data.RPPH={});
   if($('#rpReplace').checked) d.all=RPI; else { const k=a=>[a.docNo,a.text,a.amount].join('|'), have=new Set(rpAll().map(k)); d.all=[...rpAll(),...RPI.filter(a=>!have.has(k(a)))]; }
   if(await save()){ closeModal(); const R=rpCompute(); toast(`${fmt(RPI.length)} baris akuntansi tersimpan · ${R.S.ok.n} cocok, ${R.S.dev.n} selisih nilai, ${R.S.acc.n} hanya di akuntansi`,'success'); state.rp.st='all'; rpRefresh(); } }
@@ -6956,6 +6998,77 @@ async function rpExport(){
     saveBytes(new Uint8Array(await wb.xlsx.writeBuffer()),`Rekonsiliasi PPh - Akuntansi vs Pencatatan (${per.replace(/\//g,'-')}).xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     toast('Kertas kerja rekonsiliasi PPh diunduh','success');
   }catch(e){ console.error(e); toast('Gagal export: '+e.message,'error'); } }
+
+/* =====================================================================
+   ARSIP PAJAK — kumpulan dokumen final (PDF) per folder · DB.data.ARS.all
+   ===================================================================== */
+const ARS_FOLDERS=[{k:'1',l:'1. BA Hasil Rekonsiliasi PPN',d:'Berita acara hasil rekonsiliasi PPN yang sudah ditandatangani'},
+  {k:'2',l:'2. BA Hasil Rekonsiliasi PPh',d:'Berita acara / kertas kerja rekonsiliasi PPh yang sudah ditandatangani'},
+  {k:'3',l:'3. Laporan PPh',d:'Laporan pemotongan & penyetoran PPh yang sudah ditandatangani'}];
+const ARS_MAX=25*1048576;
+const arsAll=()=>{ const d=DB.data.ARS||(DB.data.ARS={}); if(!Array.isArray(d.all)) d.all=[]; return d.all; };
+if(!state.ars) state.ars={f:'1',q:'',y:'all'};
+function renderArsip(){
+  const A=arsAll(), F=state.ars, fo=ARS_FOLDERS.find(x=>x.k===F.f)||ARS_FOLDERS[0], q=(F.q||'').toLowerCase().trim();
+  const yrs=[...new Set(A.filter(a=>a.folder===fo.k).map(a=>(a.masa||a.at||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  const rows=A.filter(a=>a.folder===fo.k&&(F.y==='all'||(a.masa||a.at||'').startsWith(F.y))&&(!q||[a.title,a.name,a.ket,a.masa&&masaLabel(a.masa)].some(v=>String(v||'').toLowerCase().includes(q))))
+    .sort((a,b)=>String(b.masa||'').localeCompare(String(a.masa||''))||String(b.at).localeCompare(String(a.at)));
+  const size=A.reduce((s,a)=>s+(+a.size||0),0), canA=can('ARS','add'), canE=can('ARS','edit'), canD=can('ARS','del');
+  $('#view').innerHTML=`
+  <div class="subtabs ars-tabs" role="tablist" aria-label="Folder arsip">${ARS_FOLDERS.map(x=>`<button type="button" role="tab" class="${x.k===fo.k?'active':''}" onclick="state.ars.f='${x.k}';state.ars.y='all';renderArsip()">${icon('folder')}<span>${esc(x.l)}</span><i class="nav-cnt">${A.filter(a=>a.folder===x.k).length}</i></button>`).join('')}</div>
+  <div class="grid minis">
+    <div class="card mini"><small>Dokumen di folder ini</small><b>${fmt(A.filter(a=>a.folder===fo.k).length)} PDF</b><span class="sub">${esc(fo.d)}</span></div>
+    <div class="card mini"><small>Total Arsip</small><b>${fmt(A.length)} PDF</b><span class="sub">${ARS_FOLDERS.length} folder · ${fmtSize(size||0)}</span></div>
+    <div class="card mini"><small>Unggahan Terakhir</small><b style="font-size:15px">${A.length?esc([...A].sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0].title):'-'}</b><span class="sub">${A.length?new Date([...A].sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0].at).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'belum ada dokumen'}</span></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><div><h3>${icon('folder')} ${esc(fo.l)}</h3><p>Hanya file <b>PDF</b> — dokumen final yang sudah ditandatangani</p></div>
+      <div class="toolbar">${canA?`<button class="btn btn-primary" onclick="openArsUpload()">${icon('upload')} Upload PDF</button>`:''}</div></div>
+    ${A.filter(a=>a.folder===fo.k).length?`<div class="card-b" style="padding-bottom:0"><div class="toolbar filters">
+      <div class="search">${icon('search')}<input class="input" id="arsQ" placeholder="Cari judul, nama file, keterangan, atau masa…" value="${esc(F.q)}" oninput="state.ars.q=this.value;clearTimeout(window._arsT);window._arsT=setTimeout(()=>{renderArsip();const e=$('#arsQ');e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)">${F.q?`<button type="button" class="search-x" style="display:grid" onclick="state.ars.q='';renderArsip()">${icon('x')}</button>`:''}</div>
+      <select class="select" onchange="state.ars.y=this.value;renderArsip()"><option value="all">Semua tahun</option>${yrs.map(y=>`<option ${F.y===y?'selected':''}>${y}</option>`).join('')}</select></div></div>
+    <div class="table-wrap"><table><thead><tr><th>No</th><th>Judul Dokumen</th><th>Masa / Periode</th><th>Keterangan</th><th>File</th><th>Diunggah</th><th></th></tr></thead><tbody>
+      ${rows.map((a,i)=>`<tr><td>${i+1}</td><td><b>${esc(a.title)}</b></td><td>${a.masa?masaLabel(a.masa):'-'}</td><td style="white-space:normal;max-width:280px">${esc(a.ket||'-')}</td>
+        <td><span class="ars-file">${icon('file')}<span>${esc(a.name)}<small>${fmtSize(+a.size||0)}</small></span></span></td><td>${new Date(a.at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}<br><small class="sub-t">${esc(a.by||'')}</small></td>
+        <td><div class="row-act" style="opacity:1"><button class="icon-btn xs" title="Lihat" onclick="openStoredFile('${a.fileId}','${esc(a.name)}')">${icon('eye')}</button><button class="icon-btn xs" title="Unduh" onclick="openStoredFile('${a.fileId}','${esc(a.name)}',true)">${icon('download')}</button>${canE?`<button class="icon-btn xs" title="Ubah keterangan" onclick="openArsEdit('${a.id}')">${icon('edit')}</button>`:''}${canD?`<button class="icon-btn xs" title="Hapus" onclick="arsDel('${a.id}')">${icon('trash')}</button>`:''}</div></td></tr>`).join('')||`<tr><td colspan="7" class="sub-t" style="text-align:center;padding:24px">Tidak ada dokumen sesuai filter</td></tr>`}
+    </tbody></table></div>`
+    :`<div class="empty">${icon('folder')}<b>Folder masih kosong</b>${esc(fo.d)}.<br>Upload dokumen PDF setelah siap ditandatangani.${canA?`<br><br><button class="btn btn-primary" onclick="openArsUpload()">${icon('upload')} Upload PDF</button>`:''}</div>`}
+  </div>`;
+}
+let ARSU=[];
+function openArsUpload(){ ARSU=[];
+  openModal(`<div class="modal-h"><div><h3>Upload Dokumen Arsip</h3><p>Hanya file PDF · maks. ${fmtSize(ARS_MAX)} per file · bisa beberapa file sekaligus</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form id="arsForm" onsubmit="saveArsUpload(event)"><div class="modal-b">
+      <div class="field"><label>Folder</label><select class="select" name="folder">${ARS_FOLDERS.map(x=>`<option value="${x.k}" ${x.k===state.ars.f?'selected':''}>${esc(x.l)}</option>`).join('')}</select></div>
+      <div class="field"><label>File PDF <span style="color:var(--danger)">*</span></label><input type="file" class="input" id="arsFile" accept="application/pdf,.pdf" multiple></div>
+      <div id="arsList"></div></div>
+    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit" id="arsBtn" disabled>${icon('upload')} Simpan ke Arsip</button></div></form>`,'lg');
+  $('#arsFile').addEventListener('change',e=>{ const bad=[]; ARSU=[];
+    [...e.target.files].forEach(f=>{ const pdf=/\.pdf$/i.test(f.name)&&(!f.type||f.type==='application/pdf'); if(!pdf) bad.push(`${f.name} (bukan PDF)`); else if(f.size>ARS_MAX) bad.push(`${f.name} (lebih dari ${fmtSize(ARS_MAX)})`); else ARSU.push({f,title:f.name.replace(/\.pdf$/i,''),masa:'',ket:''}); });
+    $('#arsList').innerHTML=(bad.length?`<div class="tax-info warn" style="margin-bottom:10px">${icon('alert')}<div><b>${bad.length} file ditolak</b> — hanya PDF yang dapat diarsipkan:<br>${bad.map(esc).join('<br>')}</div></div>`:'')
+      +ARSU.map((u,i)=>`<div class="ars-up"><div class="ars-file">${icon('file')}<span>${esc(u.f.name)}<small>${fmtSize(u.f.size)}</small></span></div>
+        <div class="form-grid" style="grid-template-columns:2fr 1fr"><div class="field"><label>Judul dokumen</label><input class="input" value="${esc(u.title)}" oninput="ARSU[${i}].title=this.value"></div>
+        <div class="field"><label>Masa / periode</label><input class="input" type="month" oninput="ARSU[${i}].masa=this.value"></div>
+        <div class="field full" style="grid-column:1/-1"><label>Keterangan (opsional)</label><input class="input" oninput="ARSU[${i}].ket=this.value" placeholder="mis. ditandatangani Finance Manager & Tax Staff"></div></div></div>`).join('');
+    $('#arsBtn').disabled=!ARSU.length; }); }
+async function saveArsUpload(e){ e.preventDefault(); if(!ARSU.length) return; const folder=new FormData(e.target).get('folder'), me=currentUser(), btn=$('#arsBtn'); btn.disabled=true; btn.textContent='Mengunggah…';
+  try{ for(const u of ARSU){ const fileId=uid(); await putFile(fileId,u.f); arsAll().push({id:uid(),folder,fileId,name:u.f.name,size:u.f.size,title:(u.title||u.f.name).trim(),masa:u.masa||'',ket:(u.ket||'').trim(),at:new Date().toISOString(),by:me?me.name||me.username:''}); }
+    if((STORAGE_MODE==='local'||STORAGE_MODE==='memory')) toast('Penyimpanan browser terbatas: file PDF hanya tersimpan sementara','error');
+    if(await save()){ closeModal(); state.ars.f=folder; toast(`${ARSU.length} dokumen diarsipkan ke ${ARS_FOLDERS.find(x=>x.k===folder).l}`,'success'); renderArsip(); } }
+  catch(err){ toast('Gagal upload: '+err.message,'error'); btn.disabled=false; btn.innerHTML=`${icon('upload')} Simpan ke Arsip`; } }
+function openArsEdit(id){ const a=arsAll().find(x=>x.id===id); if(!a) return;
+  openModal(`<div class="modal-h"><div><h3>Ubah Data Arsip</h3><p>${esc(a.name)}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form onsubmit="saveArsEdit(event,'${id}')"><div class="modal-b"><div class="form-grid">
+      <div class="field full"><label>Judul dokumen</label><input class="input" name="title" required value="${esc(a.title)}"></div>
+      <div class="field"><label>Folder</label><select class="select" name="folder">${ARS_FOLDERS.map(x=>`<option value="${x.k}" ${x.k===a.folder?'selected':''}>${esc(x.l)}</option>`).join('')}</select></div>
+      <div class="field"><label>Masa / periode</label><input class="input" type="month" name="masa" value="${esc(a.masa||'')}"></div>
+      <div class="field full"><label>Keterangan</label><input class="input" name="ket" value="${esc(a.ket||'')}"></div></div></div>
+    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`); }
+async function saveArsEdit(e,id){ e.preventDefault(); const a=arsAll().find(x=>x.id===id), fd=new FormData(e.target); if(!a) return;
+  Object.assign(a,{title:String(fd.get('title')||'').trim()||a.title,folder:String(fd.get('folder')),masa:String(fd.get('masa')||''),ket:String(fd.get('ket')||'').trim()});
+  if(await save()){ closeModal(); toast('Data arsip diperbarui','success'); renderArsip(); } }
+function arsDel(id){ const a=arsAll().find(x=>x.id===id); if(!a) return;
+  confirmBox('Hapus dokumen arsip?',`<b>${esc(a.title)}</b> (${esc(a.name)}) akan dihapus permanen.`,'Hapus',async()=>{ await delFile(a.fileId); DB.data.ARS.all=arsAll().filter(x=>x.id!==id); if(await save()){ toast('Dokumen dihapus dari arsip','success'); renderArsip(); } }); }
 
 function renderRpm(){
   $('#view').innerHTML=`<div class="card"><div class="empty rpm-soon">${icon('grid')}<b>Rekonsiliasi Pajak Masukan sedang disiapkan</b>
@@ -7645,11 +7758,12 @@ const PERM_CHK={openImport:t=>can(t,'add'),commitImport:()=>IMPORT&&can(IMPORT.t
   openBupotCtx:()=>can('VPR','edit'),bpcGo:()=>can('VPR','edit'),openMrkForm:id=>can('MRK',id?'edit':'add'),saveMrkForm:()=>can('MRK',$('#mrkForm')&&$('#mrkForm').MRK_ID?'edit':'add'),mrkImportPph:()=>can('MRK','add'),
   openSptForm:rk=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),saveSpt:(e,rk)=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),deleteSpt:()=>can('spt','del'),
   openRestNew:()=>can('rest','add'),saveRest:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),resetRest:()=>can('rest','del'),
+  openArsUpload:()=>can('ARS','add'),saveArsUpload:()=>can('ARS','add'),openArsEdit:()=>can('ARS','edit'),saveArsEdit:()=>can('ARS','edit'),arsDel:()=>can('ARS','del'),
   openRpImport:()=>can('RPPH','add'),rpImportGo:()=>can('RPPH','add'),openRpForm:id=>can('RPPH',id?'edit':'add'),saveRpForm:(e,id)=>can('RPPH',id?'edit':'add'),rpDel:()=>can('RPPH','del'),rpClear:()=>can('RPPH','del'),
   openTglBayar:()=>can('PM','edit'),tbyGo:()=>can('PM','edit'),openKrImp:()=>can('PP','edit'),kriGo:()=>can('PP','edit'),
   korAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),docAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add')};
 ['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
- 'openRpImport','rpImportGo','openRpForm','saveRpForm','rpDel','rpClear','openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
+ 'openArsUpload','saveArsUpload','openArsEdit','saveArsEdit','arsDel','openRpImport','rpImportGo','openRpForm','saveRpForm','rpDel','rpClear','openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
  'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
  'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
  'downloadTemplate','saveIdentity','openRekonImport','saveRekonImport','delRekon','openRekonMap','saveRekonMap','saveRekonNote','openKredit','doKredit','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
