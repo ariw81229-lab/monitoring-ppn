@@ -302,6 +302,11 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .search{position:relative;flex:1;min-width:180px}
 .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);width:16px;height:16px}
 .search .input{padding-left:34px}
+.search .search-x{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;border-radius:7px;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.search .search-x:hover{background:var(--bg-soft,#f1f5f9);color:var(--text)}
+.search .search-x svg{position:static;transform:none;width:14px;height:14px}
+.search .input#mainSearch{padding-right:36px}
+.bpc-t td,.bpc-t th{white-space:normal!important;vertical-align:top}
 .filters .select{width:auto;min-width:150px}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .pager .btns{display:flex;gap:6px}
@@ -2858,22 +2863,28 @@ function drawChart(units){
    HALAMAN DATA (Pajak Masukan, Pajak Keluaran, PPh 21, PPh Unifikasi)
 ========================================================= */
 function setMonth(i){ state.month=i; resetFilters(); render(); }
-function setSearch(v){ state.search=v; state.page=1; renderTableOnly(); }
+function setSearch(v){ state.search=v; state.page=1; const x=document.querySelector('#mainSearch+.search-x'); if(x) x.style.display=v?'':'none'; renderTableOnly(); }
+function clearSearch(){ const el=$('#mainSearch'); if(el){ el.value=''; el.focus(); } setSearch(''); }
 function setFilter(k,v){ state.f[k]=v; state.page=1; renderTableOnly(); }
 function setPage(p){ state.page=p; renderTableOnly(); }
 function filteredRows(t){
   const q=state.search.trim().toLowerCase(), f=state.f;
-  return viewRows(t).filter(r=>{
-    if(f.status!=='all' && (r.status||'(kosong)')!==f.status) return false;
+  const out=viewRows(t).filter(r=>{
+    if(f.status!=='all' && (r.status||(t==='VPR'?'NORMAL':'(kosong)'))!==f.status) return false;
     if(t==='PM' && f.bayar!=='all' && (!!r.bayar)!==(f.bayar==='sudah')) return false;
     if((t==='BPS'||t==='VPR') && f.jenis!=='all' && (r.jenis||'(kosong)')!==f.jenis) return false;
-    if(t==='VPR' && f.masaV && f.masaV!=='all' && (r.masaPajak||'')!==f.masaV) return false;
+    if(t==='VPR' && f.inpV && !['all','new'].includes(f.inpV)){ const d0=new Date(); d0.setHours(0,0,0,0); const from=f.inpV==='today'?+d0:+d0-(+f.inpV-1)*864e5; if(seqOf(r)<from) return false; }
     if(t==='PPH21A1' && ((f.a1aw&&f.a1aw!=='all')||(f.a1ak&&f.a1ak!=='all')||(f.a1j&&f.a1j!=='all'))){ const a=a1Info(r);
       if(f.a1aw&&f.a1aw!=='all'&&a.aw!==+f.a1aw) return false; if(f.a1ak&&f.a1ak!=='all'&&a.ak!==+f.a1ak) return false; if(f.a1j&&f.a1j!=='all'&&a.j!==f.a1j) return false; }
     if(t==='PP' && f.batas && f.batas!=='all'){ const b=batasInfo(r,rowMasa(r)); if(!b||b.lvl!==f.batas) return false; }
     if(!q) return true;
+    if(t==='VPR'){ const qd=q.replace(/^rp\.?\s*/,'').replace(/[.,\s]/g,''); if(/^\d{3,}$/.test(qd)&&!/^\d{12,}$/.test(qd)&&[r.bruto,r.dpp].some(v=>String(Math.round(+v||0)).includes(qd))) return true;
+      if([r.npwp,r.nama,r.ket,r.kode,r.jenis,r.noInv,r.nobukti,r.lokasi,r.alamat].some(v=>String(v||'').toLowerCase().includes(q))) return true;
+      return /^\d{3,}$/.test(qd)&&[r.bruto,r.dpp].some(v=>String(Math.round(+v||0)).includes(qd)); }
     return [r[TYPES[t].id],r.npwp,r.nama,r.ket,r.kode,r.jenis].some(v=>String(v||'').toLowerCase().includes(q));
   });
+  if(t==='VPR'&&f.inpV&&f.inpV!=='all') out.sort((a,b)=>seqOf(b)-seqOf(a));
+  return out;
 }
 function monthTabs(t,y,m,extra){
   return `<div class="mtabs">${MONTHS.map((n,i)=>{ const c=getRows(t,y,i).length, x=extra?extra(i):'';
@@ -2884,7 +2895,7 @@ function renderData(t){
   const T=TYPES[t], y=state.year, m=state.month, comb=isComb(t), rows=viewRows(t);
   if(t==='PPH21A1') rows.forEach(r=>a1Norm(r,comb?MASA_OF.get(r):key(y,m)));
   const nBatal=rows.filter(isCanceled).length;
-  const statuses=t==='PP'?PP_ST.filter(x=>x!=='CREDITED'):[...new Set(rows.map(r=>r.status||'(kosong)'))];
+  const statuses=t==='PP'?PP_ST.filter(x=>x!=='CREDITED'):t==='VPR'?[...new Set(['NORMAL','PEMBETULAN','BATAL',...rows.map(r=>r.status||'NORMAL')])]:[...new Set(rows.map(r=>r.status||'(kosong)'))];
   const flag = T.report ? i=>{ const r=repOf(T.rep,y,i), has=groupCount(T.rep,y,i); return r&&r.lapor==='Sudah'?'<i class="flag ok" title="Sudah dilaporkan"></i>':has?'<i class="flag wait" title="Belum dilaporkan"></i>':''; } : null;
   let minis;
   const bat=nBatal?` <span class="badge b-warning" style="font-size:10.5px">${nBatal} batal</span>`:'';
@@ -2933,7 +2944,7 @@ function renderData(t){
     <div class="card mini"><small>Jumlah Data Rekanan</small><b>${fmt(ok.length)}</b><span class="sub">PPh 21 ${by('21').length} · PPh 23 ${by('23').length} · PPh 4(2) ${by('42').length}</span></div>
     <div class="card mini"><small>Total Penghasilan Bruto</small><b>${rp(sumF(ok,'bruto'))}</b><span class="sub">DPP ${rp(sumF(ok,'dpp'))}</span></div>
     <div class="card mini"><small>Total PPh Dipotong</small><b style="color:var(--primary)">${rp(sumF(ok,'pph'))}</b><span class="sub">21: ${short(sumF(by('21'),'pph'))} · 23: ${short(sumF(by('23'),'pph'))} · 4(2): ${short(sumF(by('42'),'pph'))}</span></div>
-    <div class="card mini"><small>Belum Dilapor</small><b style="color:var(--warning)">${fmt(ok.length)} data</b><span class="sub">Centang data lalu klik “Tandai sudah dilapor” — data pindah ke menu PPh 21 / PPh Unifikasi dan keluar dari daftar pencatatan ini</span></div>`;
+    <div class="card mini"><small>Belum Dilapor</small><b style="color:var(--warning)">${fmt(ok.length)} data</b><span class="sub">Submit nomor bukti potong Coretax (ikon ➜ di tiap baris atau <b>Import No. Bupot</b>) — data otomatis pindah ke menu PPh 21 / PPh Unifikasi sesuai jenis &amp; masa pajaknya</span></div>`;
   } else {
     const nf=rows.filter(r=>r.file).length;
     minis=`
@@ -2958,6 +2969,7 @@ function renderData(t){
       :t==='VPR'?`<div class="toolbar">
         <button class="btn btn-primary adm" onclick="openRowForm('VPR')">${icon('plus')} Tambah Data</button>
         <button class="btn btn-outline adm" onclick="openImportVpr()">${icon('upload')}<span class="hide-sm">Import Laporan</span></button>
+        <button class="btn btn-outline adm" onclick="openBupotCtx()" title="Import nomor bukti potong dari Coretax — data otomatis pindah ke menu PPh 21 / PPh Unifikasi">${icon('arrow')}<span class="hide-sm">Import No. Bupot</span></button>
         <button class="btn btn-outline" onclick="openLapPph()">${icon('download')}<span class="hide-sm">Laporan PPh</span></button>
         ${rows.length?`<button class="btn btn-outline" onclick="downloadAllBupot()" title="Unduh semua bupot dummy masa ini (ZIP)">${icon('file')}<span class="hide-sm">Semua Bupot</span></button>`:''}
         <button class="btn btn-outline" onclick="openGrossUp()">${icon('calc')}<span class="hide-sm">Gross Up</span></button>
@@ -2973,13 +2985,13 @@ function renderData(t){
     ${rows.length?`
     <div class="card-b" style="padding-bottom:0">
       <div class="toolbar filters">
-        <div class="search">${icon('search')}<input class="input" placeholder="Cari nomor, NPWP, nama ${T.party.toLowerCase()}…" value="${esc(state.search)}" oninput="setSearch(this.value)"></div>
+        <div class="search">${icon('search')}<input class="input" id="mainSearch" placeholder="${t==='VPR'?'Cari NIK/NPWP, nama rekanan, invoice, atau nilai bruto/DPP…':`Cari nomor, NPWP, nama ${T.party.toLowerCase()}…`}" value="${esc(state.search)}" oninput="setSearch(this.value)"><button type="button" class="search-x" title="Hapus pencarian" style="${state.search?'':'display:none'}" onclick="clearSearch()">${icon('x')}</button></div>
         ${t==='PM'?`<select class="select" onchange="setFilter('bayar',this.value)"><option value="all">Semua pembayaran</option><option value="sudah" ${state.f.bayar==='sudah'?'selected':''}>Sudah dibayar</option><option value="belum" ${state.f.bayar==='belum'?'selected':''}>Belum dibayar</option></select>`:''}
         ${t==='PP'?`<select class="select" onchange="setFilter('batas',this.value)"><option value="all">Semua batas kredit</option>${['akhir','dekat','aman','hangus'].map(v=>`<option value="${v}" ${state.f.batas===v?'selected':''}>${{akhir:'Bulan terakhir (segera!)',dekat:'Sisa 1 masa',aman:'Aman',hangus:'Hangus'}[v]}</option>`).join('')}</select>`:''}
         ${t==='PPH21A1'?`<select class="select" onchange="setFilter('a1aw',this.value)" title="Masa awal periode penghasilan"><option value="all">Masa awal: semua</option>${MONTHS.map((nm,i)=>`<option value="${i}" ${String(state.f.a1aw)===String(i)?'selected':''}>Awal ${nm}</option>`).join('')}</select>
           <select class="select" onchange="setFilter('a1ak',this.value)" title="Masa akhir periode penghasilan"><option value="all">Masa akhir: semua</option>${MONTHS.map((nm,i)=>`<option value="${i}" ${String(state.f.a1ak)===String(i)?'selected':''}>Akhir ${nm}</option>`).join('')}</select>
           <select class="select" onchange="setFilter('a1j',this.value)"><option value="all">Semua jenis A1</option>${[['penuh','Desember · setahun penuh'],['tengah','Desember · sebagian tahun'],['berhenti','Berhenti bekerja']].map(([v,l])=>`<option value="${v}" ${state.f.a1j===v?'selected':''}>${l}</option>`).join('')}</select>`:''}
-        ${t==='VPR'?`<select class="select" onchange="setFilter('masaV',this.value)"><option value="all">Semua masa pajak</option>${[...new Set(rows.map(r=>r.masaPajak).filter(Boolean))].sort().reverse().map(k=>`<option value="${k}" ${state.f.masaV===k?'selected':''}>${masaLabel(k)}</option>`).join('')}</select>`:''}
+        ${t==='VPR'?`<select class="select" onchange="setFilter('inpV',this.value)" title="Urutkan / saring berdasarkan waktu input">${[['all','Semua inputan (urut input)'],['new','Inputan terbaru di atas'],['today','Diinput hari ini'],['7','Diinput 7 hari terakhir'],['30','Diinput 30 hari terakhir']].map(([v,l])=>`<option value="${v}" ${(state.f.inpV||'all')===v?'selected':''}>${l}</option>`).join('')}</select>`:''}
         ${t==='BPS'||t==='VPR'?`<select class="select" onchange="setFilter('jenis',this.value)"><option value="all">Semua jenis PPh</option>${[...new Set(rows.map(r=>r.jenis||'(kosong)'))].map(s=>`<option ${s===state.f.jenis?'selected':''} value="${esc(s)}">${esc(s)}</option>`).join('')}</select>`:''}
         <select class="select" onchange="setFilter('status',this.value)"><option value="all">Semua status</option>${statuses.map(s=>`<option ${s===state.f.status?'selected':''} value="${esc(s)}">${esc(s)}</option>`).join('')}</select>
       </div>
@@ -3024,6 +3036,8 @@ function renderTableOnly(){
     <div class="bulk">${state.sel.size} data dipilih<span class="sp"></span>
       <label style="display:flex;align-items:center;gap:6px;font-weight:600">Dilapor pada masa <input type="month" class="input" id="vprMasaL" style="width:auto;height:34px" value="${esc(vprDefMasa())}"></label>
       <button class="btn btn-success btn-sm" onclick="vprLapor()">${icon('check')} Tandai sudah dilapor &amp; pindahkan</button>
+      <button class="btn btn-outline btn-sm" onclick="vprBulkDownload()">${icon('download')} Unduh bupot</button>
+      <button class="btn btn-danger btn-sm" onclick="vprBulkDelete()">${icon('trash')} Hapus</button>
       <button class="btn btn-ghost btn-sm" onclick="state.sel=new Set();renderTableOnly()">Batal pilih</button></div>`
   :selMode&&state.sel.size&&t==='PP'?`
     <div class="bulk">${state.sel.size} faktur dipilih<span class="sp"></span>
@@ -3040,7 +3054,7 @@ function renderTableOnly(){
       <tbody>${slice.map((r,i)=>`<tr class="${t==='PP'?(r.status==='CANCELED'?'pp-cancel':r.status==='AMENDED'?'pp-amend':r.jenisFP==='Normal'?'pp-normal':''):isCanceled(r)?'canceled':''} ${state.sel.has(r.id)?'sel':''}">
         ${selMode?`<td>${(t==='PP'&&!ppOpen(r))||(t==='VPR'&&r.lapor)?'':`<input type="checkbox" class="chk" ${state.sel.has(r.id)?'checked':''} onchange="selRow('${r.id}',this.checked)">`}</td>`:''}
         <td>${start+i+1}</td>${comb?`<td style="white-space:nowrap">${masaLabel(rowMasa(r))}</td>`:''}${T.cols.map(c=>cellHTML(c,r)).join('')}
-        ${comb?'':`<td><div class="row-act">${t==='PP'&&ppOpen(r)?`<button class="icon-btn xs" style="color:var(--success)" title="Kreditkan — tandai CREDITED & pindahkan ke Pajak Masukan" onclick="openKredit('${r.id}')">${icon('check')}</button>`:''}${t==='VPR'?`<button class="icon-btn xs" title="Lihat bupot dummy" onclick="viewBupot('${r.id}')">${icon('eye')}</button><button class="icon-btn xs" style="color:var(--primary)" title="Unduh bupot dummy (PDF)" onclick="downloadBupot('${r.id}')">${icon('download')}</button><button class="icon-btn xs" title="Print bupot dummy" onclick="printBupot('${r.id}')">${icon('print')}</button>`:''}<button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button>${t==='MRK'?'':`<button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button>`}</div></td>`}</tr>`).join('')}</tbody>
+        ${comb?'':`<td><div class="row-act">${t==='PP'&&ppOpen(r)?`<button class="icon-btn xs" style="color:var(--success)" title="Kreditkan — tandai CREDITED & pindahkan ke Pajak Masukan" onclick="openKredit('${r.id}')">${icon('check')}</button>`:''}${t==='VPR'&&isAdmin()?`<button class="icon-btn xs" style="color:var(--success)" title="Submit nomor bukti potong Coretax → pindah ke menu PPh" onclick="openBupotSubmit('${r.id}')">${icon('arrow')}</button>`:''}${t==='VPR'?`<button class="icon-btn xs" title="Lihat bupot dummy" onclick="viewBupot('${r.id}')">${icon('eye')}</button><button class="icon-btn xs" style="color:var(--primary)" title="Unduh bupot dummy (PDF)" onclick="downloadBupot('${r.id}')">${icon('download')}</button><button class="icon-btn xs" title="Print bupot dummy" onclick="printBupot('${r.id}')">${icon('print')}</button>`:''}<button class="icon-btn xs" title="Ubah" onclick="openRowForm('${t}','${r.id}')">${icon('edit')}</button>${t==='MRK'?'':`<button class="icon-btn xs" title="Hapus" onclick="deleteRow('${t}','${r.id}')">${icon('trash')}</button>`}</div></td>`}</tr>`).join('')}</tbody>
       <tfoot><tr>${selMode?'<td></td>':''}<td></td>${comb?'<td></td>':''}${T.cols.map((c,i)=>c.f==='num'?`<td class="num">${fmt(sum(c.k))}</td>`:i===nameIdx?`<td>${t==='PP'?'Total belum dikreditkan (APPROVED)':`Total (tanpa ${T.unit} batal)`}</td>`:'<td></td>').join('')}${comb?'':'<td></td>'}</tr></tfoot>
     </table></div>
     <div class="pager"><span class="per-wrap">Tampilkan <select class="select per-sel" onchange="setPer(this.value)" title="Jumlah baris per halaman">${PER_OPTS.map(v=>`<option ${v===PER_PAGE?'selected':''}>${v}</option>`).join('')}</select> · Menampilkan ${start+1}–${Math.min(start+PER_PAGE,list.length)} dari ${fmt(list.length)} ${T.unit}</span>
@@ -3223,6 +3237,121 @@ async function saveVprForm(e){
   if(cur) Object.assign(cur,rec); else { arr.push({id:uid(),seq:Date.now(),...rec}); state.page=9999; } /* data baru di urutan paling bawah */
   if(await save()){ closeModal(); toast(cur?'Data diperbarui':'Data ditambahkan','success'); refreshDataView(); }
 }
+
+/* ---------- Aksi massal (centang) ---------- */
+async function vprBulkDownload(){ const rows=vprAll().filter(r=>state.sel.has(r.id)); if(!rows.length) return;
+  if(rows.length===1) return downloadBupot(rows[0].id);
+  try{ const JSZip=await ensureJSZip(), z=new JSZip(), used={};
+    for(const r of rows){ let n=bupotName(r); if(used[n]){ used[n]++; n=n.replace(/\.pdf$/,` (${used[n]}).pdf`); } else used[n]=1; z.file(n,(await bupotDoc(r)).output('arraybuffer')); }
+    saveBytes(await z.generateAsync({type:'uint8array'}),`Bupot Dummy Rekanan - ${rows.length} data (${todayISO()}).zip`,'application/zip'); toast(`${rows.length} bupot dummy diunduh (ZIP)`,'success');
+  }catch(e){ toast('Gagal: '+e.message,'error'); } }
+function vprBulkDelete(){ const ids=new Set(vprAll().filter(r=>state.sel.has(r.id)).map(r=>r.id)); if(!ids.size) return;
+  confirmBox('Hapus data terpilih?',`<b>${ids.size} data</b> akan dihapus permanen dari Pencatatan PPh Rekanan.`,'Hapus',async()=>{
+    DB.data.VPR.all=vprAll().filter(r=>!ids.has(r.id)); state.sel=new Set(); if(await save()){ toast(`${ids.size} data dihapus`,'success'); refreshDataView(); } }); }
+
+/* ---------- Nomor bukti potong Coretax → otomatis pindah ke menu PPh 21 / PPh Unifikasi (masa pajak data) ---------- */
+const bpNorm=x=>String(x||'').replace(/\s+/g,'').toUpperCase();
+function bpUsed(nomor,exceptId){ const k=bpNorm(nomor); if(!k) return '';
+  for(const t of ['PPH21','PPH21NP','PPH23','PPH42']) for(const [ym,a] of Object.entries(DB.data[t]||{})) for(const x of a||[]) if(bpNorm(x.nobukti)===k) return `${TYPES[t].menu} · ${masaLabel(ym)}`;
+  const o=vprAll().find(x=>x.id!==exceptId&&bpNorm(x.nobukti)===k); return o?`Pencatatan PPh Rekanan (${o.nama})`:''; }
+function vprMoveCtx(items){ /* items: [{r, nomor, tgl}] — pindah ke menu tujuan pada masa pajak masing-masing */
+  const cnt={}, moved=new Set();
+  items.forEach(({r,nomor,tgl})=>{ const ym=/^\d{4}-\d{2}$/.test(r.masaPajak||'')?r.masaPajak:nowYM(), t=VPR_TGT(r), arr=DB.data[t][ym]||(DB.data[t][ym]=[]);
+    const {vprId,...rec}=vprTargetRec({...r,nobukti:String(nomor).trim(),tanggal:tgl||r.tanggal}); arr.push({id:uid(),masa:+ym.slice(5)-1,tahun:+ym.slice(0,4),...rec,bupotCtx:true});
+    moved.add(r.id); const lbl=`${TYPES[t].menu} ${masaLabel(ym)}`; cnt[lbl]=(cnt[lbl]||0)+1; });
+  DB.data.VPR.all=vprAll().filter(r=>!moved.has(r.id)); moved.forEach(id=>state.sel.delete(id));
+  return Object.entries(cnt).map(([k,v])=>`${k} (${v})`).join(', '); }
+function openBupotSubmit(id){ const r=vprAll().find(x=>x.id===id); if(!r) return; const t=VPR_TGT(r), ym=r.masaPajak||nowYM();
+  openModal(`<div class="modal-h"><div><h3>Submit Nomor Bukti Potong Coretax</h3><p>Setelah disimpan, data otomatis <b>pindah</b> ke menu <b>${esc(TYPES[t].menu)}</b> masa <b>${masaLabel(ym)}</b> dan dihapus dari Pencatatan PPh Rekanan</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form id="bpForm" onsubmit="saveBupotSubmit(event,'${id}')" autocomplete="off"><div class="modal-b">
+      <div class="tax-info ok" style="margin:0 0 14px">${icon('file')}<div><b>${esc(r.nama||'-')}</b> · ${esc(r.npwp||'-')}<br>${esc(r.jenis||'')} · ${esc(r.kode||'')} · Masa ${masaLabel(ym)}${r.noInv?` · Inv ${esc(r.noInv)}`:''}<br>Bruto Rp ${fmt(r.bruto)} · PPh dipotong <b>Rp ${fmt(r.pph)}</b></div></div>
+      <div class="form-grid"><div class="field"><label>Nomor Bukti Potong (Coretax) <span style="color:var(--danger)">*</span></label><input class="input" name="nomor" required value="${esc(r.nobukti||'')}" placeholder="mis. 2600ABCDE" oninput="$('#bpWarn').textContent=''"></div>
+      <div class="field"><label>Tanggal Bukti Potong</label><input class="input" type="date" name="tgl" value="${esc(r.tanggal||todayISO())}"></div></div>
+      <div id="bpWarn" style="color:var(--danger);font-weight:600;font-size:12.5px;margin-top:8px"></div></div>
+    <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-success" type="submit">${icon('arrow')} Simpan &amp; Pindahkan</button></div></form>`);
+  setTimeout(()=>{ const el=$('#bpForm [name=nomor]'); if(el) el.focus(); },50); }
+async function saveBupotSubmit(e,id){ e.preventDefault(); const r=vprAll().find(x=>x.id===id); if(!r) return closeModal();
+  const fd=new FormData(e.target), nomor=String(fd.get('nomor')||'').trim(), tgl=String(fd.get('tgl')||'');
+  if(!nomor) return; const u=bpUsed(nomor,id); if(u){ $('#bpWarn').textContent=`Nomor bukti potong ini sudah dipakai di ${u}.`; return; }
+  const info=vprMoveCtx([{r,nomor,tgl}]); if(await save()){ closeModal(); toast(`Nomor bupot tersimpan · data dipindahkan ke ${info}`,'success'); refreshDataView(); } }
+
+/* import nomor bupot massal: template dari sistem (kolom ID) atau file ekspor Coretax (dicocokkan lewat NPWP + DPP/bruto) */
+let BPC=null;
+async function bpcTemplate(){
+  try{ const rows=filteredRows('VPR'); if(!rows.length) return toast('Tidak ada data pada daftar','error');
+    const ExcelJS=await ensureExcelJS(), wb=new ExcelJS.Workbook(), ws=wb.addWorksheet('NO BUPOT CORETAX');
+    const C=[['ID SISTEM (jangan diubah)',16],['MASA PAJAK',14],['JENIS PAJAK',16],['NIK / NPWP',22],['NAMA REKANAN',36],['NO INVOICE',18],['BRUTO / DPP',16],['PPh DIPOTONG',15],['NOMOR BUKTI POTONG CORETAX',26],['TANGGAL BUKTI POTONG (DD/MM/YYYY)',20]];
+    ws.columns=C.map(([,w])=>({width:w})); ws.getRow(1).values=['Isi kolom NOMOR BUKTI POTONG CORETAX (dan tanggal bila berbeda), lalu import lewat menu Pencatatan PPh Rekanan → Import No. Bupot. Baris tanpa nomor dilewati.'];
+    ws.getRow(1).font={bold:true,color:{argb:'FF1E3A8A'}}; const h=ws.getRow(2); h.values=C.map(c=>c[0]); h.font={bold:true}; h.alignment={wrapText:true,vertical:'middle',horizontal:'center'}; h.height=34;
+    C.forEach((c,i)=>{ h.getCell(i+1).fill={type:'pattern',pattern:'solid',fgColor:{argb:i>=8?'FFFDE68A':'FFDBEAFE'}}; h.getCell(i+1).border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}}; });
+    rows.forEach((r,i)=>{ const x=ws.getRow(3+i); x.values=[r.id,masaLabel(r.masaPajak||''),r.jenis||'',String(r.npwp||''),r.nama||'',r.noInv||'',+r.bruto||0,+r.pph||0,r.nobukti||'',r.tanggal?fmtDate(r.tanggal):''];
+      [7,8].forEach(c=>x.getCell(c).numFmt='#,##0'); x.getCell(1).font={color:{argb:'FF94A3B8'}}; x.getCell(4).numFmt='@'; x.getCell(9).numFmt='@';
+      for(let c=1;c<=10;c++) x.getCell(c).border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}}; [9,10].forEach(c=>x.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFBEB'}}); });
+    ws.views=[{state:'frozen',ySplit:2}];
+    saveBytes(new Uint8Array(await wb.xlsx.writeBuffer()),`Template No Bupot Coretax (${todayISO()}).xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); toast('Template diunduh','success');
+  }catch(e){ toast('Gagal: '+e.message,'error'); } }
+function openBupotCtx(){ BPC=null;
+  openModal(`<div class="modal-h"><div><h3>Import Nomor Bukti Potong Coretax</h3><p>Data yang cocok otomatis <b>pindah</b> ke menu PPh 21 / PPh Unifikasi sesuai jenis &amp; masa pajaknya</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} <b>Cara 1:</b> unduh template (berisi data pada daftar saat ini), isi kolom <b>Nomor Bukti Potong Coretax</b>, lalu upload.<br><b>Cara 2:</b> upload file ekspor daftar bukti potong dari <b>Coretax</b> — dicocokkan otomatis lewat <b>NIK/NPWP + DPP/bruto</b> (serta nomor invoice/dokumen referensi &amp; masa pajak bila ada).</div>
+      <button type="button" class="btn btn-outline" onclick="bpcTemplate()">${icon('download')} Unduh Template No. Bupot</button>
+      <input type="file" class="input" id="bpcFile" accept=".xlsx,.xls,.csv" style="margin-top:12px"><div id="bpcInfo" style="margin-top:12px"></div></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-success" id="bpcBtn" disabled onclick="bpcGo()">${icon('arrow')} Submit &amp; Pindahkan</button></div>`,'xl');
+  $('#bpcFile').addEventListener('change',async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ BPC=bpcParse(XLSX.read(await f.arrayBuffer(),{type:'array'})); /* tanggal dibaca sebagai serial (tanpa geser zona waktu) */ bpcShow(); }catch(err){ $('#bpcInfo').innerHTML=`<div class="tax-info warn">${icon('alert')}<div>${esc(err.message)}</div></div>`; $('#bpcBtn').disabled=true; } }); }
+function bpcParse(wb){
+  const nh=x=>String(x||'').toLowerCase().replace(/\s+/g,' ').trim(), dig=x=>String(x||'').replace(/\D/g,''), num=x=>typeof x==='number'?x:toNum(String(x||'').replace(/^rp\.?\s*/i,''))||0;
+  const iso=d=>{ if(d instanceof Date) return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; if(typeof d==='number'){ const t=new Date(Math.round((Math.floor(d)-25569)*864e5)); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`; }
+    const t=String(d||'').trim(); let m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/.exec(t); if(m) return `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`; m=/^(\d{4})-(\d{2})-(\d{2})/.exec(t); return m?`${m[1]}-${m[2]}-${m[3]}`:''; };
+  const ymOf=x=>{ if(x instanceof Date) return `${x.getFullYear()}-${pad(x.getMonth()+1)}`; const t=String(x||'').trim(); let m=/^(\d{1,2})[\/\-.](\d{4})$/.exec(t); if(m) return `${m[2]}-${pad(+m[1])}`; m=/^(\d{4})-(\d{1,2})/.exec(t); if(m) return `${m[1]}-${pad(+m[2])}`;
+    const i=MONTHS.findIndex(n=>t.toLowerCase().includes(n.toLowerCase())); m=/(\d{4})/.exec(t); return i>=0&&m?`${m[1]}-${pad(i+1)}`:''; };
+  const idn=x=>dig(x).replace(/^0+/,''), DUMMY=/^9{3}0+9{3}0+$/; /* NIK samaran Coretax (mis. 9990000000999000) */
+  const sheets=[];
+  for(const sn of wb.SheetNames){ const A=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:true});
+    for(let hr=0;hr<Math.min(A.length,15);hr++){ const H=A[hr].map(nh), col={};
+      H.forEach((h,i)=>{ if(!h) return;
+        if(/^id sistem|^id$/.test(h)) col.id??=i;
+        else if(/(nomor|no\.?)\s*(bukti|bupot|bp\b)/.test(h)&&!/tanggal|tgl/.test(h)) col.nomor??=i;
+        else if(/tanggal|tgl/.test(h)&&/bukti|bupot|potong|pemotong/.test(h)) col.tgl??=i;
+        else if(/kode objek|kode obj|^kop$/.test(h)) col.kode??=i;
+        else if(/^status/.test(h)) col.st??=i;
+        else if(/nik|npwp/.test(h)&&!/pemotong|nitku|tempat/.test(h)) col.npwp??=i;
+        else if(/bruto|dpp|dasar pengenaan/.test(h)) col.dpp??=i;
+        else if(/^pph|pph dipotong|pajak penghasilan|pph yang dipotong/.test(h)) col.pph??=i;
+        else if(/invoice|dokumen referensi|nomor dokumen|faktur/.test(h)&&!/tanggal|tgl|jenis/.test(h)) col.inv??=i;
+        else if(/^masa/.test(h)) col.masa??=i; });
+      if(col.nomor!=null&&(col.id!=null||col.npwp!=null||col.dpp!=null)){ sheets.push({sn,A,hr,col}); break; } } }
+  if(!sheets.length) throw new Error('Kolom "Nomor Bukti Potong" beserta "NIK/NPWP" atau "DPP/Bruto" tidak ditemukan pada file.');
+  const list=vprAll(), taken=new Set(), seenNo=new Set(), out=[];
+  const near=(a,b)=>Math.abs((+a||0)-(+b||0))<1;
+  for(const {sn,A,hr,col} of sheets) for(let i=hr+1;i<A.length;i++){ const row=A[i], g=k=>col[k]!=null?row[col[k]]:'', nomor=String(g('nomor')||'').trim(); if(!nomor) continue;
+    const it={sheet:sn,line:i+1,nomor,tgl:iso(g('tgl')),npwp:String(g('npwp')||''),kode:String(g('kode')||'').trim(),dpp:num(g('dpp')),pph:num(g('pph')),inv:String(g('inv')||'').trim(),masa:ymOf(g('masa'))||iso(g('tgl')).slice(0,7)};
+    const free=list.filter(r=>!taken.has(r.id)), amt=r=>!it.dpp?(it.pph?near(r.pph,it.pph):true):(near(r.bruto,it.dpp)||near(r.dpp,it.dpp));
+    const narrow=c=>{ if(c.length>1&&it.kode){ const x=c.filter(r=>(r.kode||'')===it.kode); if(x.length) c=x; }
+      if(c.length>1&&it.pph){ const x=c.filter(r=>near(r.pph,it.pph)); if(x.length) c=x; }
+      if(c.length>1&&it.inv){ const x=c.filter(r=>bpNorm(r.noInv)===bpNorm(it.inv)); if(x.length) c=x; }
+      if(c.length>1&&it.masa){ const x=c.filter(r=>r.masaPajak===it.masa); if(x.length) c=x; } return c; };
+    let c=[], via=''; const id=String(g('id')||'').trim(); if(id){ c=free.filter(r=>r.id===id); via='id'; }
+    const nd=idn(it.npwp);
+    if(!c.length&&nd&&!DUMMY.test(dig(it.npwp))){ c=narrow(free.filter(r=>idn(r.npwp)===nd&&amt(r))); via='npwp'; }
+    if(!c.length&&it.kode&&it.dpp){ c=narrow(free.filter(r=>(r.kode||'')===it.kode&&amt(r))); via='kode'; } /* NIK samaran / berbeda: kode objek + nilai */
+    const u=bpUsed(nomor,c[0]&&c[0].id), stc=nh(g('st'));
+    if(seenNo.has(bpNorm(nomor))){ it.st='dup'; it.msg='Nomor ganda di file'; }
+    else if(/batal|pembatalan/.test(stc)){ it.st='none'; it.msg='Bukti potong berstatus batal di Coretax'; }
+    else if(u){ it.st='used'; it.msg='Nomor sudah dipakai di '+u; }
+    else if(!c.length){ it.st='none'; it.msg='Data tidak ditemukan di Pencatatan'; }
+    else { it.st=via==='kode'?'cek':'ok'; it.r=c[0]; taken.add(c[0].id);
+      it.msg=via==='kode'?'Dicocokkan lewat kode objek + nilai (NIK/NPWP di Coretax tidak sama / disamarkan) — mohon cek':c.length>1?`${c.length} data identik — dipakai yang paling awal diinput`:''; }
+    seenNo.add(bpNorm(nomor)); out.push(it); }
+  return out; }
+function bpcShow(){ const ok=BPC.filter(x=>x.st==='ok'||x.st==='cek'), cek=BPC.filter(x=>x.st==='cek'), bad=BPC.filter(x=>!ok.includes(x)), ST={ok:['b-success','Cocok'],cek:['b-warning','Cocok — cek'],none:['b-danger','Tidak ditemukan'],used:['b-danger','Sudah dipakai'],dup:['b-danger','Ganda']};
+  const bySheet={}; BPC.forEach(x=>{ const k=x.sheet; bySheet[k]=bySheet[k]||[0,0]; bySheet[k][ok.includes(x)?0:1]++; });
+  $('#bpcInfo').innerHTML=!BPC.length?`<div class="tax-info warn">${icon('alert')}<div>Tidak ada baris yang berisi nomor bukti potong.</div></div>`:`<div class="tax-info ${bad.length?'warn':'ok'}">${icon(bad.length?'alert':'check')}<div><b>${ok.length} data cocok</b> dan siap dipindahkan${cek.length?` (${cek.length} di antaranya dicocokkan lewat kode objek + nilai — mohon dicek)`:''}${bad.length?` · <b>${bad.length} baris dilewati</b>`:''}.<div style="margin-top:4px;font-size:12px">${Object.entries(bySheet).map(([k,v])=>`${esc(k)}: ${v[0]} cocok${v[1]?`, ${v[1]} dilewati`:''}`).join(' · ')}</div></div></div>
+    <div class="table-wrap" style="max-height:320px;overflow:auto;margin-top:10px"><table class="bpc-t" style="font-size:12.5px"><thead><tr><th style="width:28px"></th><th>Sheet · Baris</th><th>Nomor Bupot</th><th>Rekanan</th><th>Tujuan</th><th>Status</th></tr></thead><tbody>${[...BPC].sort((a,b)=>({ok:0,cek:1}[a.st]??2)-({ok:0,cek:1}[b.st]??2)).map(x=>{ const t=x.r?VPR_TGT(x.r):null, k=BPC.indexOf(x);
+      return `<tr><td>${x.r?`<input type="checkbox" ${x.skip?'':'checked'} title="Ikut dipindahkan" onchange="BPC[${k}].skip=!this.checked;bpcCount()">`:''}</td><td><small style="color:var(--muted)">${esc(x.sheet.replace(/import|coretax/ig,'').replace(/\s+/g,' ').trim())}</small><br>${x.line}</td><td><b>${esc(x.nomor)}</b></td><td>${x.r?`${esc(x.r.nama)}<br><small style="color:var(--muted)">${esc(x.r.npwp||'')} · Rp ${fmt(x.r.bruto)}</small>`:`<small style="color:var(--muted)">${esc(x.npwp||'-')} · Rp ${fmt(x.dpp)}</small>`}</td><td>${t?`${esc(TYPES[t].menu)}<br><small style="color:var(--muted)">${masaLabel(x.r.masaPajak||nowYM())}</small>`:'-'}</td><td style="white-space:normal;min-width:130px"><span class="badge ${ST[x.st][0]}">${ST[x.st][1]}</span>${x.msg?`<br><small style="color:var(--muted)">${esc(x.msg)}</small>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
+  bpcCount(); }
+function bpcCount(){ const n=(BPC||[]).filter(x=>(x.st==='ok'||x.st==='cek')&&!x.skip).length; $('#bpcBtn').disabled=!n; $('#bpcBtn').innerHTML=`${icon('arrow')} Submit &amp; Pindahkan${n?` (${n})`:''}`; }
+async function bpcGo(){ const ok=(BPC||[]).filter(x=>(x.st==='ok'||x.st==='cek')&&!x.skip&&vprAll().includes(x.r)); if(!ok.length) return;
+  const info=vprMoveCtx(ok.map(x=>({r:x.r,nomor:x.nomor,tgl:x.tgl}))); if(await save()){ closeModal(); toast(`${ok.length} nomor bupot tersimpan · dipindahkan ke ${info}`,'success'); refreshDataView(); } }
 
 /* ---------- Cegah pencatatan ganda: semua 5 unsur harus sama persis ---------- */
 const vprDupKey=(nama,npwp,inv,tgl,bruto)=>[namaKey(nama),npwpDig(npwp),String(inv||'').replace(/\s+/g,' ').trim().toUpperCase(),String(tgl||''),Math.round(+bruto||0)].join('|');
