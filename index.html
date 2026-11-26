@@ -6790,7 +6790,7 @@ function renderRpph(){
   const chip=(k,l,n)=>`<button class="rp-chip ${f.st===k?'on':''}" onclick="state.rp.st='${k}';rpRefresh()">${l}<b>${n}</b></button>`;
   const empty=!R.nAcc;
   $('#view').innerHTML=`
-  <div class="kr-hd ok" style="--c:var(--primary)">${icon('grid')}<div><b>Rekonsiliasi PPh Otomatis — Akuntansi vs Pencatatan PPh Rekanan</b><span>Import laporan PPh dari akuntansi (buku besar utang PPh). Sistem otomatis mencocokkan <strong>nama rekanan (kolom Text)</strong> dan <strong>nilai PPh (kolom Amount in LC, tanda minus diabaikan)</strong> dengan data <a class="link" onclick="go('VPR')">Pencatatan PPh Rekanan</a> yang belum dilaporkan. Jika ada beberapa data dengan nama &amp; nilai yang sama, dipakai <strong>tanggal invoice paling lama</strong>.</span></div></div>
+  <div class="kr-hd ok" style="--c:var(--primary)">${icon('grid')}<div><b>Rekonsiliasi PPh Otomatis — Akuntansi vs Pencatatan PPh Rekanan</b><span>Import laporan PPh dari akuntansi (buku besar utang PPh). Sistem otomatis mencocokkan <strong>nama rekanan</strong> dan <strong>nilai PPh</strong> dengan data <a class="link" onclick="go('VPR')">Pencatatan PPh Rekanan</a> yang belum dilaporkan. Apabila terdapat lebih dari satu data dengan nama dan nilai yang sama, pasangan tersebut <strong>ditandai untuk diverifikasi secara manual</strong>.</span></div></div>
   <div class="grid minis">
     <div class="card mini"><small>PPh menurut Akuntansi</small><b>${rp(S.acc_total)}</b><span class="sub">${fmt(R.nAcc)} baris · periode ${esc(rpPeriode())}</span></div>
     <div class="card mini"><small>PPh menurut Pencatatan</small><b>${rp(S.tax_total)}</b><span class="sub">${fmt(R.nTax)} data ${f.scope==='all'?'(semua masa)':'masa '+masaLabel(f.scope)}</span></div>
@@ -6811,8 +6811,8 @@ function renderRpph(){
         <select class="select" onchange="state.rp.scope=this.value;rpRefresh()" title="Data Pencatatan PPh Rekanan yang ikut direkonsiliasi"><option value="all">Pencatatan: semua masa</option>${masaOpts.map(k=>`<option value="${k}" ${f.scope===k?'selected':''}>Pencatatan masa ${masaLabel(k)}</option>`).join('')}</select>
       </div></div>
     <div class="table-wrap"><table class="rp-t"><thead><tr><th rowspan="2">No</th><th rowspan="2">Status</th><th colspan="4" class="rp-g acc">Buku Besar Akuntansi</th><th colspan="4" class="rp-g tax">Pencatatan PPh Rekanan</th><th rowspan="2" class="num">Selisih</th>${isAdmin()||can('RPPH','edit')||can('RPPH','del')?'<th rowspan="2"></th>':''}</tr>
-      <tr><th>Tgl / No Dokumen</th><th>Keterangan (Text)</th><th>Jenis</th><th class="num">PPh</th><th>Nama Rekanan</th><th>Invoice</th><th>Masa</th><th class="num">PPh</th></tr></thead><tbody>
-      ${rows.map((p,i)=>{ const a=p.a, r=p.r, st=RP_ST[p.st]; return `<tr class="rp-${p.st}"><td>${i+1}</td><td><span class="badge ${st.c}">${st.l}</span>${p.n>1?`<br><small class="sub-t" title="Ada ${p.n} data dengan nama & nilai sama — dipakai tanggal invoice terlama">${p.n} kandidat · inv. terlama</small>`:''}</td>
+      <tr><th>Tgl / No Dokumen</th><th>Keterangan</th><th>Jenis</th><th class="num">PPh</th><th>Nama Rekanan</th><th>Invoice</th><th>Masa</th><th class="num">PPh</th></tr></thead><tbody>
+      ${rows.map((p,i)=>{ const a=p.a, r=p.r, st=RP_ST[p.st]; return `<tr class="rp-${p.st}"><td>${i+1}</td><td><span class="badge ${st.c}">${st.l}</span>${p.n>1?`<br><small class="sub-t" title="Terdapat ${p.n} data dengan nama & nilai yang sama — mohon verifikasi manual">${p.n} data serupa · verifikasi manual</small>`:''}</td>
         <td>${a?`${fmtDate(a.docDate)}<br><small class="sub-t">${esc(a.docNo||'')}${a.gl?' · '+esc(a.gl):''}</small>`:'<span class="sub-t">—</span>'}</td>
         <td class="rp-txt">${a?`${esc(a.text||'')}${a.ref?`<br><small class="sub-t">Ref ${esc(a.ref)}</small>`:''}`:'<span class="sub-t">belum dibukukan</span>'}</td>
         <td>${a?esc(a.jenis||'-'):r?esc((r.jenis||'').replace(' (Final)','')):''}</td><td class="num">${a?fmt(p.accAmt):'—'}</td>
@@ -6904,7 +6904,7 @@ function openRpForm(id){ const a=id?rpAll().find(x=>x.id===id):null;
       <div class="field"><label>Tanggal Posting</label><input class="input" type="date" name="posting" value="${esc(a?a.posting:todayISO())}"></div>
       <div class="field"><label>Nomor Dokumen</label><input class="input" name="docNo" value="${esc(a?a.docNo:'')}"></div>
       <div class="field"><label>Akun G/L</label><input class="input" name="gl" value="${esc(a?a.gl:'')}" placeholder="mis. 2105131000"></div>
-      <div class="field full"><label>Keterangan (Text) — memuat nama rekanan <span style="color:var(--danger)">*</span></label><input class="input" name="text" required value="${esc(a?a.text:'')}" placeholder="mis. PPH 23 UNIVERSITAS SUMATERA UTARA"></div>
+      <div class="field full"><label>Keterangan — memuat nama rekanan <span style="color:var(--danger)">*</span></label><input class="input" name="text" required value="${esc(a?a.text:'')}" placeholder="mis. PPH 23 UNIVERSITAS SUMATERA UTARA"></div>
       <div class="field"><label>Referensi / No Invoice</label><input class="input" name="ref" value="${esc(a?a.ref:'')}"></div>
       <div class="field"><label>Nilai PPh (Amount in LC) <span style="color:var(--danger)">*</span></label><input class="input" name="amount" required inputmode="decimal" value="${a?fmt(a.amount):''}" placeholder="mis. 221.250"></div>
     </div></div><div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`);
@@ -6937,7 +6937,7 @@ async function rpExport(){
     /* ===== 1. RINGKASAN ===== */
     const s1=wb.addWorksheet('RINGKASAN',{views:[{showGridLines:false}]}); s1.columns=[{width:5},{width:44},{width:14},{width:20},{width:20},{width:20},{width:4}];
     kop(s1,6,'KERTAS KERJA REKONSILIASI PAJAK PENGHASILAN (PPh)','Buku Besar Utang PPh (Akuntansi) terhadap Pencatatan PPh Rekanan (Pajak)');
-    const info=[['Periode data akuntansi',per],['Cakupan pencatatan PPh rekanan',state.rp.scope==='all'?'Semua masa (data belum dilaporkan)':masaLabel(state.rp.scope)],['Metode pencocokan','Nama rekanan (Text) + nilai PPh; bila ganda dipakai tanggal invoice terlama'],['Tanggal disusun',now]];
+    const info=[['Periode data akuntansi',per],['Cakupan pencatatan PPh rekanan',state.rp.scope==='all'?'Semua masa (data belum dilaporkan)':masaLabel(state.rp.scope)],['Metode pencocokan','Nama rekanan + nilai PPh; data ganda ditandai untuk verifikasi manual'],['Tanggal disusun',now]];
     info.forEach((x,i)=>{ const r=s1.getRow(8+i); r.getCell(2).value=x[0]; r.getCell(3).value=': '+x[1]; s1.mergeCells(`C${8+i}:F${8+i}`); r.getCell(2).font={bold:true,size:10}; r.getCell(3).font={size:10}; });
     let y=13; s1.getCell(`B${y}`).value='A. IKHTISAR REKONSILIASI'; s1.getCell(`B${y}`).font={bold:true,size:11,color:{argb:BL}}; y++;
     const stmt=[['Saldo utang PPh menurut Akuntansi',S.acc_total,1],['Dikurangi: dibukukan akuntansi, belum ada di pencatatan pajak',-S.acc.acc,0],['Ditambah: ada di pencatatan pajak, belum dibukukan akuntansi',S.tax.tax,0],['Penyesuaian selisih nilai (pencatatan − akuntansi)',S.dev.tax-S.dev.acc,0],['Saldo PPh menurut Pencatatan PPh Rekanan',S.tax_total,1]];
@@ -6965,7 +6965,7 @@ async function rpExport(){
     kop(s2,20,'DETAIL REKONSILIASI PPh — AKUNTANSI vs PENCATATAN PPh REKANAN',`Periode akuntansi: ${per} · disusun ${now}`);
     s2.mergeCells('A8:A9'); s2.mergeCells('B8:B9'); s2.mergeCells('C8:J8'); s2.mergeCells('K8:Q8'); s2.mergeCells('R8:R9'); s2.mergeCells('S8:S9'); s2.mergeCells('T8:T9');
     const g8=s2.getRow(8); g8.getCell(1).value='No'; g8.getCell(2).value='Status'; g8.getCell(3).value='BUKU BESAR AKUNTANSI'; g8.getCell(11).value='PENCATATAN PPh REKANAN (PAJAK)'; g8.getCell(18).value='Selisih (Akt − Pjk)'; g8.getCell(19).value='Kandidat'; g8.getCell(20).value='Keterangan / Tindak Lanjut';
-    const h9=['','','Tgl Dokumen','Tgl Posting','No Dokumen','Akun G/L','Jenis PPh','Keterangan (Text)','Referensi','PPh Akuntansi','Nama Rekanan','NIK / NPWP','No Invoice','Tgl Invoice','Masa Pajak','Kode Objek','PPh Pencatatan'];
+    const h9=['','','Tgl Dokumen','Tgl Posting','No Dokumen','Akun G/L','Jenis PPh','Keterangan','Referensi','PPh Akuntansi','Nama Rekanan','NIK / NPWP','No Invoice','Tgl Invoice','Masa Pajak','Kode Objek','PPh Pencatatan'];
     h9.forEach((v,i)=>{ if(v) s2.getRow(9).getCell(i+1).value=v; });
     [8,9].forEach(rn=>{ const r=s2.getRow(rn); r.height=rn===8?20:30; for(let c=1;c<=20;c++){ const x=r.getCell(c); x.font={bold:true,color:{argb:'FFFFFFFF'},size:10}; x.alignment={horizontal:'center',vertical:'middle',wrapText:true}; x.border=BD;
       x.fill={type:'pattern',pattern:'solid',fgColor:{argb:c>=3&&c<=10?'FF1E3A5F':c>=11&&c<=17?'FF0F5132':'FF334155'}}; } });
@@ -6973,7 +6973,7 @@ async function rpExport(){
     const order={acc:0,dev:1,tax:2,ok:3}; const P=[...R.pairs].sort((x,y)=>order[x.st]-order[y.st]);
     let rr=10; P.forEach((p,i)=>{ const a=p.a||{}, t=p.r||{}, st=RP_ST[p.st], r=s2.getRow(rr);
       r.values=[i+1,st.l,dIso(a.docDate),dIso(a.posting),a.docNo||'',a.gl||'',a.jenis||'',a.text||'',a.ref||'',p.a?p.accAmt:null,t.nama||'',t.npwp?String(t.npwp):'',t.noInv||'',dIso(t.tglInv),t.masaPajak?masaLabel(t.masaPajak):'',t.kode||'',p.r?p.taxAmt:null,{formula:`N(J${rr})-N(Q${rr})`,result:p.dev},p.n>1?p.n:null,
-        (p.st==='ok'&&p.n>1?`Dipilih inv. terlama dari ${p.n} data sama · `:'')+RP_ACT_S[p.st]];
+        (p.st==='ok'&&p.n>1?`${p.n} data serupa — verifikasi manual · `:'')+RP_ACT_S[p.st]];
       for(let c=1;c<=20;c++){ const x=r.getCell(c); x.border=BD; x.font={size:9.5}; x.alignment={vertical:'top',wrapText:c===8||c===11||c===20}; }
       [3,4,14].forEach(c=>r.getCell(c).numFmt='dd/mm/yyyy'); [10,17,18].forEach(c=>r.getCell(c).numFmt=NF); r.getCell(1).alignment={horizontal:'center',vertical:'top'}; r.getCell(19).alignment={horizontal:'center',vertical:'top'};
       r.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:st.x}}; r.getCell(2).font={bold:true,size:9.5,color:{argb:st.t}};
@@ -7142,7 +7142,7 @@ function renderRpm(){
         <div class="search">${icon('search')}<input class="input" id="rnSearch" placeholder="Cari nomor faktur, nama penjual, nomor dokumen, atau nilai PPN…" value="${esc(f.q)}" oninput="state.rn.q=this.value;clearTimeout(window._rnT);window._rnT=setTimeout(()=>{rnRefresh();const e=$('#rnSearch');e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)">${f.q?`<button type="button" class="search-x" style="display:grid" onclick="state.rn.q='';rnRefresh()">${icon('x')}</button>`:''}</div>
         <select class="select" onchange="state.rn.scope=this.value;rnRefresh()" title="Faktur Prepopulated yang ikut direkonsiliasi"><option value="all">Prepopulated: semua masa</option>${masaOpts.map(k=>`<option value="${k}" ${f.scope===k?'selected':''}>Prepopulated masa ${masaLabel(k)}</option>`).join('')}</select></div></div>
     <div class="table-wrap"><table class="rp-t"><thead><tr><th rowspan="2">No</th><th rowspan="2">Status</th><th colspan="4" class="rp-g acc">Buku Besar Akuntansi</th><th colspan="4" class="rp-g tax">Prepopulated Pajak Masukan (Coretax)</th><th rowspan="2" class="num">Selisih</th>${ed?'<th rowspan="2"></th>':''}</tr>
-      <tr><th>Tgl / No Dokumen</th><th>No Faktur</th><th>Nama (Text)</th><th class="num">PPN</th><th>No Faktur</th><th>Penjual</th><th>Masa</th><th class="num">PPN</th></tr></thead><tbody>
+      <tr><th>Tgl / No Dokumen</th><th>No Faktur</th><th>Nama Penjual</th><th class="num">PPN</th><th>No Faktur</th><th>Penjual</th><th>Masa</th><th class="num">PPN</th></tr></thead><tbody>
       ${rows.slice(0,1500).map((p,i)=>{ const a=p.a, o=p.o, st=RN_ST[p.st]; return `<tr class="rp-${p.st==='ok'?'ok':p.st==='pp'?'tax':p.st==='acc'?'acc':'dev'}"><td>${i+1}</td><td><span class="badge ${st.c}">${st.l}</span>${p.note?`<br><small class="sub-t">${esc(p.note)}</small>`:''}</td>
         <td>${a?`${fmtDate(a.posting||a.docDate)}<br><small class="sub-t">${esc(a.docNo||'')}</small>`:'<span class="sub-t">—</span>'}</td>
         <td>${a?`<span class="${a.fp&&a.fp.length===17?'':'rn-bad'}" title="${a.fp?a.fp.length+' digit':'tidak ada nomor faktur'}">${esc(a.fp?rnFmtFp(a.fp):'—')}</span>${a.fp&&a.fp.length!==17?`<br><small class="rn-bad">${a.fp.length} digit</small>`:''}`:''}</td>
@@ -7271,7 +7271,7 @@ async function rnExport(){
     kop(s2,13,'DETAIL REKONSILIASI PAJAK MASUKAN',`Periode buku besar: ${per} · disusun ${now}`);
     ['A8:A9','B8:B9','C8:G8','H8:L8','M8:M9'].forEach(m=>s2.mergeCells(m));
     const g8=s2.getRow(8); g8.getCell(1).value='No'; g8.getCell(2).value='Status'; g8.getCell(3).value='BUKU BESAR AKUNTANSI'; g8.getCell(8).value='PREPOPULATED PAJAK MASUKAN (CORETAX)'; g8.getCell(13).value='Keterangan';
-    ['','','Tgl Posting','No Dokumen','No Faktur','Nama (Teks)','PPN','No Faktur','Penjual','Masa','PPN','Selisih'].forEach((v,i)=>{ if(v) s2.getRow(9).getCell(i+1).value=v; });
+    ['','','Tgl Posting','No Dokumen','No Faktur','Nama Penjual','PPN','No Faktur','Penjual','Masa','PPN','Selisih'].forEach((v,i)=>{ if(v) s2.getRow(9).getCell(i+1).value=v; });
     [8,9].forEach(rn=>{ const r=s2.getRow(rn); r.height=rn===8?20:26; for(let c=1;c<=13;c++){ const x=r.getCell(c); x.font={bold:true,color:{argb:'FFFFFFFF'},size:10}; x.alignment={horizontal:'center',vertical:'middle',wrapText:true}; x.border=BD; x.fill=fill(c>=3&&c<=7?'FF14365D':c>=8&&c<=11?'FF0F5132':'FF334155'); } });
     const dI=d=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||''); return m?new Date(Date.UTC(+m[1],+m[2]-1,+m[3])):null; }, ord={inc:0,dev:1,acc:2,pp:3,ok:4};
     const P=[...R.pairs].sort((a,b)=>ord[a.st]-ord[b.st]); let rr=10;
