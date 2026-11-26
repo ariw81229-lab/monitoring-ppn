@@ -317,6 +317,21 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .ars-tabs .nav-cnt{background:var(--surface-2);color:var(--muted);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800}.ars-tabs button.active .nav-cnt{background:rgba(255,255,255,.25);color:#fff}
 .ars-up{border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px}.ars-up .ars-file{margin-bottom:8px}
 .rn-bad{color:#c2410c;font-weight:700}
+.rrs-wrap{max-height:72vh;overflow:auto}.rrs-t{font-size:12.5px;border-collapse:separate;border-spacing:0}
+.rrs-t thead th{position:sticky;top:0;z-index:3;background:#14365d;color:#fff;font-size:11px;letter-spacing:.03em;text-transform:uppercase;white-space:normal;min-width:90px;vertical-align:bottom;line-height:1.3;border-right:1px solid rgba(255,255,255,.12)}
+.rrs-t thead th small{display:block;font-size:10px;opacity:.75;text-transform:none;letter-spacing:0;margin-top:2px}
+.rrs-t th.rrs-c0,.rrs-t td:first-child{position:sticky;left:0;z-index:2;min-width:52px;width:52px}.rrs-t th.rrs-c1,.rrs-t td.rrs-nm{position:sticky;left:52px;z-index:2;min-width:230px;max-width:280px;white-space:normal}
+.rrs-t thead th.rrs-c0,.rrs-t thead th.rrs-c1{z-index:4}.rrs-t tbody td:first-child,.rrs-t td.rrs-nm{background:var(--surface)}
+.rrs-t td{border-bottom:1px solid var(--border);padding:7px 10px;white-space:nowrap}.rrs-t td.num{text-align:right;font-variant-numeric:tabular-nums}
+.rrs-sh td{background:linear-gradient(90deg,#e8eef6,var(--surface-2));color:#14365d;cursor:pointer;padding:10px 12px;position:sticky;left:0;border-top:2px solid #c7d5e6}
+.rrs-sh td b{font-size:13px;letter-spacing:.02em}.rrs-sh .rrs-meta{margin-left:14px;font-size:12px;color:var(--muted);font-weight:500}
+.rrs-car{display:inline-flex;margin-right:8px;transition:transform .2s;vertical-align:-3px}.rrs-car svg{width:14px;height:14px}.rrs-sec.closed .rrs-car{transform:rotate(-90deg)}
+.rrs-jml td{background:#fffbe6!important;font-weight:800;border-bottom:2px solid #e6d58a}.rrs-tot td{background:#226845!important;color:#fff;font-weight:800;font-size:13px}.rrs-sisa td{background:var(--surface-2);font-size:12.5px;padding:10px 12px}
+.rrs-t td.rrs-auto{background:#e0edff!important;box-shadow:inset 0 0 0 1px #9cc1f5}.rrs-new td{background:#f0fdf4}.rrs-new td:first-child{box-shadow:inset 3px 0 #16a34a}
+.rrs-k{display:inline-block;max-width:340px;white-space:normal;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:7px;line-height:1.35}.rrs-k.ok{background:#dcfce7;color:#166534}.rrs-k.fu{background:#fff7ed;color:#9a3412}.rrs-k.etc{background:var(--surface-2);color:var(--text)}
+.rrs-sync{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:#eef5ff;border:1px solid #c9dcf7;color:#1e3a8a;font-size:13px}.rrs-sync svg{width:16px;height:16px}.rrs-sync.idle{background:#f0fdf4;border-color:#bbf7d0;color:#166534}.rrs-sync .link{margin-left:auto;background:none;border:0;color:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+.rrs-tg{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}.rrs-foot{display:flex;flex-wrap:wrap;gap:18px;padding:12px 18px;font-size:12px;color:var(--muted);border-top:1px solid var(--border)}.rrs-foot span:last-child{margin-left:auto}
+.rrs-dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}.rrs-dot.auto{background:#e0edff;border:1px solid #9cc1f5}.rrs-dot.new{background:#f0fdf4;border:1px solid #16a34a}
 .rp-chips{display:flex;flex-wrap:wrap;gap:8px}.rp-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:6px 12px;font:600 12.5px inherit;color:var(--text);cursor:pointer}
 .rp-chip b{background:var(--surface-2);border-radius:999px;padding:1px 8px;font-size:11.5px}.rp-chip.on{background:var(--primary);border-color:var(--primary);color:#fff}.rp-chip.on b{background:rgba(255,255,255,.22)}
 .rp-t th.rp-g{text-align:center;color:#fff}.rp-t th.rp-g.acc{background:#1e3a5f}.rp-t th.rp-g.tax{background:#0f5132}.rp-t td{vertical-align:top}.rp-t .rp-txt{max-width:280px;white-space:normal}
@@ -2104,7 +2119,7 @@ function currentUser(){ const u=session.get(); return DB.users.find(x=>x.usernam
 function logout(){ setTimeout(fitKso,60); try{ const t=themeOf(); if(!$('#app').hidden){ LOGIN_THEME={...t}; localStorage.setItem(THEME_KEY,JSON.stringify(t)); } }catch(e){} if(CLOUD_ON&&CLOUD.uid) cloudLogout(); session.clear(); $('#app').hidden=true; $('#login').hidden=false; document.body.classList.remove('ro'); closeSidebar(); applyTheme(); tickClock(); }
 function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 /* Hak akses per menu untuk akun pengunjung (diatur admin): add = tambah/import, edit = ubah, del = hapus */
-const PERM_MENUS=[{k:'PM',l:'Pajak Masukan',d:'Monitoring & Prepopulated Pajak Masukan',t:['PM','PP']},{k:'RPPN',l:'Rekonsiliasi Pajak Masukan',d:'import / input / hapus buku besar PPN Masukan akuntansi',t:['RPPN']},{k:'PK',l:'Pajak Keluaran',d:'Monitoring Pajak Keluaran',t:['PK']},{k:'BPS',l:'Bukti Potong ESDM',t:['BPS']},
+const PERM_MENUS=[{k:'PM',l:'Pajak Masukan',d:'Monitoring, Resume Restitusi & Prepopulated Pajak Masukan',t:['PM','PP','RRS']},{k:'RPPN',l:'Rekonsiliasi Pajak Masukan',d:'import / input / hapus buku besar PPN Masukan akuntansi',t:['RPPN']},{k:'PK',l:'Pajak Keluaran',d:'Monitoring Pajak Keluaran',t:['PK']},{k:'BPS',l:'Bukti Potong ESDM',t:['BPS']},
   {k:'PPH21',l:'PPh 21',d:'Selain Pegawai Tetap · A1 · Bulanan Pegawai Tetap',t:['PPH21NP','PPH21A1','PPH21']},{k:'PPHU',l:'PPh Unifikasi',d:'PPh 23 & PPh 4 ayat 2',t:['PPH23','PPH42']},
   {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'RPPH',l:'Rekonsiliasi PPh',d:'import / input / hapus data laporan PPh akuntansi',t:['RPPH']},{k:'MRK',l:'Master Rekanan',t:['MRK']},{k:'ARS',l:'Arsip',d:'upload / ubah / hapus dokumen PDF arsip pajak',t:['ARS']},
   {k:'spt',l:'Status SPT Rekanan',d:'upload / kelola / hapus bukti SPT PPN rekanan',t:['spt']},{k:'rest',l:'Restitusi PPN',d:'Alur Proses Restitusi: tambah masa, isi alur & dokumen, hapus data proses',t:['rest']}];
@@ -2142,13 +2157,13 @@ const state={view:'dashboard', year:Math.max(START_YEAR,now.getFullYear()), mont
   search:'', f:{status:'all',bayar:'all',jenis:'all',spt:'all',rest:'all'}, page:1, sel:new Set()};
 const NAV=[
   {sec:'Utama'},{id:'dashboard',label:'Dashboard',ic:'grid'},
-  {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','PP','GL','RPM']},{grp:'Pajak Keluaran',ic:'out',items:['PK','BPS']},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
+  {sec:'PPN'},{grp:'Pajak Masukan',ic:'in',items:['PM','RRS','PP','GL','RPM']},{grp:'Pajak Keluaran',ic:'out',items:['PK','BPS']},{id:'spt',label:'Status SPT Rekanan',ic:'shield'},
   {sec:'Restitusi PPN'},{id:'rest',label:'Alur Proses Restitusi',ic:'refund'},{id:'flow',label:'Flowchart Restitusi',ic:'flow'},
   {sec:'PPh'},{grp:'PPh 21',ic:'users',items:['PPH21NP','PPH21A1','PPH21']},{grp:'PPh Unifikasi',ic:'receipt',items:['PPH23','PPH42']},{grp:'Pencatatan PPh Rekanan',ic:'clip',items:['VPR','RPPH']},
   {sec:'Sistem'},{id:'MRK',label:'Master Rekanan',ic:'users'},{id:'ARS',label:'Arsip',ic:'folder'},{id:'settings',label:'Pengaturan',ic:'gear'},
 ];
-const NAV_LBL={VPR:'Pencatatan PPh Rekanan & Bupot Dummy',RPPH:'Rekonsiliasi PPh',PK:'Monitoring Pajak Keluaran',BPS:'Bukti Potong ESDM',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
-const TITLES={ARS:'Sistem · Arsip Pajak',RPPH:'PPh · Rekonsiliasi Pajak Penghasilan (PPh)',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan · Telah Dikreditkan',PP:'Prepopulated Pajak Masukan · Belum Dikreditkan',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
+const NAV_LBL={RRS:'Resume Restitusi PPN',VPR:'Pencatatan PPh Rekanan & Bupot Dummy',RPPH:'Rekonsiliasi PPh',PK:'Monitoring Pajak Keluaran',BPS:'Bukti Potong ESDM',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL'};
+const TITLES={RRS:'Resume Restitusi PPN · Pajak Masukan Dikreditkan',ARS:'Sistem · Arsip Pajak',RPPH:'PPh · Rekonsiliasi Pajak Penghasilan (PPh)',RPM:'Rekonsiliasi Pajak Masukan',GL:'Buku Besar / GL Pajak Masukan',dashboard:'Dashboard Pajak',PM:'Monitoring Pajak Masukan · Telah Dikreditkan',PP:'Prepopulated Pajak Masukan · Belum Dikreditkan',PK:'Monitoring Pajak Keluaran',spt:'Monitoring Status SPT Rekanan',
   rest:'Alur Proses Restitusi PPN',flow:'Flowchart Restitusi PPN',settings:'Pengaturan',tema:'Akun Saya',BPS:'Bukti Potong ESDM',
   PPH21NP:'PPh 21 · BP 21 Selain Pegawai Tetap',PPH21A1:'PPh 21 · BP A1 Masa Pajak Terakhir',PPH21:'PPh 21 · Bulanan Pegawai Tetap',
   PPH23:'PPh Unifikasi · PPh Pasal 23',PPH42:'PPh Unifikasi · PPh Pasal 4 Ayat 2 (Final)',VPR:'PPh · Pencatatan PPh Rekanan & Bupot Dummy',MRK:'PPh · Master Rekanan'};
@@ -2219,7 +2234,7 @@ function render(){
   const comb=ck&&state[ck];
   $('#yearSel').innerHTML=(ck?`<option value="all" ${comb?'selected':''}>Semua Tahun (Gabungan)</option>`:'')
     +ys.map(y=>`<option value="${y}" ${!comb&&y===state.year?'selected':''}>Tahun ${y}</option>`).join('');
-  $('#yearSel').hidden=state.view==='settings'||state.view==='tema'||state.view==='RPM'||state.view==='RPPH'||state.view==='ARS'||state.view==='GL'||state.view==='VPR'||state.view==='MRK';
+  $('#yearSel').hidden=state.view==='settings'||state.view==='tema'||state.view==='RPM'||state.view==='RRS'||state.view==='RPPH'||state.view==='ARS'||state.view==='GL'||state.view==='VPR'||state.view==='MRK';
   $('#pageTitle').textContent=TITLES[state.view]||'';
   { const v=state.view, b=document.body.classList; b.toggle('pa',!isAdmin()&&can(v,'add')); b.toggle('pe',!isAdmin()&&can(v,'edit')); b.toggle('pd',!isAdmin()&&can(v,'del')); }
   if(state.view==='dashboard') renderDashboard();
@@ -2229,6 +2244,7 @@ function render(){
   else if(state.view==='rest') renderRest();
   else if(state.view==='flow') renderFlow();
   else if(state.view==='RPM') renderRpm();
+  else if(state.view==='RRS') renderRrs();
   else if(state.view==='RPPH') renderRpph();
   else if(state.view==='ARS') renderArsip();
   else if(state.view==='GL') renderGL();
@@ -2237,7 +2253,7 @@ function render(){
   const sg=NAV.find(n=>n.grp&&n.items.includes(state.view)); if(sg) $('#view').insertAdjacentHTML('afterbegin',subTabsHTML(sg));
 }
 /* Pemisah antar halaman dalam satu menu (pengganti sub menu di sidebar) */
-const SUB_IC={VPR:'clip',RPPH:'grid',PM:'in',PP:'clock',GL:'file',RPM:'grid',PPH21NP:'users',PPH21A1:'file',PPH21:'user',PPH23:'receipt',PPH42:'receipt',PK:'out',BPS:'folder'};
+const SUB_IC={RRS:'file',VPR:'clip',RPPH:'grid',PM:'in',PP:'clock',GL:'file',RPM:'grid',PPH21NP:'users',PPH21A1:'file',PPH21:'user',PPH23:'receipt',PPH42:'receipt',PK:'out',BPS:'folder'};
 function subTabsHTML(g){
   const urgent=g.items.includes('PP')?batasScan().akhir.n:0;
   return `<div class="subtabs" role="tablist" aria-label="${esc(g.grp)}">${g.items.map(id=>`<button type="button" role="tab" class="${id===state.view?'active':''}" aria-selected="${id===state.view}" onclick="go('${id}')">${icon(SUB_IC[id]||'file')}<span>${NAV_LBL[id]||(TYPES[id]?TYPES[id].sub||TYPES[id].menu:id)}</span>${id==='PP'&&urgent?`<i class="nav-cnt">${urgent}</i>`:''}</button>`).join('')}</div>`;
@@ -3021,6 +3037,7 @@ function renderData(t){
       </div>`:comb?`<div class="toolbar"><button class="btn btn-outline" onclick="openExport('${t}')">${icon('download')}<span class="hide-sm">Export</span></button></div>`:`<div class="toolbar">
         <button class="btn btn-primary" onclick="openImport('${t}')">${icon('upload')} Import Excel</button>
         ${t==='PP'?`<button class="btn btn-outline adm p-edit" onclick="openKrImp()" title="Kreditkan banyak faktur sekaligus dari Excel — otomatis pindah ke Monitoring Pajak Masukan sesuai masa dikreditkan">${icon('check')}<span class="hide-sm">Import Dikreditkan</span></button>`:''}
+        ${t==='PM'?`<button class="btn btn-outline" onclick="go('RRS')" title="Pratinjau & export Excel resume restitusi (pajak masukan yang sudah dikreditkan)">${icon('file')}<span class="hide-sm">Resume Restitusi</span></button>`:''}
         ${t==='PM'?`<button class="btn btn-outline adm p-edit" onclick="openTglBayar()" title="Isi tanggal bukti bayar banyak faktur sekaligus dari Excel">${icon('calendar')}<span class="hide-sm">Import Tgl Bayar</span></button>`:''}
         <button class="btn btn-outline" onclick="openRowForm('${t}')">${icon('plus')}<span class="hide-sm">Tambah</span></button>
         <button class="btn btn-outline" onclick="downloadTemplate('${t}')">${icon('file')}<span class="hide-sm">Template</span></button>
@@ -6151,7 +6168,7 @@ function resetData(){
     Object.values(DB.spt).forEach(s=>(s.files||[]).forEach(f=>ids.push(f.id)));
     Object.values(DB.reports).forEach(g=>Object.values(g).forEach(r=>[r.file,r.fileSpt,r.fBpe,r.fSpt].forEach(f=>f&&ids.push(f.id))));
     Object.values(DB.restitusi||{}).forEach(r=>(r.docs||[]).forEach(d=>ids.push(d.id)));
-    Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id))); ((DB.data.ARS||{}).all||[]).forEach(a=>a.fileId&&ids.push(a.fileId));
+    Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id))); ((DB.data.ARS||{}).all||[]).forEach(a=>a.fileId&&ids.push(a.fileId)); ((DB.data.RRS||{}).all||[]).forEach(a=>a.fileId&&ids.push(a.fileId));
     for(const id of ids) await delFile(id);
     const def=defaultDB(); DB.data=def.data; DB.reports=def.reports; DB.spt={}; DB.restitusi={};
     await save(); render(); toast('Semua data dihapus','success');
@@ -6187,7 +6204,7 @@ function allFileIds(){
   Object.values(DB.spt||{}).forEach(s=>(s.files||[]).forEach(f=>ids.push(f.id)));
   Object.values(DB.reports||{}).forEach(g=>Object.values(g).forEach(r=>[r.file,r.fileSpt,r.fBpe,r.fSpt].forEach(f=>f&&ids.push(f.id))));
   Object.values(DB.restitusi||{}).forEach(r=>(r.docs||[]).forEach(d=>ids.push(d.id)));
-  Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id))); ((DB.data.ARS||{}).all||[]).forEach(a=>a.fileId&&ids.push(a.fileId));
+  Object.values(DB.data.BPS||{}).forEach(a=>a.forEach(r=>r.file&&ids.push(r.file.id))); ((DB.data.ARS||{}).all||[]).forEach(a=>a.fileId&&ids.push(a.fileId)); ((DB.data.RRS||{}).all||[]).forEach(a=>a.fileId&&ids.push(a.fileId));
   return [...new Set(ids)];
 }
 const blobToDataURL=b=>new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(fr.error); fr.readAsDataURL(b); });
@@ -7115,6 +7132,296 @@ function rnCompute(){
   return {pairs,S,nAcc:acc.length,nPP:open.length}; }
 function rnPeriode(){ const d=rnAll().map(a=>a.posting||a.docDate).filter(Boolean).sort(); return d.length?(d[0].slice(0,7)===d[d.length-1].slice(0,7)?masaLabel(d[0].slice(0,7)):`${fmtDate(d[0])} s.d. ${fmtDate(d[d.length-1])}`):'-'; }
 function rnRefresh(){ renderRpm(); const sg=NAV.find(n=>n.grp&&n.items.includes('RPM')); if(sg) $('#view').insertAdjacentHTML('afterbegin',subTabsHTML(sg)); }
+/* =====================================================================
+   RESUME RESTITUSI PPN — Excel asli pengguna disimpan apa adanya; website hanya menambahkan:
+   (1) tanggal & PPN sudah terbayar dari status pembayaran Monitoring Pajak Masukan,
+   (2) keterangan "SUDAH ADA SPT PPN" bila SPT rekanan sudah diupload,
+   (3) faktur Pajak Masukan (sudah dikreditkan) yang belum ada → baris baru di bagian masa pajaknya.
+   Semua perubahan dilakukan langsung pada XML sheet sehingga format, rumus, pivot & tampilan Excel tetap.
+   ===================================================================== */
+const RRS_MON=['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
+const rrsMeta=()=>{ const d=DB.data.RRS||(DB.data.RRS={}); if(!Array.isArray(d.all)) d.all=[]; return d.all[0]||null; };
+if(!state.rrs) state.rrs={q:'',fl:'all',det:false,closed:{}};
+let RRS_C=null, RRS_B=null;
+const xUn=s=>String(s).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(m,n)=>String.fromCharCode(+n)).replace(/&amp;/g,'&');
+const xEs=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const xlSerial=iso=>{ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(iso||''); return m?Math.round((Date.UTC(+m[1],+m[2]-1,+m[3])-Date.UTC(1899,11,30))/864e5):null; };
+const xlIso=n=>{ if(typeof n!=='number'||!isFinite(n)||n<20000) return ''; const d=new Date(Date.UTC(1899,11,30)+Math.round(n)*864e5); return d.toISOString().slice(0,10); };
+/* ---------- baca file ---------- */
+async function rrsLoad(){ const m=rrsMeta(); if(!m) return null; if(RRS_C&&RRS_C.fileId===m.fileId) return RRS_C;
+  const blob=await getFile(m.fileId); if(!blob) throw new Error('File Excel resume tidak ditemukan di penyimpanan — silakan import ulang');
+  RRS_C=await rrsOpen(await blob.arrayBuffer()); RRS_C.fileId=m.fileId; RRS_B=null; return RRS_C; }
+async function rrsOpen(buf){ const JSZip=await ensureJSZip(), z=await JSZip.loadAsync(buf);
+  const wbx=await z.file('xl/workbook.xml').async('string'), rels=await z.file('xl/_rels/workbook.xml.rels').async('string');
+  const sh=/<sheet\b[^>]*>/.exec(wbx)[0], rid=/r:id="([^"]+)"/.exec(sh)[1], sheetName=xUn(/name="([^"]+)"/.exec(sh)[1]);
+  const rel=[...rels.matchAll(/<Relationship\b[^>]*>/g)].map(x=>x[0]).find(x=>new RegExp(`Id="${rid}"`).test(x)); let sp=/Target="([^"]+)"/.exec(rel)[1];
+  sp=sp.startsWith('/')?sp.slice(1):'xl/'+sp.replace(/^\.\//,'');
+  const S=await z.file(sp).async('string'), ssf=z.file('xl/sharedStrings.xml'), ssx=ssf?await ssf.async('string'):'';
+  const SST=[...ssx.matchAll(/<si>([\s\S]*?)<\/si>/g)].map(m=>[...m[1].matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)].map(x=>xUn(x[1])).join(''));
+  return {buf,sp,sheetName,S,SST,wbx}; }
+function rrsSplit(S){ const i0=S.indexOf('<sheetData'), i1=S.indexOf('>',i0)+1, selfClose=S[i1-2]==='/';
+  if(selfClose) return {head:S.slice(0,i1-2)+'>',rows:[],tail:'</sheetData>'+S.slice(i1)};
+  const i2=S.indexOf('</sheetData>'), body=S.slice(i1,i2), rows=[]; const re=/<row\b[^>]*?(?:\/>|>[\s\S]*?<\/row>)/g; let m;
+  while((m=re.exec(body))) rows.push({r:+/\br="(\d+)"/.exec(m[0])[1],x:m[0]}); return {head:S.slice(0,i1),rows,tail:S.slice(i2)}; }
+/* sel kolom A..V dari satu baris XML */
+function rrsCells(x,SST,maxC){ const out={}; const re=/<c r="([A-Z]{1,3})(\d+)"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g; let m;
+  while((m=re.exec(x))){ const col=m[1], ci=colN(col); if(ci>maxC) break; const at=m[3], inn=m[4]||'', s=(/\ss="(\d+)"/.exec(at)||[])[1], t=(/\st="(\w+)"/.exec(at)||[])[1];
+    const fm=/<f\b([^>]*?)(?:\/>|>([\s\S]*?)<\/f>)/.exec(inn), vm=/<v>([\s\S]*?)<\/v>/.exec(inn), im=/<is>[\s\S]*?<t[^>]*>([\s\S]*?)<\/t>/.exec(inn);
+    const c={col,s,t,f:fm?(fm[2]!=null?xUn(fm[2]):null):null,fa:fm?fm[1]:''};
+    if(fm&&/t="shared"/.test(fm[1])){ c.si=(/si="(\d+)"/.exec(fm[1])||[])[1]; c.sref=(/ref="([^"]+)"/.exec(fm[1])||[])[1]; }
+    if(t==='s'&&vm) c.v=SST[+vm[1]]??''; else if(t==='inlineStr') c.v=im?xUn(im[1]):''; else if(t==='str'||t==='e') c.v=vm?xUn(vm[1]):''; else if(t==='b') c.v=vm?vm[1]==='1':false; else if(vm) c.v=+vm[1];
+    out[col]=c; } return out; }
+/* offset rumus shared (referensi relatif) */
+const rrsOff=(f,dr,dc)=>f.replace(REF_RE,(m0,sh,da,ca,dr0,ra,db,cb,dr2,rb)=>{ if(m0[0]==='"') return m0; const C=(d,c)=>d?c:colL(colN(c)+dc), Rw=(d,r)=>d?r:(+r+dr);
+  return (sh||'')+da+C(da,ca)+dr0+Rw(dr0,ra)+(cb?':'+db+C(db,cb)+dr2+Rw(dr2,rb):''); });
+function rrsModel(rows,SST){ const M=new Map(), R=new Map(); for(const row of rows){ if(row.r>5000) continue; const cs=rrsCells(row.x,SST,22); R.set(row.r,cs); for(const c of Object.values(cs)) M.set(c.col+row.r,c); }
+  /* buka shared formula untuk evaluasi */
+  const master={}; for(const [ref,c] of M) if(c.si!=null&&c.f) master[c.si]={ref,f:c.f};
+  for(const [ref,c] of M) if(c.si!=null&&c.f==null&&master[c.si]){ const a=/([A-Z]+)(\d+)/.exec(master[c.si].ref), b=/([A-Z]+)(\d+)/.exec(ref); c.f=rrsOff(master[c.si].f,+b[2]-+a[2],colN(b[1])-colN(a[1])); c.fromShared=1; }
+  return {M,R}; }
+function rrsEval(M){ const memo=new Map(), busy=new Set();
+  const num=v=>typeof v==='number'?v:(typeof v==='boolean'?+v:(isFinite(+v)&&String(v).trim()!==''?+v:0));
+  const val=ref=>{ if(memo.has(ref)) return memo.get(ref); const c=M.get(ref); if(!c) return 0; if(c.f==null) return c.v??0; if(busy.has(ref)) return c.v??0; busy.add(ref);
+    let expr=c.f.replace(/\$/g,'').replace(/SUM\(([A-Z]{1,3})(\d+):([A-Z]{1,3})(\d+)\)/gi,(m,c1,r1,c2,r2)=>{ let s=0; for(let ci=colN(c1);ci<=colN(c2);ci++) for(let r=+r1;r<=+r2;r++) s+=num(val(colL(ci)+r)); return '('+s+')'; })
+      .replace(/\b([A-Z]{1,3})(\d+)\b/g,(m,cc,r)=>'('+num(val(cc+r))+')');
+    let v=c.v??0; if(/^[\d.+\-*/()\sEe]+$/.test(expr)){ try{ const x=Function('"use strict";return ('+expr+')')(); if(typeof x==='number'&&isFinite(x)) v=Math.round(x*1e6)/1e6; }catch(e){} }
+    busy.delete(ref); memo.set(ref,v); return v; };
+  for(const [ref,c] of M) if(c.f!=null) c.val=val(ref); else c.val=c.v; return val; }
+/* ---------- struktur sheet ---------- */
+function rrsStruct(R){ const rs=[...R.keys()].sort((a,b)=>a-b), txt=(r,c)=>{ const x=(R.get(r)||{})[c]; return x&&typeof x.v==='string'?x.v.trim():''; };
+  const hdr=rs.find(r=>/^no\.?$/i.test(txt(r,'A'))&&Object.values(R.get(r)).some(c=>/FAKTUR/i.test(String(c.v||'')))); if(!hdr) return null;
+  const H={}; for(const [c,x] of Object.entries(R.get(hdr))) if(typeof x.v==='string') H[c]=x.v.replace(/\s+/g,' ').trim(); const H2={}; for(const [c,x] of Object.entries(R.get(hdr+1)||{})) if(typeof x.v==='string') H2[c]=x.v.trim();
+  const find=(re,d)=>Object.keys(H).find(c=>re.test(H[c]))||d;
+  const col={no:'A',nama:find(/^NAMA/i,'B'),npwp:find(/^NPWP/i,'C'),fp:find(/FAKTUR/i,'D'),tgl:find(/^TGL\.? ?FP|TANGGAL FAKTUR/i,'E'),dppL:find(/NILAI LAIN/i,'F'),dpp:find(/^HARGA JUAL|^DPP$/i,'G'),ppn:find(/^PPN$/i,'H'),
+    res:find(/PENGAJUAN RESTITUSI/i,'I'),tglBy:find(/TGL\.? ?BAYAR|TANGGAL BAYAR/i,'S'),ppnBy:find(/SUDAH TERBAYAR/i,'T'),os:find(/PPN OS|OUTSTANDING/i,'U'),ket:find(/KETERANGAN/i,'V')};
+  const secs=[]; let cur=null, total=null;
+  for(const r of rs){ if(r<=hdr+1) continue; const a=txt(r,'A'), m=new RegExp(`^(${RRS_MON.join('|')})\\s+(\\d{4})`,'i').exec(a);
+    if(m&&!txt(r,col.nama)&&!txt(r,col.fp)){ cur={r,title:a,k:key(+m[2],RRS_MON.indexOf(m[1].toUpperCase())),rows:[],jumlah:null}; secs.push(cur); continue; }
+    if(/^JUMLAH$/i.test(a)&&cur&&!cur.jumlah){ cur.jumlah=r; cur=null; continue; }
+    if(/^TOTAL$/i.test(a)){ total=r; cur=null; continue; }
+    if(cur) cur.rows.push(r); }
+  return {hdr,H,H2,col,secs,total}; }
+/* ---------- rencana sinkronisasi ---------- */
+/* jumlah & template baris slot kosong untuk bagian NIHIL (meniru bagian NIHIL yang sudah ada) */
+function RRS_NSLOT(st,full){ const R=RRS_C&&RRS_C.model?RRS_C.model.R:null; let n=5, tpl=null;
+  const ns=st.secs.find(s=>/NIHIL/i.test(s.title)&&s.jumlah); if(ns){ const sl=ns.rows.filter(r=>{ const a=R&&(R.get(r)||{}).A; return a&&(a.f!=null||a.si!=null||typeof a.v==='number'); }); if(sl.length){ n=sl.length; tpl=sl[sl.length-1]; } }
+  return full?{n,tpl}:n; }
+function rrsPlan(B){ const {R,M}=B.model, st=B.st, C=st.col, sets=[], ins=[], newSec=[];
+  const g=(r,c)=>{ const x=(R.get(r)||{})[c]; return x?(x.val??x.v):''; };
+  const pm=new Map(); for(const [k,a] of Object.entries(DB.data.PM||{})) (a||[]).forEach(r=>{ if(isCanceled(r)) return; const d=fpDig(r.nofaktur); if(d&&!pm.has(d)) pm.set(d,{k,r}); });
+  const inX=new Set(); const sptTpl=(()=>{ for(const [ref,c] of M) if(ref.startsWith(C.ket)&&/^SUDAH ADA SPT PPN$/i.test(String(c.v||'').trim())) return c.s; return null; })();
+  const sptOk=o=>!!sptRec(`${o.k}|${rkKey(o.r)}`);
+  for(const s of st.secs) for(const r of s.rows){ const d=fpDig(g(r,C.fp)); if(!d) continue; inX.add(d); const o=pm.get(d); if(!o) continue;
+    if(o.r.bayar&&o.r.tglBayar){ const sv=xlSerial(o.r.tglBayar), ppn=+g(r,C.ppn)||+o.r.ppn||0;
+      if(sv&&+g(r,C.tglBy)!==sv) sets.push({r,c:C.tglBy,n:sv,why:'Tgl bayar dari Monitoring Pajak Masukan'});
+      if(Math.abs((+g(r,C.ppnBy)||0)-ppn)>=1) sets.push({r,c:C.ppnBy,n:ppn,why:'PPN sudah terbayar dari Monitoring Pajak Masukan'}); }
+    if(sptOk(o)&&!/^SUDAH ADA SPT PPN/i.test(String(g(r,C.ket)||'').trim())) sets.push({r,c:C.ket,str:'SUDAH ADA SPT PPN',s:sptTpl,why:'SPT PPN rekanan sudah diupload'}); }
+  /* faktur baru (sudah dikreditkan) yang belum ada di Excel */
+  const first=st.secs.length?st.secs.map(s=>s.k).sort()[0]:'9999-99', add={};
+  for(const [d,o] of pm){ if(inX.has(d)||o.k<first) continue; (add[o.k]=add[o.k]||[]).push(o); }
+  const byN=(a,b)=>String(a.r.nama||'').localeCompare(String(b.r.nama||''),'id',{sensitivity:'base'})||String(a.r.nofaktur).localeCompare(String(b.r.nofaktur));
+  for(const k of Object.keys(add).sort()){ const L=add[k].sort(byN), sec=st.secs.find(s=>s.k===k);
+    if(sec){ const empty=sec.rows.filter(r=>!String(g(r,C.nama)||'').trim()&&!String(g(r,C.fp)||'').trim()&&String(g(r,'A')??'')!==''&&(R.get(r)||{}).A&&(R.get(r).A.f!=null||typeof R.get(r).A.v==='number'));
+      const data=sec.rows.filter(r=>String(g(r,C.nama)||'').trim()||String(g(r,C.fp)||'').trim()), blank=sec.rows.filter(r=>!data.includes(r)&&!empty.includes(r));
+      for(const o of L){ if(empty.length){ sets.push({r:empty.shift(),fill:o,why:'Faktur baru dari Monitoring Pajak Masukan'}); continue; }
+        const nm=String(o.r.nama||''); const before=data.find(r=>String(g(r,C.nama)||'').localeCompare(nm,'id',{sensitivity:'base'})>0);
+        const at=before||(blank.length?blank[blank.length-1]:sec.jumlah); ins.push({at,o,tpl:data[data.length-1]||sec.rows[0]||sec.r+1,sec:sec.k}); } }
+    else newSec.push({k,L}); }
+  /* bulan tanpa PM dikreditkan → bagian "(NIHIL)"; sampai bulan lalu atau masa terbaru */
+  { const lastK=st.secs.length?st.secs.map(s=>s.k).sort().slice(-1)[0]:null;
+    if(lastK){ const nx=k=>{ let [y,m]=k.split('-').map(Number); m++; if(m>12){m=1;y++;} return `${y}-${String(m).padStart(2,'0')}`; };
+      const now=new Date(), prevMon=(()=>{ let y=now.getFullYear(), m=now.getMonth(); if(m===0){m=12;y--;} return `${y}-${String(m).padStart(2,'0')}`; })();
+      const endK=[prevMon,...newSec.map(x=>x.k)].sort().slice(-1)[0];
+      for(let k=nx(lastK);k<=endK;k=nx(k)) if(!newSec.some(x=>x.k===k)) newSec.push({k,L:[]});
+      newSec.sort((a,b)=>a.k<b.k?-1:1); } }
+  /* judul: lanjutkan nomor TAHAP; bulan tanpa faktur → (NIHIL) */
+  { let tpl=null, n=0; for(const s of st.secs){ const m=/\(([^()]*?TAHAP\s*)(\d+)([^()]*)\)/i.exec(s.title); if(m&&+m[2]>=n){ n=+m[2]; tpl=[m[1],m[3]]; } }
+    if(!tpl) tpl=['RESTITUSI PEMERIKSAAN TAHAP ',''];
+    for(const ns of newSec){ const [yy,mm]=ns.k.split('-'), mon=`${RRS_MON[+mm-1]} ${yy}`; if(ns.L.length){ n++; ns.title=`${mon} (${tpl[0]}${n}${tpl[1]})`; } else ns.title=`${mon} (NIHIL)`; } }
+  return {sets,ins,newSec,sptTpl}; }
+/* ---------- bangun ulang XML ---------- */
+function rrsRowMap(shifts){ const s=[...shifts].sort((a,b)=>a.at-b.at); return r=>{ let d=0; for(const x of s){ if(r>=x.at) d+=x.n; else break; } return Math.min(1048576,r+d); }; }
+const rrsMapF=(f,map,own,sheetName)=>f.replace(REF_RE,(m0,sh,da,ca,dr,ra,db,cb,dr2,rb)=>{ if(m0[0]==='"') return m0; const s=shName(sh)||own; if(s!==sheetName) return m0; return (sh||'')+da+ca+dr+map(+ra)+(cb?':'+db+cb+dr2+map(+rb):''); });
+const rrsMapSq=(sq,map)=>sq.replace(/(\$?)([A-Z]{1,3})(\$?)(\d+)/g,(m,a,c,b,r)=>a+c+b+map(+r));
+function rrsCellXml(col,r,s,kind,val,f){ const sa=s!=null?` s="${s}"`:'';
+  if(f!=null) return `<c r="${col}${r}"${sa}><f>${xEs(f)}</f>${typeof val==='number'?`<v>${val}</v>`:''}</c>`;
+  if(kind==='n'&&val!==''&&val!=null) return `<c r="${col}${r}"${sa}><v>${val}</v></c>`;
+  if(kind==='s'&&val) return `<c r="${col}${r}"${sa} t="inlineStr"><is><t xml:space="preserve">${xEs(val)}</t></is></c>`;
+  return `<c r="${col}${r}"${sa}/>`; }
+function rrsPutCell(rowX,col,r,cellX){ const re=new RegExp(`<c r="${col}${r}"[^>]*?(?:/>|>[\\s\\S]*?</c>)`); if(re.test(rowX)) return rowX.replace(re,()=>cellX);
+  const ci=colN(col); let pos=-1; const rc=/<c r="([A-Z]{1,3})\d+"/g; let m; while((m=rc.exec(rowX))){ if(colN(m[1])>ci){ pos=m.index; break; } }
+  if(pos<0){ if(/\/>$/.test(rowX)&&!/<\/row>$/.test(rowX)) return rowX.replace(/\/>$/,'>'+cellX+'</row>'); return rowX.replace(/<\/row>$/,cellX+'</row>'); }
+  return rowX.slice(0,pos)+cellX+rowX.slice(pos); }
+function rrsStyle(R,r,col){ const c=(R.get(r)||{})[col]; return c?c.s:undefined; }
+async function rrsBuild(){ const C0=await rrsLoad(); if(!C0) return null;
+  if(!C0.base){ const sp=rrsSplit(C0.S); C0.base=sp; C0.model=rrsModel(sp.rows,C0.SST); rrsEval(C0.model.M); C0.st=rrsStruct(C0.model.R); }
+  if(!C0.st) throw new Error('Struktur Excel tidak dikenali (judul kolom "NO" & "NO. FAKTUR PAJAK" tidak ditemukan)');
+  const P=rrsPlan(C0), sig=JSON.stringify([P.sets.map(x=>[x.r,x.c,x.n,x.str,x.fill&&x.fill.r.id]),P.ins.map(x=>[x.at,x.o.r.id]),P.newSec.map(x=>[x.k,x.title,x.L.map(o=>o.r.id)])]);
+  if(RRS_B&&RRS_B.fileId===C0.fileId&&RRS_B.sig===sig) return RRS_B;
+  const {R}=C0.model, st=C0.st, Cc=st.col, own=C0.sheetName, g=(r,c)=>{ const x=(R.get(r)||{})[c]; return x?(x.val??x.v):''; };
+  /* --- sisipan: baris baru dalam bagian yang ada + bagian (masa) baru --- */
+  const shifts=[], groups=new Map(); P.ins.forEach(x=>{ if(!groups.has(x.at)) groups.set(x.at,[]); groups.get(x.at).push(x); }); for(const [at,L] of groups) shifts.push({at,n:L.length});
+  const last=st.secs[st.secs.length-1], blocks=[];
+  for(const ns of P.newSec){ const prev=[...st.secs].reverse().find(s=>s.k<ns.k)||last, nxt=st.secs.find(s=>s.k>ns.k);
+    const at=nxt?nxt.r:(prev.jumlah+2); const n=1+(ns.L.length||RRS_NSLOT(st))+1+1+1; shifts.push({at,n}); blocks.push({at,ns,n,tplSec:last}); }
+  blocks.forEach(b=>{ const same=blocks.filter(x=>x.at===b.at); b.off=same.slice(0,same.indexOf(b)).reduce((s,x)=>s+x.n,0); b.tot=same.reduce((s,x)=>s+x.n,0); });
+  const map=rrsRowMap(shifts), hasIns=shifts.length>0, autoRefs=new Set(), newRows=new Set(), newHeads=new Set();
+  /* --- bongkar shared formula bila ada sisipan (nilai rumus tidak berubah) --- */
+  let rows=C0.base.rows.map(x=>({...x}));
+  { const masters={}; rows.forEach(row=>{ if(!row.x.includes('t="shared"')) return; for(const m of row.x.matchAll(/<c r="([A-Z]{1,3})(\d+)"[^>]*(?<!\/)>(?:(?!<\/c>)[\s\S])*?<f\b([^>]*?)t="shared"([^>]*)>([^<]*)<\/f>/g)){ const si=(/si="(\d+)"/.exec(m[3]+m[4])||[])[1]; masters[si]={c:m[1],r:+m[2],f:xUn(m[5])}; } });
+    rows=rows.map(row=>{ if(!row.x.includes('t="shared"')) return row; let x=row.x.replace(/<c r="([A-Z]{1,3})(\d+)"([^>]*)(?<!\/)>((?:(?!<\/c>)[\s\S])*?)<f\b([^>]*?)t="shared"([^>]*?)(?:\/>|>([^<]*)<\/f>)/g,(m0,c,r,ca,pre,fa1,fa2,ftxt)=>{
+        const si=(/si="(\d+)"/.exec(fa1+fa2)||[])[1], ms=masters[si]; if(!ms) return m0; const f=ftxt!=null&&ftxt!==''?xUn(ftxt):rrsOff(ms.f,+r-ms.r,colN(c)-colN(ms.c));
+        return `<c r="${c}${r}"${ca}>${pre}<f>${xEs(f)}</f>`; }); return {...row,x}; }); }
+  /* --- geser nomor baris & referensi rumus --- */
+  const minAt=hasIns?Math.min(...shifts.map(s=>s.at)):Infinity;
+  rows=rows.map(row=>{ let x=row.x; if(hasIns&&x.includes('<f')) x=x.replace(/<f\b([^>]*)>([^<]*)<\/f>/g,(m0,a,t)=>`<f${a.replace(/ref="([^"]+)"/,(m,q)=>`ref="${rrsMapSq(q,map)}"`)}>${xEs(rrsMapF(xUn(t),map,own,own))}</f>`);
+    if(row.r>=minAt){ const nr=map(row.r); x=x.replace(/^(<row\b[^>]*?\s)r="\d+"/,(m,a)=>`${a}r="${nr}"`).replace(/<c r="([A-Z]{1,3})\d+"/g,(m,c)=>`<c r="${c}${nr}"`); return {r:nr,x,o:row.r}; }
+    return {r:row.r,x,o:row.r}; });
+  const byOld=new Map(rows.map(x=>[x.o,x]));
+  const put=(oldR,col,cellX)=>{ const row=byOld.get(oldR); if(row) row.x=rrsPutCell(row.x,col,row.r,cellX); };
+  /* --- isian sel (pembayaran / SPT / slot kosong) --- */
+  const fillRow=(o,nr,styleRow,isNew)=>{ const out=[]; const r=o.r, dl=+r.dppLain||Math.round((+r.dpp||0)*11/12), sv=xlSerial(r.tanggal), sp=r.bayar&&r.tglBayar?xlSerial(r.tglBayar):null, spt=!!sptRec(`${o.k}|${rkKey(r)}`);
+    const V={[Cc.nama]:['s',String(r.nama||'').toUpperCase()],[Cc.npwp]:['s',String(r.npwp||'')],[Cc.fp]:['s',String(r.nofaktur||'')],[Cc.tgl]:['n',sv],[Cc.dppL]:['n',dl],[Cc.dpp]:['n',+r.dpp||0],[Cc.ppn]:['n',+r.ppn||0],[Cc.res]:['n',+r.ppn||0]};
+    if(sp){ V[Cc.tglBy]=['n',sp]; V[Cc.ppnBy]=['n',+r.ppn||0]; } if(spt) V[Cc.ket]=['s','SUDAH ADA SPT PPN'];
+    return V; };
+  for(const x of P.sets){ const nr=map(x.r);
+    if(x.fill){ const V=fillRow(x.fill,nr); for(const [c,[k,v]] of Object.entries(V)){ put(x.r,c,rrsCellXml(c,nr,c===Cc.ket&&P.sptTpl?P.sptTpl:rrsStyle(R,x.r,c),k,v)); autoRefs.add(c+nr); } newRows.add(nr); continue; }
+    put(x.r,x.c,rrsCellXml(x.c,nr,x.s??rrsStyle(R,x.r,x.c),x.str!=null?'s':'n',x.str??x.n)); autoRefs.add(x.c+nr); }
+  /* --- baris baru di bagian yang ada --- */
+  const tplCells=r=>R.get(r)||{}, tagOf=r=>{ const row=C0.base.rows.find(x=>x.r===r); return row?/^<row\b[^>]*?(?=\/?>)/.exec(row.x)[0]:'<row r="0"'; };
+  const mkRow=(nr,tplR,cellsFn)=>{ const T=tplCells(tplR), cols=Object.keys(T).sort((a,b)=>colN(a)-colN(b)); let cx='';
+    const want=cellsFn(), allC=[...new Set([...cols,...Object.keys(want)])].filter(c=>colN(c)<=22).sort((a,b)=>colN(a)-colN(b));
+    for(const c of allC){ const w=want[c], s=(T[c]||{}).s; if(w&&w.f!=null) cx+=rrsCellXml(c,nr,s,null,null,w.f); else if(w) cx+=rrsCellXml(c,nr,w.s??s,w.k,w.v); else cx+=rrsCellXml(c,nr,s,'',''); }
+    return tagOf(tplR).replace(/\br="\d+"/,`r="${nr}"`).replace(/\sspans="[^"]*"/,'')+'>'+cx+'</row>'; };
+  const relF=(tplR,nr)=>{ const out={}; for(const [c,x] of Object.entries(tplCells(tplR))) if(x.f!=null&&c!=='A'&&colN(c)<=22) out[c]={f:rrsOff(x.f.replace(/\$/g,'$'),nr-tplR,0)}; return out; };
+  const extra=[]; /* {after old row or at, rows:[{r,x}]} */
+  for(const [at,L] of groups){ const base=map(at)-L.length; L.forEach((x,i)=>{ const nr=base+i, V=fillRow(x.o,nr); const F=relF(x.tpl,nr);
+      extra.push({beforeOld:at,r:nr,x:mkRow(nr,x.tpl,()=>{ const w={A:{f:`A${nr-1}+1`},...F}; for(const [c,[k,v]] of Object.entries(V)) w[c]={k,v,s:c===Cc.ket&&P.sptTpl?P.sptTpl:undefined}; return w; })});
+      newRows.add(nr); Object.keys(V).forEach(c=>autoRefs.add(c+nr)); }); }
+  /* --- bagian masa baru (struktur meniru bagian terakhir) --- */
+  for(const b of blocks){ const T=b.tplSec, nAt=map(b.at)-b.tot+b.off; let r=nAt; const L=b.ns.L, [yy,mm]=b.ns.k.split('-');
+    const tHead=T.r, tData=T.rows.find(x=>String(g(x,Cc.fp)||'').trim())||T.rows[0], tBlank=T.jumlah-1, tJum=T.jumlah, tSp=T.jumlah+1;
+    extra.push({beforeOld:b.at,r,x:mkRow(r,tHead,()=>({A:{k:'s',v:b.ns.title||`${RRS_MON[+mm-1]} ${yy}`}}))}); newHeads.add(r); r++;
+    const first=r, prevSec=[...st.secs].reverse().find(s=>s.k<b.ns.k), prevLast=prevSec?map(prevSec.rows.filter(x=>String(g(x,Cc.fp)||'').trim()||true).slice(-1)[0]||prevSec.r):null;
+    L.forEach((o,i)=>{ const V=fillRow(o,r), F=relF(tData,r); extra.push({beforeOld:b.at,r,x:mkRow(r,tData,()=>{ const w={A:i===0?(prevLast?{f:`A${prevLast}+1`}:{k:'n',v:1}):{f:`A${r-1}+1`},...F}; for(const [c,[k,v]] of Object.entries(V)) w[c]={k,v,s:c===Cc.ket&&P.sptTpl?P.sptTpl:undefined}; return w; })});
+      newRows.add(r); Object.keys(V).forEach(c=>autoRefs.add(c+r)); r++; });
+    if(!L.length){ const ni=RRS_NSLOT(st,true); for(let i=0;i<ni.n;i++){ const rr=r; extra.push({beforeOld:b.at,r:rr,x:mkRow(rr,ni.tpl||tData,()=>({A:i===0?(prevLast?{f:`A${prevLast}+1`}:{k:'n',v:1}):{f:`A${rr-1}+1`}}))}); r++; } }
+    const blankR=r; extra.push({beforeOld:b.at,r,x:mkRow(r,tBlank,()=>({}))}); r++;
+    extra.push({beforeOld:b.at,r,x:mkRow(r,tJum,()=>{ const w={A:{k:'s',v:'JUMLAH'}}; for(const [c,x] of Object.entries(tplCells(tJum))) if(x.f!=null) w[c]={f:x.f.replace(/SUM\(\$?([A-Z]{1,3})\$?\d+:\$?([A-Z]{1,3})\$?\d+\)/gi,(m,c1,c2)=>`SUM(${c1}${first}:${c2}${blankR})`)}; return w; })}); r++;
+    extra.push({beforeOld:b.at,r,x:mkRow(r,tSp,()=>({}))}); }
+  /* gabungkan & urutkan */
+  let all=[...rows.map(x=>({r:x.r,x:x.x})),...extra.map(x=>({r:x.r,x:x.x}))].sort((a,b)=>a.r-b.r);
+  /* --- penomoran kolom NO: baris pertama tiap bagian yang terdampak menyambung dari bagian sebelumnya --- */
+  if(hasIns){ const S2=rrsStruct(rrsModel(all,C0.SST).R); if(S2){ let prevLast=null; for(const s of S2.secs){ const dr=s.rows.filter(r=>{ const row=all.find(x=>x.r===r); return row&&/<c r="A\d+"[^>]*><f>/.test(row.x); });
+      dr.forEach((r,i)=>{ const want=i===0?(prevLast?`A${prevLast}+1`:null):`A${dr[i-1]}+1`; if(!want) return; const row=all.find(x=>x.r===r); row.x=row.x.replace(new RegExp(`(<c r="A${r}"[^>]*><f>)[^<]*(</f>)`),`$1${want}$2`); });
+      if(dr.length) prevLast=dr[dr.length-1]; } } }
+  /* --- TOTAL: tambahkan JUMLAH bagian masa baru --- */
+  if(blocks.length){ const S3=rrsStruct(rrsModel(all,C0.SST).R); if(S3&&S3.total){ const newJ=S3.secs.filter(s=>s.jumlah&&newHeads.has(s.r)).map(s=>s.jumlah); const row=all.find(x=>x.r===S3.total);
+      if(row&&newJ.length) row.x=row.x.replace(/(<c r="([A-Z]{1,3})\d+"[^>]*><f>)([^<]*)(<\/f>)/g,(m0,a,c,f,z)=>{ if(colN(c)>22) return m0; const refs=f.split('+'); if(!refs.every(q=>new RegExp(`^\\$?${c}\\$?\\d+$`).test(q.trim()))) return m0;
+        const have=new Set(refs.map(q=>+q.replace(/\D/g,''))); const add=newJ.filter(j=>!have.has(j)).map(j=>`${c}${j}`); return add.length?a+[f,...add].join('+')+z:m0; }); } }
+  /* --- hitung ulang nilai rumus (cache <v>) untuk kolom A..V --- */
+  const mdl=rrsModel(all,C0.SST); rrsEval(mdl.M);
+  all=all.map(row=>{ if(row.r>5000||!row.x.includes('<f>')) return row; let x=row.x;
+    x=x.replace(/<c r="([A-Z]{1,3})(\d+)"([^>]*)><f>([^<]*)<\/f>(?:<v>[^<]*<\/v>)?<\/c>/g,(m0,c,r,a,f)=>{ if(colN(c)>22) return m0; const cell=mdl.M.get(c+r); const v=cell&&typeof cell.val==='number'?cell.val:null; return `<c r="${c}${r}"${a.replace(/\st="\w+"/,'')}><f>${f}</f>${v!=null?`<v>${v}</v>`:''}</c>`; }); return {...row,x}; });
+  /* --- head / tail / workbook / pivot --- */
+  let head=C0.base.head, tail=C0.base.tail;
+  if(hasIns){ const fx=s=>s.replace(/\b(ref|sqref|activeCell|topLeftCell)="([^"]+)"/g,(m,a,v)=>`${a}="${rrsMapSq(v,map)}"`).replace(/<brk id="(\d+)"/g,(m,i)=>`<brk id="${map(+i)}"`);
+    head=fx(head).replace(/<dimension ref="[^"]*"\/>/,m=>m); tail=fx(tail); }
+  const S=head+all.map(x=>x.x).join('')+tail;
+  const out=new Map([[C0.sp,S]]);
+  out.set('xl/workbook.xml',(hasIns?C0.wbx.replace(/<definedName\b([^>]*)>([^<]*)<\/definedName>/g,(m,a,t)=>`<definedName${a}>${xEs(rrsMapF(xUn(t),map,null,own))}</definedName>`):C0.wbx).replace(/<calcPr\b([^>]*?)\/>/,(m,a)=>/fullCalcOnLoad/.test(a)?m:`<calcPr${a} fullCalcOnLoad="1"/>`));
+  RRS_B={fileId:C0.fileId,sig,out,map,hasIns,autoRefs,newRows,model:mdl,st:rrsStruct(mdl.R),plan:P,C0};
+  return RRS_B; }
+async function rrsExport(){ try{ const B=await rrsBuild(); if(!B) return; const JSZip=await ensureJSZip(), z=await JSZip.loadAsync(B.C0.buf);
+    for(const [p,s] of B.out) z.file(p,s);
+    if(z.file('xl/calcChain.xml')){ z.remove('xl/calcChain.xml'); const rp='xl/_rels/workbook.xml.rels'; z.file(rp,(await z.file(rp).async('string')).replace(/<Relationship\b[^>]*calcChain[^>]*\/>/,''));
+      z.file('[Content_Types].xml',(await z.file('[Content_Types].xml').async('string')).replace(/<Override\b[^>]*calcChain[^>]*\/>/,'')); }
+    if(B.hasIns) for(const p of Object.keys(z.files).filter(p=>/^xl\/pivotCache\/pivotCacheDefinition\d+\.xml$/.test(p))){ let s=await z.file(p).async('string');
+      s=s.replace(/<worksheetSource\b([^>]*)\/>/,(m,a)=>{ const sh=(/sheet="([^"]+)"/.exec(a)||[])[1]; if(xUn(sh||'')!==B.C0.sheetName) return m; return `<worksheetSource${a.replace(/ref="([^"]+)"/,(q,v)=>`ref="${rrsMapSq(v,B.map)}"`)}/>`; });
+      s=s.replace(/<pivotCacheDefinition\b([^>]*?)>/,(m,a)=>/refreshOnLoad/.test(a)?m:`<pivotCacheDefinition${a} refreshOnLoad="1">`); z.file(p,s); }
+    if(B.hasIns) for(const p of Object.keys(z.files).filter(p=>/^xl\/pivotTables\/pivotTable\d+\.xml$/.test(p))){ const s=await z.file(p).async('string'); z.file(p,s.replace(/<location ref="([^"]+)"/,(m,v)=>`<location ref="${rrsMapSq(v,B.map)}"`)); }
+    const m=rrsMeta(), bytes=await z.generateAsync({type:'uint8array',compression:'DEFLATE'});
+    saveBytes(bytes,m.name||'Resume Restitusi.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); toast('Excel resume restitusi diunduh (format asli + data terbaru)','success');
+  }catch(e){ console.error(e); toast('Gagal export: '+e.message,'error'); } }
+/* ---------- import ---------- */
+function openRrsImport(){ const m=rrsMeta();
+  openModal(`<div class="modal-h"><div><h3>Import Excel Resume Restitusi PPN</h3><p>File disimpan apa adanya — format, rumus & tampilan Excel tidak diubah</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Upload file Excel resume (mis. <b>Resume Restitusi 2025 - 2026 PROYEK DUSEM.xlsx</b>). Setelah tersimpan, website otomatis menambahkan <b>tanggal &amp; PPN sudah terbayar</b> dari status pembayaran, <b>keterangan SPT PPN</b> rekanan, dan <b>faktur Pajak Masukan baru</b> ke bagian masa pajaknya — saat dilihat maupun saat Export.</div>
+      ${m?`<div class="tax-info warn" style="margin-bottom:10px">${icon('alert')}<div>File saat ini: <b>${esc(m.name)}</b> (diimport ${new Date(m.at).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}). Import baru akan <b>menggantikan</b> file tersebut.</div></div>`:''}
+      <input type="file" class="input" id="rrsFile" accept=".xlsx"><div id="rrsInfo" style="margin-top:12px"></div></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="rrsBtn" disabled onclick="rrsImportGo()">${icon('upload')} Simpan</button></div>`,'lg');
+  $('#rrsFile').addEventListener('change',async e=>{ const f=e.target.files[0]; window._rrsF=null; if(!f) return; $('#rrsInfo').innerHTML='<div class="sub-t">Membaca file…</div>';
+    try{ const C=await rrsOpen(await f.arrayBuffer()), sp=rrsSplit(C.S), md=rrsModel(sp.rows,C.SST); rrsEval(md.M); const st=rrsStruct(md.R);
+      if(!st||!st.secs.length) throw new Error('Format tidak dikenali: judul kolom "NO" / "NO. FAKTUR PAJAK" dan bagian per bulan (mis. "MARET 2026") tidak ditemukan.');
+      const n=st.secs.reduce((s,x)=>s+x.rows.filter(r=>fpDig(((md.R.get(r)||{})[st.col.fp]||{}).v)).length,0);
+      $('#rrsInfo').innerHTML=`<div class="tax-info ok">${icon('check')}<div>Sheet <b>${esc(C.sheetName)}</b> · <b>${st.secs.length} bagian masa</b> (${esc(st.secs[0].title)} s.d. ${esc(st.secs[st.secs.length-1].title)}) · <b>${fmt(n)} faktur</b></div></div>`;
+      window._rrsF=f; $('#rrsBtn').disabled=false; }
+    catch(err){ $('#rrsInfo').innerHTML=`<div class="tax-info warn">${icon('alert')}<div>${esc(err.message)}</div></div>`; $('#rrsBtn').disabled=true; } }); }
+async function rrsImportGo(){ const f=window._rrsF; if(!f) return; const btn=$('#rrsBtn'); btn.disabled=true; btn.textContent='Menyimpan…';
+  try{ const old=rrsMeta(), fileId=uid(), me=currentUser(); await putFile(fileId,new Blob([await f.arrayBuffer()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    DB.data.RRS={all:[{id:uid(),fileId,name:f.name,size:f.size,at:new Date().toISOString(),by:me?me.name||me.username:''}]};
+    if(await save()){ if(old&&old.fileId) delFile(old.fileId); RRS_C=null; RRS_B=null; closeModal(); toast('Excel resume restitusi tersimpan','success'); rrsRefresh(); } }
+  catch(e){ toast('Gagal: '+e.message,'error'); btn.disabled=false; btn.innerHTML=`${icon('upload')} Simpan`; } }
+function rrsRemove(){ const m=rrsMeta(); if(!m) return; confirmBox('Hapus file resume?',`File <b>${esc(m.name)}</b> dihapus dari website. Data Pajak Masukan tidak terpengaruh.`,'Hapus',async()=>{ DB.data.RRS={all:[]}; if(await save()){ delFile(m.fileId); RRS_C=null; RRS_B=null; toast('File resume dihapus','success'); rrsRefresh(); } }); }
+/* ---------- tampilan ---------- */
+function rrsRefresh(){ renderRrs(); }
+async function renderRrs(){ const m=rrsMeta(), V=$('#view'), addTabs=()=>{ const sg=NAV.find(n=>n.grp&&n.items.includes('RRS')); if(sg&&!V.querySelector('.subtabs')) V.insertAdjacentHTML('afterbegin',subTabsHTML(sg)); };
+  if(!m){ V.innerHTML=`<div class="card"><div class="empty">${icon('file')}<b>Belum ada Excel resume restitusi</b>Import file Excel resume restitusi PPN (daftar pajak masukan yang sudah dikreditkan). File disimpan apa adanya dan diperbarui otomatis dari data website.<br><br><button class="btn btn-primary adm p-add" onclick="openRrsImport()">${icon('upload')} Import Excel</button></div></div>`; addTabs(); return; }
+  V.innerHTML=`<div class="card"><div class="empty"><div class="spinner" style="margin:0 auto 10px"></div><b>Menyiapkan pratinjau…</b>${esc(m.name)}</div></div>`; addTabs();
+  let B; try{ B=await rrsBuild(); }catch(e){ V.innerHTML=`<div class="card"><div class="empty">${icon('alert')}<b>Gagal membaca Excel</b>${esc(e.message)}<br><br><button class="btn btn-primary adm p-add" onclick="openRrsImport()">${icon('upload')} Import ulang</button></div></div>`; addTabs(); return; }
+  if(state.view!=='RRS') return;
+  const {model:{R,M},st,autoRefs,newRows}=B, C=st.col, f=state.rrs, q=(f.q||'').toLowerCase().trim(), qd=q.replace(/[.,\-\s]/g,'');
+  const cv=(r,c)=>{ const x=(R.get(r)||{})[c]; return x?(x.val??x.v):''; }, txt=(r,c)=>{ const v=cv(r,c); return typeof v==='string'?v:''; };
+  const title=[2,3,4].map(r=>txt(r,'A')).filter(Boolean);
+  const vis=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V'].filter(c=>f.det||!['J','K','L','M','N','O','P','Q','R'].includes(c));
+  const DATE=new Set([C.tgl,C.tglBy,'M']), NUM=new Set(['F','G','H','I','J','K','L','N','O','P','Q','T','U']), hd=c=>(st.H[c]||'').replace(/\n/g,' '), hd2=c=>st.H2[c]||'';
+  const fmtC=(r,c)=>{ const v=cv(r,c); if(v===''||v==null) return ''; if(DATE.has(c)&&typeof v==='number') return fmtDate(xlIso(v)); if(NUM.has(c)&&typeof v==='number') return v===0?'-':fmt(v); if(c==='A'&&typeof v==='number') return fmt(v); return esc(String(v)); };
+  const ketCls=s=>/^SUDAH ADA SPT/i.test(s)?'ok':/FU KE VENDOR/i.test(s)?'fu':s?'etc':'';
+  let tot={ppn:0,by:0,os:0,n:0,spt:0,fu:0,kos:0,auto:autoRefs.size,baru:newRows.size};
+  const rowOk=r=>{ const nm=txt(r,C.nama), fp=String(cv(r,C.fp)||''); if(!nm&&!fp) return false;
+    if(q&&!([nm,fp,String(cv(r,C.npwp)||''),txt(r,C.ket)].some(v=>v.toLowerCase().includes(q))||(qd&&/^\d{3,}$/.test(qd)&&[cv(r,C.ppn),fpDig(fp)].some(v=>String(typeof v==='number'?Math.round(v):v).includes(qd))))) return false;
+    const os=+cv(r,C.os)||0, k=txt(r,C.ket);
+    if(f.fl==='os'&&!(Math.abs(os)>=1)) return false; if(f.fl==='lunas'&&Math.abs(os)>=1) return false; if(f.fl==='spt'&&!/^SUDAH ADA SPT/i.test(k)) return false; if(f.fl==='nospt'&&/^SUDAH ADA SPT/i.test(k)) return false;
+    if(f.fl==='auto'&&!vis.some(c=>autoRefs.has(c+r))) return false; return true; };
+  st.secs.forEach(s=>s.rows.forEach(r=>{ if(!txt(r,C.nama)&&!cv(r,C.fp)) return; tot.n++; tot.ppn+=+cv(r,C.ppn)||0; tot.by+=+cv(r,C.ppnBy)||0;  const k=txt(r,C.ket); if(/^SUDAH ADA SPT/i.test(k)) tot.spt++; else if(/FU KE VENDOR/i.test(k)) tot.fu++; else tot.kos++; })); tot.os=tot.ppn-tot.by;
+  const sumRow=(r,cls,lbl)=>`<tr class="${cls}"><td colspan="${vis.indexOf('F')}">${esc(lbl||txt(r,'A'))}</td>${vis.slice(vis.indexOf('F')).map(c=>`<td class="${NUM.has(c)?'num':''}">${NUM.has(c)?fmtC(r,c):''}</td>`).join('')}</tr>`;
+  const secHTML=s=>{ const rows=s.rows.filter(rowOk); if(q||f.fl!=='all'){ if(!rows.length) return ''; }
+    const closed=f.closed[s.k]&&!q&&f.fl==='all', n=s.rows.filter(r=>txt(r,C.nama)||cv(r,C.fp)).length, nn=s.rows.filter(r=>newRows.has(r)).length;
+    return `<tbody class="rrs-sec ${closed?'closed':''}"><tr class="rrs-sh" onclick="state.rrs.closed['${s.k}']=!state.rrs.closed['${s.k}'];renderRrs()"><td colspan="${vis.length}"><span class="rrs-car">${icon('chev')}</span><b>${esc(s.title)}</b><span class="rrs-meta">${n?`${n} faktur · PPN ${rp(+cv(s.jumlah,C.ppn)||0)}`:'nihil'}${nn?` · <span class="badge b-primary">+${nn} baru</span>`:''}</span></td></tr>
+      ${closed?'':rows.map(r=>`<tr class="${newRows.has(r)?'rrs-new':''}">${vis.map(c=>{ const a=autoRefs.has(c+r), v=fmtC(r,c);
+        if(c===C.ket){ const k=txt(r,c); return `<td class="rrs-ket ${a?'rrs-auto':''}">${k?`<span class="rrs-k ${ketCls(k)}">${esc(k)}</span>`:''}</td>`; }
+        return `<td class="${NUM.has(c)?'num':''} ${a?'rrs-auto':''} ${c===C.nama?'rrs-nm':''}" ${a?'title="Diisi otomatis dari data website"':''}>${v}</td>`; }).join('')}</tr>`).join('')}
+      ${closed||!s.jumlah?'':sumRow(s.jumlah,'rrs-jml')}</tbody>`; };
+  const sisa=st.total?[...R.keys()].find(r=>r>st.total&&r<st.total+4&&Object.values(R.get(r)||{}).some(c=>/SISA BELUM CAIR/i.test(String(c.v||'')))):null;
+  V.innerHTML=`
+  <div class="kr-hd ok">${icon('file')}<div><b>Resume Restitusi PPN — Pajak Masukan yang Telah Dikreditkan</b><span>Pratinjau file Excel <strong>${esc(m.name)}</strong> apa adanya. Kolom <strong>Tgl. Bayar / PPN Sudah Terbayar</strong>, keterangan <strong>SPT PPN</strong>, dan <strong>faktur baru</strong> dari Monitoring Pajak Masukan terisi otomatis (ditandai biru) dan ikut terbawa saat Export.</span></div></div>
+  <div class="grid minis">
+    <div class="card mini"><small>Total PPN Dikreditkan</small><b>${rp(tot.ppn)}</b><span class="sub">${fmt(tot.n)} faktur · ${st.secs.length} masa</span></div>
+    <div class="card mini"><small>PPN Sudah Terbayar</small><b style="color:var(--success)">${rp(tot.by)}</b><div class="progress" style="margin-top:6px"><span style="width:${tot.ppn?Math.min(100,tot.by/tot.ppn*100):0}%;background:var(--success)"></span></div><span class="sub">${tot.ppn?(tot.by/tot.ppn*100).toFixed(1):0}% dari total PPN</span></div>
+    <div class="card mini"><small>PPN Outstanding (OS)</small><b style="color:${Math.abs(tot.os)>=1?'var(--danger)':'var(--success)'}">${rp(tot.os)}</b><span class="sub">belum dibayar ke rekanan</span></div>
+    <div class="card mini"><small>Keterangan SPT Rekanan</small><b>${fmt(tot.spt)} <span style="font-size:13px;color:var(--muted)">ada SPT</span></b><span class="sub">${fmt(tot.fu)} sudah di-FU ke vendor · ${fmt(tot.kos)} kosong</span></div>
+  </div>
+  <div class="card rrs-card">
+    <div class="card-h"><div><h3>${esc(title[0]||'Resume Restitusi PPN')}</h3><p>${title.slice(1).map(esc).join(' · ')}</p></div>
+      <div class="toolbar"><button class="btn btn-outline adm p-add" onclick="openRrsImport()">${icon('upload')}<span class="hide-sm">Import Excel</span></button>
+        <button class="btn btn-primary" onclick="rrsExport()">${icon('download')} Export Excel</button>
+        <button class="btn btn-danger adm p-del" onclick="rrsRemove()" title="Hapus file resume">${icon('trash')}</button></div></div>
+    <div class="card-b" style="padding-bottom:0">
+      ${tot.auto?`<div class="rrs-sync">${icon('check')}<span><b>${fmt(tot.auto)} sel</b> diperbarui otomatis${tot.baru?` · <b>${fmt(tot.baru)} faktur baru</b> ditambahkan`:''} dari Monitoring Pajak Masukan &amp; Status SPT Rekanan</span><button class="link" onclick="state.rrs.fl='auto';renderRrs()">Lihat</button></div>`:`<div class="rrs-sync idle">${icon('check')}<span>Data Excel sudah sesuai dengan data website — tidak ada pembaruan otomatis</span></div>`}
+      <div class="toolbar filters" style="margin-top:12px">
+        <div class="search">${icon('search')}<input class="input" id="rrsQ" placeholder="Cari nama rekanan, NPWP, nomor faktur, atau nilai PPN…" value="${esc(f.q)}" oninput="state.rrs.q=this.value;clearTimeout(window._rrsT);window._rrsT=setTimeout(()=>{renderRrs().then(()=>{const e=$('#rrsQ');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length)}})},300)">${f.q?`<button type="button" class="search-x" style="display:grid" onclick="state.rrs.q='';renderRrs()">${icon('x')}</button>`:''}</div>
+        <select class="select" onchange="state.rrs.fl=this.value;renderRrs()">${[['all','Semua faktur'],['os','PPN belum terbayar (OS)'],['lunas','PPN sudah terbayar'],['spt','Sudah ada SPT PPN'],['nospt','Belum ada SPT PPN'],['auto','Diperbarui otomatis']].map(([v,l])=>`<option value="${v}" ${f.fl===v?'selected':''}>${l}</option>`).join('')}</select>
+        <label class="rrs-tg"><input type="checkbox" ${f.det?'checked':''} onchange="state.rrs.det=this.checked;renderRrs()"> Kolom restitusi lengkap</label>
+        <button class="btn btn-ghost btn-sm" onclick="const o=Object.values(state.rrs.closed).some(Boolean);state.rrs.closed={};if(!o)(RRS_B&&RRS_B.st.secs||[]).forEach(s=>state.rrs.closed[s.k]=true);renderRrs()">Buka / tutup semua</button>
+      </div></div>
+    <div class="table-wrap rrs-wrap"><table class="rrs-t"><thead><tr>${vis.map(c=>{ let h=hd(c); if(!h){ const pc=colL(colN(c)-1); h=hd(pc); } const sub=hd2(c); return `<th class="${NUM.has(c)?'num':''} ${c==='A'?'rrs-c0':c===C.nama?'rrs-c1':''}">${esc(h||c)}${sub?`<small>${esc(sub)}</small>`:''}</th>`; }).join('')}</tr></thead>
+      ${st.secs.map(secHTML).join('')||`<tbody><tr><td colspan="${vis.length}" class="sub-t" style="text-align:center;padding:24px">Tidak ada data sesuai filter</td></tr></tbody>`}
+      ${st.total&&!q&&f.fl==='all'?`<tbody>${sumRow(st.total,'rrs-tot')}${sisa?`<tr class="rrs-sisa"><td colspan="${vis.length}">${esc(Object.values(R.get(sisa)).map(c=>c.v).find(v=>/SISA/i.test(String(v)))||'')}: <b>Pemeriksaan ${rp(+cv(sisa,'I')||0)}</b> · Pendahuluan ${rp(+cv(sisa,'J')||0)}</td></tr>`:''}</tbody>`:''}
+    </table></div>
+    <div class="rrs-foot"><span><i class="rrs-dot auto"></i> Diisi otomatis dari website</span><span><i class="rrs-dot new"></i> Faktur baru dari Monitoring Pajak Masukan</span><span>File: ${esc(m.name)} · diimport ${new Date(m.at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}${m.by?' oleh '+esc(m.by):''}</span></div>
+  </div>`;
+  addTabs(); }
+
 function renderRpm(){
   const R=rnCompute(), {S}=R, f=state.rn, q=(f.q||'').toLowerCase().trim(), qd=q.replace(/[.,\-\s]/g,'');
   const rows=R.pairs.filter(p=>(f.st==='all'||p.st===f.st)&&(!q||[p.a&&p.a.text,p.a&&p.a.docNo,p.o&&p.o.r.nama,p.o&&p.o.r.nofaktur].some(v=>String(v||'').toLowerCase().includes(q))||(/^\d{3,}$/.test(qd)&&[p.a&&p.a.fp,p.o&&p.o.fp,String(Math.round(p.accAmt)),String(Math.round(p.ppAmt))].some(v=>String(v||'').includes(qd)))));
@@ -7980,13 +8287,14 @@ const PERM_CHK={openImport:t=>can(t,'add'),commitImport:()=>IMPORT&&can(IMPORT.t
   openBupotCtx:()=>can('VPR','edit'),bpcGo:()=>can('VPR','edit'),openMrkForm:id=>can('MRK',id?'edit':'add'),saveMrkForm:()=>can('MRK',$('#mrkForm')&&$('#mrkForm').MRK_ID?'edit':'add'),mrkImportPph:()=>can('MRK','add'),
   openSptForm:rk=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),saveSpt:(e,rk)=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),deleteSpt:()=>can('spt','del'),
   openRestNew:()=>can('rest','add'),saveRest:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),resetRest:()=>can('rest','del'),
+  openRrsImport:()=>can('RRS','add'),rrsImportGo:()=>can('RRS','add'),rrsRemove:()=>can('RRS','del'),
   openRnImport:()=>can('RPPN','add'),rnImportGo:()=>can('RPPN','add'),openRnForm:id=>can('RPPN',id?'edit':'add'),saveRnForm:(e,id)=>can('RPPN',id?'edit':'add'),rnDel:()=>can('RPPN','del'),rnClear:()=>can('RPPN','del'),
   openArsUpload:()=>can('ARS','add'),saveArsUpload:()=>can('ARS','add'),openArsEdit:()=>can('ARS','edit'),saveArsEdit:()=>can('ARS','edit'),arsDel:()=>can('ARS','del'),
   openRpImport:()=>can('RPPH','add'),rpImportGo:()=>can('RPPH','add'),openRpForm:id=>can('RPPH',id?'edit':'add'),saveRpForm:(e,id)=>can('RPPH',id?'edit':'add'),rpDel:()=>can('RPPH','del'),rpClear:()=>can('RPPH','del'),
   openTglBayar:()=>can('PM','edit'),tbyGo:()=>can('PM','edit'),openKrImp:()=>can('PP','edit'),kriGo:()=>can('PP','edit'),
   korAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),docAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add')};
 ['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
- 'openRnImport','rnImportGo','openRnForm','saveRnForm','rnDel','rnClear','openArsUpload','saveArsUpload','openArsEdit','saveArsEdit','arsDel','openRpImport','rpImportGo','openRpForm','saveRpForm','rpDel','rpClear','openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
+ 'openRrsImport','rrsImportGo','rrsRemove','openRnImport','rnImportGo','openRnForm','saveRnForm','rnDel','rnClear','openArsUpload','saveArsUpload','openArsEdit','saveArsEdit','arsDel','openRpImport','rpImportGo','openRpForm','saveRpForm','rpDel','rpClear','openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
  'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
  'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
  'downloadTemplate','saveIdentity','openRekonImport','saveRekonImport','delRekon','openRekonMap','saveRekonMap','saveRekonNote','openKredit','doKredit','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
