@@ -6790,7 +6790,7 @@ function renderRpph(){
   <div class="grid minis">
     <div class="card mini"><small>PPh menurut Akuntansi</small><b>${rp(S.acc_total)}</b><span class="sub">${fmt(R.nAcc)} baris · periode ${esc(rpPeriode())}</span></div>
     <div class="card mini"><small>PPh menurut Pencatatan</small><b>${rp(S.tax_total)}</b><span class="sub">${fmt(R.nTax)} data ${f.scope==='all'?'(semua masa)':'masa '+masaLabel(f.scope)}</span></div>
-    <div class="card mini"><small>Selisih (Akuntansi − Pencatatan)</small><b style="color:${Math.abs(S.selisih)<1?'var(--success)':'var(--danger)'}">${Math.abs(S.selisih)<1?'Rp 0':rp(S.selisih)}</b><span class="sub">${Math.abs(S.selisih)<1?'Seimbang':'Perlu ditindaklanjuti'}</span></div>
+    <div class="card mini"><small>Selisih (Akuntansi − Pencatatan)</small>${R.nAcc?`<b style="color:${Math.abs(S.selisih)<1?'var(--success)':'var(--danger)'}">${Math.abs(S.selisih)<1?'Rp 0':rp(S.selisih)}</b><span class="sub">${Math.abs(S.selisih)<1?'Seimbang':'Perlu ditindaklanjuti'}</span>`:`<b>—</b><span class="sub">Belum ada data akuntansi</span>`}</div>
     <div class="card mini"><small>Tingkat Kecocokan</small><b style="color:var(--primary)">${R.nAcc?Math.round(S.ok.n/R.nAcc*100):0}%</b><div class="progress" style="margin-top:6px"><span style="width:${R.nAcc?S.ok.n/R.nAcc*100:0}%;background:var(--success)"></span></div><span class="sub">${S.ok.n} dari ${R.nAcc} baris akuntansi cocok</span></div>
   </div>
   <div class="card">
@@ -6798,9 +6798,9 @@ function renderRpph(){
       <div class="toolbar">
         <button class="btn btn-primary adm p-add" onclick="openRpImport()">${icon('upload')} Import Laporan Akuntansi</button>
         <button class="btn btn-outline adm p-add" onclick="openRpForm()">${icon('plus')}<span class="hide-sm">Input Manual</span></button>
-        <button class="btn btn-outline" onclick="rpExport()" ${R.pairs.length?'':'disabled'}>${icon('download')}<span class="hide-sm">Export Excel</span></button>
-        ${R.nAcc?`<button class="btn btn-danger adm p-del" onclick="rpClear()" title="Hapus semua data akuntansi">${icon('trash')}</button>`:''}</div></div>
-    ${R.pairs.length?`<div class="card-b" style="padding-bottom:0">
+        <button class="btn btn-outline" onclick="rpExport()" ${R.nAcc?'':'disabled'}>${icon('download')}<span class="hide-sm">Export Excel</span></button>
+        ${R.nAcc?`<button class="btn btn-danger adm p-del" onclick="rpClear()" title="Kosongkan data akuntansi setelah rekon selesai">${icon('trash')}<span class="hide-sm">Kosongkan Data</span></button>`:''}</div></div>
+    ${R.nAcc?`<div class="card-b" style="padding-bottom:0">
       <div class="rp-chips">${chip('all','Semua',R.pairs.length)}${Object.entries(RP_ST).map(([k,v])=>chip(k,v.l,S[k].n)).join('')}</div>
       <div class="toolbar filters" style="margin-top:12px">
         <div class="search">${icon('search')}<input class="input" id="rpSearch" placeholder="Cari nama rekanan, nomor dokumen, invoice, atau nilai…" value="${esc(f.q)}" oninput="state.rp.q=this.value;clearTimeout(window._rpT);window._rpT=setTimeout(()=>{rpRefresh();const e=$('#rpSearch');e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)">${f.q?`<button type="button" class="search-x" style="display:grid" onclick="state.rp.q='';rpRefresh()">${icon('x')}</button>`:''}</div>
@@ -6817,7 +6817,7 @@ function renderRpph(){
         <td class="num" style="font-weight:700;color:${Math.abs(p.dev)<1?'var(--success)':'var(--danger)'}">${Math.abs(p.dev)<1?'0':fmt(p.dev)}</td>
         ${isAdmin()||can('RPPH','edit')||can('RPPH','del')?`<td><div class="row-act">${a&&can('RPPH','edit')?`<button class="icon-btn xs" title="Ubah data akuntansi" onclick="openRpForm('${a.id}')">${icon('edit')}</button>`:''}${a&&can('RPPH','del')?`<button class="icon-btn xs" title="Hapus baris akuntansi" onclick="rpDel('${a.id}')">${icon('trash')}</button>`:''}</div></td>`:''}</tr>`; }).join('')||`<tr><td colspan="12" class="sub-t" style="text-align:center;padding:24px">Tidak ada data sesuai filter</td></tr>`}
       </tbody><tfoot><tr><td colspan="5">TOTAL ${f.st==='all'&&!q?'':'(sesuai filter)'}</td><td class="num">${fmt(rows.reduce((s,p)=>s+p.accAmt,0))}</td><td colspan="3"></td><td class="num">${fmt(rows.reduce((s,p)=>s+p.taxAmt,0))}</td><td class="num">${fmt(rows.reduce((s,p)=>s+p.dev,0))}</td>${isAdmin()||can('RPPH','edit')||can('RPPH','del')?'<td></td>':''}</tr></tfoot></table></div>`
-    :`<div class="empty">${icon('upload')}<b>Belum ada data untuk direkonsiliasi</b>Import file laporan PPh dari akuntansi (Excel). Kolom yang dipakai: <b>Text</b> (nama rekanan) dan <b>Amount in LC</b> (nilai PPh).<br><br><button class="btn btn-primary adm p-add" onclick="openRpImport()">${icon('upload')} Import Laporan Akuntansi</button></div>`}
+    :`<div class="empty">${icon('upload')}<b>Belum ada data untuk direkonsiliasi</b>Import laporan PPh dari akuntansi (Excel format apa pun) untuk memulai rekonsiliasi.<br><br><button class="btn btn-primary adm p-add" onclick="openRpImport()">${icon('upload')} Import Laporan Akuntansi</button></div>`}
   </div>`;
 }
 /* ---------- import laporan akuntansi — format bebas: kolom dideteksi otomatis & bisa dipetakan manual ---------- */
@@ -6911,7 +6911,7 @@ async function saveRpForm(e,id){ e.preventDefault(); const fd=new FormData(e.tar
   if(id){ const a=rpAll().find(x=>x.id===id); if(a) Object.assign(a,rec); } else rpAll().push({id:uid(),manual:true,...rec});
   if(await save()){ closeModal(); toast('Data akuntansi tersimpan · rekonsiliasi diperbarui','success'); rpRefresh(); } }
 function rpDel(id){ confirmBox('Hapus baris akuntansi?','Baris ini dihapus dari data rekonsiliasi.','Hapus',async()=>{ DB.data.RPPH.all=rpAll().filter(a=>a.id!==id); if(await save()){ toast('Baris dihapus','success'); rpRefresh(); } }); }
-function rpClear(){ confirmBox('Hapus semua data akuntansi?',`<b>${fmt(rpAll().length)} baris</b> data akuntansi dihapus. Data Pencatatan PPh Rekanan tidak terpengaruh.`,'Hapus semua',async()=>{ DB.data.RPPH.all=[]; if(await save()){ toast('Data akuntansi dihapus','success'); rpRefresh(); } }); }
+function rpClear(){ confirmBox('Kosongkan data rekonsiliasi?',`<b>${fmt(rpAll().length)} baris</b> data akuntansi PPh dihapus sehingga halaman rekonsiliasi kosong kembali dan siap untuk import bulan berikutnya. Simpan dulu hasil <b>Export Excel</b> bila diperlukan. Data Pencatatan PPh Rekanan tidak terpengaruh.`,'Kosongkan',async()=>{ DB.data.RPPH.all=[]; if(await save()){ toast('Data akuntansi dihapus','success'); rpRefresh(); } }); }
 /* ---------- export Excel (kertas kerja rekonsiliasi) ---------- */
 async function rpExport(){
   try{
@@ -7131,7 +7131,7 @@ function renderRpm(){
         <button class="btn btn-primary adm p-add" onclick="openRnImport()">${icon('upload')} Import Laporan Akuntansi</button>
         <button class="btn btn-outline adm p-add" onclick="openRnForm()">${icon('plus')}<span class="hide-sm">Input Manual</span></button>
         <button class="btn btn-outline" onclick="rnExport()" ${R.nAcc?'':'disabled'}>${icon('download')}<span class="hide-sm">Export Excel</span></button>
-        ${R.nAcc?`<button class="btn btn-danger adm p-del" onclick="rnClear()" title="Hapus semua data akuntansi">${icon('trash')}</button>`:''}</div></div>
+        ${R.nAcc?`<button class="btn btn-danger adm p-del" onclick="rnClear()" title="Kosongkan data akuntansi setelah rekon selesai">${icon('trash')}<span class="hide-sm">Kosongkan Data</span></button>`:''}</div></div>
     ${R.nAcc?`<div class="card-b" style="padding-bottom:0">
       <div class="rp-chips">${chip('all','Semua',R.pairs.length)}${Object.entries(RN_ST).map(([k,v])=>chip(k,v.l,S[k].n)).join('')}</div>
       <div class="toolbar filters" style="margin-top:12px">
@@ -7148,7 +7148,7 @@ function renderRpm(){
         <td class="num" style="font-weight:700;color:${Math.abs(p.dev)<1?'var(--success)':'var(--danger)'}">${Math.abs(p.dev)<1?'0':fmt(p.dev)}</td>
         ${ed?`<td><div class="row-act" style="opacity:1">${a&&can('RPPN','edit')?`<button class="icon-btn xs" title="Ubah / lengkapi nomor faktur" onclick="openRnForm('${a.id}')">${icon('edit')}</button>`:''}${a&&can('RPPN','del')?`<button class="icon-btn xs" title="Hapus baris" onclick="rnDel('${a.id}')">${icon('trash')}</button>`:''}</div></td>`:''}</tr>`; }).join('')||`<tr><td colspan="12" class="sub-t" style="text-align:center;padding:24px">Tidak ada data sesuai filter</td></tr>`}
       </tbody><tfoot><tr><td colspan="5">TOTAL ${f.st==='all'&&!q?'':'(sesuai filter)'}</td><td class="num">${fmt(rows.reduce((s,p)=>s+p.accAmt,0))}</td><td colspan="3"></td><td class="num">${fmt(rows.reduce((s,p)=>s+p.ppAmt,0))}</td><td class="num">${fmt(rows.reduce((s,p)=>s+p.dev,0))}</td>${ed?'<td></td>':''}</tr></tfoot></table></div>`
-    :`<div class="empty">${icon('upload')}<b>Belum ada data untuk direkonsiliasi</b>Import buku besar PPN Masukan dari akuntansi (Excel format apa pun). Sistem mencari kolom <b>nomor faktur / keterangan</b> dan <b>nilai PPN (Debit)</b> — kolom <b>Saldo</b> (kumulatif) tidak dipakai.<br><br><button class="btn btn-primary adm p-add" onclick="openRnImport()">${icon('upload')} Import Laporan Akuntansi</button></div>`}
+    :`<div class="empty">${icon('upload')}<b>Belum ada data untuk direkonsiliasi</b>Import buku besar PPN Masukan dari akuntansi (Excel format apa pun) untuk memulai rekonsiliasi.<br><br><button class="btn btn-primary adm p-add" onclick="openRnImport()">${icon('upload')} Import Laporan Akuntansi</button></div>`}
   </div>`;
 }
 /* ---------- import: format bebas ---------- */
@@ -7224,7 +7224,7 @@ async function saveRnForm(e,id){ e.preventDefault(); const fd=new FormData(e.tar
   if(id){ const a=rnAll().find(x=>x.id===id); if(a) Object.assign(a,rec); } else rnAll().push({id:uid(),manual:true,...rec});
   if(await save()){ closeModal(); toast(fp.length===17?'Tersimpan · rekonsiliasi diperbarui':'Tersimpan — nomor faktur belum 17 digit, tetap ditandai cek manual','success'); rnRefresh(); } }
 function rnDel(id){ confirmBox('Hapus baris akuntansi?','Baris ini dihapus dari data rekonsiliasi Pajak Masukan.','Hapus',async()=>{ DB.data.RPPN.all=rnAll().filter(a=>a.id!==id); if(await save()){ toast('Baris dihapus','success'); rnRefresh(); } }); }
-function rnClear(){ confirmBox('Hapus semua data akuntansi?',`<b>${fmt(rnAll().length)} baris</b> data akuntansi PPN Masukan dihapus. Data Prepopulated tidak terpengaruh.`,'Hapus semua',async()=>{ DB.data.RPPN.all=[]; if(await save()){ toast('Data akuntansi dihapus','success'); rnRefresh(); } }); }
+function rnClear(){ confirmBox('Kosongkan data rekonsiliasi?',`<b>${fmt(rnAll().length)} baris</b> data akuntansi PPN Masukan dihapus sehingga halaman rekonsiliasi kosong kembali dan siap untuk import bulan berikutnya. Simpan dulu hasil <b>Export Excel</b> bila diperlukan. Data Prepopulated tidak terpengaruh.`,'Kosongkan',async()=>{ DB.data.RPPN.all=[]; if(await save()){ toast('Data akuntansi dihapus','success'); rnRefresh(); } }); }
 /* ---------- export Excel ---------- */
 async function rnExport(){
   try{ const R=rnCompute(), {S}=R, ExcelJS=await ensureExcelJS(), wb=new ExcelJS.Workbook(); wb.creator='Monitoring Data Pajak'; wb.created=new Date();
