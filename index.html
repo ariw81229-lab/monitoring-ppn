@@ -316,6 +316,7 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .ars-file{display:inline-flex;align-items:center;gap:8px}.ars-file>svg{width:20px;height:20px;color:#dc2626;flex:none}.ars-file span{display:flex;flex-direction:column;font-size:12.5px;line-height:1.3;word-break:break-all}.ars-file small{color:var(--muted);font-size:11px}
 .ars-tabs .nav-cnt{background:var(--surface-2);color:var(--muted);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800}.ars-tabs button.active .nav-cnt{background:rgba(255,255,255,.25);color:#fff}
 .ars-up{border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px}.ars-up .ars-file{margin-bottom:8px}
+.rn-bad{color:#c2410c;font-weight:700}
 .rp-chips{display:flex;flex-wrap:wrap;gap:8px}.rp-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:6px 12px;font:600 12.5px inherit;color:var(--text);cursor:pointer}
 .rp-chip b{background:var(--surface-2);border-radius:999px;padding:1px 8px;font-size:11.5px}.rp-chip.on{background:var(--primary);border-color:var(--primary);color:#fff}.rp-chip.on b{background:rgba(255,255,255,.22)}
 .rp-t th.rp-g{text-align:center;color:#fff}.rp-t th.rp-g.acc{background:#1e3a5f}.rp-t th.rp-g.tax{background:#0f5132}.rp-t td{vertical-align:top}.rp-t .rp-txt{max-width:280px;white-space:normal}
@@ -2100,7 +2101,7 @@ function currentUser(){ const u=session.get(); return DB.users.find(x=>x.usernam
 function logout(){ setTimeout(fitKso,60); try{ const t=themeOf(); if(!$('#app').hidden){ LOGIN_THEME={...t}; localStorage.setItem(THEME_KEY,JSON.stringify(t)); } }catch(e){} if(CLOUD_ON&&CLOUD.uid) cloudLogout(); session.clear(); $('#app').hidden=true; $('#login').hidden=false; document.body.classList.remove('ro'); closeSidebar(); applyTheme(); tickClock(); }
 function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 /* Hak akses per menu untuk akun pengunjung (diatur admin): add = tambah/import, edit = ubah, del = hapus */
-const PERM_MENUS=[{k:'PM',l:'Pajak Masukan',d:'Monitoring & Prepopulated Pajak Masukan',t:['PM','PP']},{k:'PK',l:'Pajak Keluaran',d:'Monitoring Pajak Keluaran',t:['PK']},{k:'BPS',l:'Bukti Potong ESDM',t:['BPS']},
+const PERM_MENUS=[{k:'PM',l:'Pajak Masukan',d:'Monitoring & Prepopulated Pajak Masukan',t:['PM','PP']},{k:'RPPN',l:'Rekonsiliasi Pajak Masukan',d:'import / input / hapus buku besar PPN Masukan akuntansi',t:['RPPN']},{k:'PK',l:'Pajak Keluaran',d:'Monitoring Pajak Keluaran',t:['PK']},{k:'BPS',l:'Bukti Potong ESDM',t:['BPS']},
   {k:'PPH21',l:'PPh 21',d:'Selain Pegawai Tetap · A1 · Bulanan Pegawai Tetap',t:['PPH21NP','PPH21A1','PPH21']},{k:'PPHU',l:'PPh Unifikasi',d:'PPh 23 & PPh 4 ayat 2',t:['PPH23','PPH42']},
   {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'RPPH',l:'Rekonsiliasi PPh',d:'import / input / hapus data laporan PPh akuntansi',t:['RPPH']},{k:'MRK',l:'Master Rekanan',t:['MRK']},{k:'ARS',l:'Arsip',d:'upload / ubah / hapus dokumen PDF arsip pajak',t:['ARS']},
   {k:'spt',l:'Status SPT Rekanan',d:'upload / kelola / hapus bukti SPT PPN rekanan',t:['spt']},{k:'rest',l:'Restitusi PPN',d:'Alur Proses Restitusi: tambah masa, isi alur & dokumen, hapus data proses',t:['rest']}];
@@ -7070,11 +7071,228 @@ async function saveArsEdit(e,id){ e.preventDefault(); const a=arsAll().find(x=>x
 function arsDel(id){ const a=arsAll().find(x=>x.id===id); if(!a) return;
   confirmBox('Hapus dokumen arsip?',`<b>${esc(a.title)}</b> (${esc(a.name)}) akan dihapus permanen.`,'Hapus',async()=>{ await delFile(a.fileId); DB.data.ARS.all=arsAll().filter(x=>x.id!==id); if(await save()){ toast('Dokumen dihapus dari arsip','success'); renderArsip(); } }); }
 
+/* =====================================================================
+   REKONSILIASI PAJAK MASUKAN — Buku Besar PPN Masukan (Akuntansi) vs Prepopulated Pajak Masukan (Coretax, belum dikreditkan)
+   Cocok hanya bila NOMOR FAKTUR 17 digit DAN NILAI PPN sama persis. Data akuntansi: DB.data.RPPN.all
+   ===================================================================== */
+const RN_ST={ok:{l:'Cocok',c:'b-success',x:'FFDCFCE7',t:'FF166534',a:'Sesuai — nomor faktur & PPN sama'},
+  dev:{l:'Selisih PPN',c:'b-warning',x:'FFFEF3C7',t:'FF92400E',a:'Nomor faktur sama, nilai PPN berbeda — cek jurnal / faktur'},
+  inc:{l:'Faktur Tidak Lengkap',c:'b-amber',x:'FFFFEDD5',t:'FF9A3412',a:'Nomor faktur akuntansi tidak 17 digit — cek manual & lengkapi'},
+  acc:{l:'Tidak di Prepopulated',c:'b-danger',x:'FFFEE2E2',t:'FF991B1B',a:'Faktur tidak ada di Prepopulated (belum dikreditkan) — cek Coretax / status kredit'},
+  pp:{l:'Belum Dibukukan',c:'b-primary',x:'FFDBEAFE',t:'FF1E40AF',a:'Ada di Prepopulated Coretax, belum dibukukan akuntansi — konfirmasi ke Accounting'}};
+const RN_SH={ok:'Sesuai',dev:'Cek jurnal / faktur',inc:'Lengkapi nomor faktur (cek manual)',acc:'Cek Coretax / status kredit',pp:'Konfirmasi ke Accounting'};
+if(!state.rn) state.rn={st:'all',q:'',scope:'all'};
+const rnAll=()=>{ const d=DB.data.RPPN||(DB.data.RPPN={}); if(!Array.isArray(d.all)) d.all=[]; return d.all; };
+const fpDig=s=>String(s||'').replace(/\D/g,'');
+const rnFmtFp=d=>d||'';
+/* nomor faktur dari teks: deret angka 13–20 digit (boleh bertitik/strip) di awal atau di mana pun */
+function rnFpOf(v){ if(typeof v==='number') return v>=1e12?String(Math.round(v)):''; const t=String(v||'');
+  const m=/(?:^|[^\d])(\d{2,3}[.\-\s]?\d{3}[.\-\s]?\d{2}[.\-\s]?\d{6,9})(?!\d)/.exec(t)||/(?:^|[^\d])(\d{13,20})(?!\d)/.exec(t); return m?fpDig(m[1]):''; }
+function rnNameOf(text){ let t=String(text||'').trim(); t=t.replace(/^\s*[\d.\-\s]{13,26}(?=[-\s])/,'').replace(/^[-\s]+/,'');
+  const m=/^[A-Z]{1,4}\d{4,}-[\dA-Z]*-+(.+)$/i.exec(t); return (m?m[1]:t).trim(); }
+function rnCompute(){
+  const acc=rnAll().filter(a=>+a.amount), sc=state.rn.scope, open=[];
+  for(const [k,a] of Object.entries(DB.data.PP||{})) if(sc==='all'||k===sc) (a||[]).forEach(r=>{ if(ppOpen(r)) open.push({k,r,fp:fpDig(r.nofaktur)}); });
+  const byFp=new Map(); open.forEach(o=>{ if(!byFp.has(o.fp)) byFp.set(o.fp,[]); byFp.get(o.fp).push(o); });
+  const inPM=new Map(); for(const [k,a] of Object.entries(DB.data.PM||{})) (a||[]).forEach(r=>{ const d=fpDig(r.nofaktur); if(d) inPM.set(d,k); });
+  const used=new Set(), pairs=[], near=(x,y)=>Math.abs((+x||0)-(+y||0))<1;
+  for(const a of acc){ const d=a.fp||''; let p={a,o:null,st:'acc',accAmt:a.amount,ppAmt:0};
+    if(d.length===17&&byFp.has(d)){ const c=byFp.get(d).filter(o=>!used.has(o)); const e=c.find(o=>near(o.r.ppn,a.amount));
+      if(e){ p.o=e; p.st='ok'; } else if(c.length){ p.o=c[0]; p.st='dev'; } else p.note='Faktur sudah dipasangkan dengan baris akuntansi lain (dobel jurnal?)'; }
+    else if(d.length!==17){ p.st='inc'; /* kandidat bantu: PPN sama & nama mirip / sebagian nomor faktur sama — TIDAK dihitung cocok */
+      const cand=open.filter(o=>!used.has(o)&&near(o.r.ppn,a.amount)&&((d.length>=8&&(o.fp.includes(d.slice(-8))||o.fp.endsWith(d.slice(-6))))||rpNameMatch(a.nama||rnNameOf(a.text),o.r.nama||'')));
+      if(cand.length) p.cand=cand.slice(0,3); }
+    else if(inPM.has(d)) p.note=`Sudah dikreditkan — ada di Monitoring Pajak Masukan ${masaLabel(inPM.get(d))}`;
+    if(p.o) used.add(p.o); p.ppAmt=p.o?+p.o.r.ppn||0:0; pairs.push(p); }
+  open.filter(o=>!used.has(o)).sort((x,y)=>x.k.localeCompare(y.k)||String(x.r.tanggal||'').localeCompare(String(y.r.tanggal||''))).forEach(o=>pairs.push({a:null,o,st:'pp',accAmt:0,ppAmt:+o.r.ppn||0}));
+  pairs.forEach(p=>p.dev=p.accAmt-p.ppAmt);
+  const S={}; Object.keys(RN_ST).forEach(k=>{ const L=pairs.filter(p=>p.st===k); S[k]={n:L.length,acc:L.reduce((s,p)=>s+p.accAmt,0),pp:L.reduce((s,p)=>s+p.ppAmt,0)}; });
+  S.accT=pairs.reduce((s,p)=>s+p.accAmt,0); S.ppT=pairs.reduce((s,p)=>s+p.ppAmt,0); S.sel=S.accT-S.ppT;
+  return {pairs,S,nAcc:acc.length,nPP:open.length}; }
+function rnPeriode(){ const d=rnAll().map(a=>a.posting||a.docDate).filter(Boolean).sort(); return d.length?(d[0].slice(0,7)===d[d.length-1].slice(0,7)?masaLabel(d[0].slice(0,7)):`${fmtDate(d[0])} s.d. ${fmtDate(d[d.length-1])}`):'-'; }
+function rnRefresh(){ renderRpm(); const sg=NAV.find(n=>n.grp&&n.items.includes('RPM')); if(sg) $('#view').insertAdjacentHTML('afterbegin',subTabsHTML(sg)); }
 function renderRpm(){
-  $('#view').innerHTML=`<div class="card"><div class="empty rpm-soon">${icon('grid')}<b>Rekonsiliasi Pajak Masukan sedang disiapkan</b>
-    Fitur rekonsiliasi sedang diuji coba secara manual dan akan ditambahkan kembali setelah formatnya final.<br>Untuk melihat saldo dan mutasi seluruh vendor/rekanan, gunakan menu <b>Buku Besar / GL</b>.<br><br>
-    <button class="btn btn-primary" onclick="go('GL')">${icon('file')} Buka Buku Besar / GL</button></div></div>`;
+  const R=rnCompute(), {S}=R, f=state.rn, q=(f.q||'').toLowerCase().trim(), qd=q.replace(/[.,\-\s]/g,'');
+  const rows=R.pairs.filter(p=>(f.st==='all'||p.st===f.st)&&(!q||[p.a&&p.a.text,p.a&&p.a.docNo,p.o&&p.o.r.nama,p.o&&p.o.r.nofaktur].some(v=>String(v||'').toLowerCase().includes(q))||(/^\d{3,}$/.test(qd)&&[p.a&&p.a.fp,p.o&&p.o.fp,String(Math.round(p.accAmt)),String(Math.round(p.ppAmt))].some(v=>String(v||'').includes(qd)))));
+  const masaOpts=Object.keys(DB.data.PP||{}).filter(k=>(DB.data.PP[k]||[]).some(ppOpen)).sort();
+  const chip=(k,l,n)=>`<button class="rp-chip ${f.st===k?'on':''}" onclick="state.rn.st='${k}';rnRefresh()">${l}<b>${n}</b></button>`;
+  const ed=isAdmin()||can('RPPN','edit')||can('RPPN','del'), manual=S.inc.n+S.dev.n;
+  $('#view').innerHTML=`
+  <div class="kr-hd ok" style="--c:var(--primary)">${icon('grid')}<div><b>Rekonsiliasi Pajak Masukan Otomatis — Akuntansi vs Prepopulated Coretax</b><span>Import buku besar PPN Masukan dari akuntansi. Sistem otomatis mencocokkan dengan <a class="link" onclick="go('PP')">Prepopulated Pajak Masukan</a> (faktur yang <strong>belum dikreditkan</strong>). Dinyatakan <strong>cocok hanya bila nomor faktur 17 digit dan nilai PPN sama persis</strong>; nomor faktur yang tidak lengkap ditandai untuk <strong>cek manual</strong>.</span></div></div>
+  <div class="grid minis">
+    <div class="card mini"><small>PPN Masukan menurut Akuntansi</small><b>${rp(S.accT)}</b><span class="sub">${fmt(R.nAcc)} baris · periode ${esc(rnPeriode())}</span></div>
+    <div class="card mini"><small>PPN Prepopulated (belum dikreditkan)</small><b>${rp(S.ppT)}</b><span class="sub">${fmt(R.nPP)} faktur ${f.scope==='all'?'(semua masa)':'masa '+masaLabel(f.scope)}</span></div>
+    <div class="card mini"><small>PPN Cocok</small><b style="color:var(--success)">${rp(S.ok.acc)}</b><div class="progress" style="margin-top:6px"><span style="width:${R.nAcc?S.ok.n/R.nAcc*100:0}%;background:var(--success)"></span></div><span class="sub">${S.ok.n} dari ${R.nAcc} baris akuntansi (${R.nAcc?Math.round(S.ok.n/R.nAcc*100):0}%)</span></div>
+    <div class="card mini"><small>Perlu Cek Manual</small><b style="color:${manual?'var(--warning)':'var(--success)'}">${manual} baris</b><span class="sub">${S.inc.n} faktur tidak lengkap · ${S.dev.n} selisih PPN · ${S.acc.n} tidak di prepopulated</span></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><div><h3>Hasil Rekonsiliasi Pajak Masukan</h3><p>${R.nAcc?`Dihitung otomatis · selisih total (akuntansi − prepopulated) <b style="color:${Math.abs(S.sel)<1?'var(--success)':'var(--danger)'}">${Math.abs(S.sel)<1?'Rp 0':rp(S.sel)}</b>`:'Belum ada data akuntansi — import buku besar PPN Masukan untuk memulai'}</p></div>
+      <div class="toolbar">
+        <button class="btn btn-primary adm p-add" onclick="openRnImport()">${icon('upload')} Import Laporan Akuntansi</button>
+        <button class="btn btn-outline adm p-add" onclick="openRnForm()">${icon('plus')}<span class="hide-sm">Input Manual</span></button>
+        <button class="btn btn-outline" onclick="rnExport()" ${R.nAcc?'':'disabled'}>${icon('download')}<span class="hide-sm">Export Excel</span></button>
+        ${R.nAcc?`<button class="btn btn-danger adm p-del" onclick="rnClear()" title="Hapus semua data akuntansi">${icon('trash')}</button>`:''}</div></div>
+    ${R.nAcc?`<div class="card-b" style="padding-bottom:0">
+      <div class="rp-chips">${chip('all','Semua',R.pairs.length)}${Object.entries(RN_ST).map(([k,v])=>chip(k,v.l,S[k].n)).join('')}</div>
+      <div class="toolbar filters" style="margin-top:12px">
+        <div class="search">${icon('search')}<input class="input" id="rnSearch" placeholder="Cari nomor faktur, nama penjual, nomor dokumen, atau nilai PPN…" value="${esc(f.q)}" oninput="state.rn.q=this.value;clearTimeout(window._rnT);window._rnT=setTimeout(()=>{rnRefresh();const e=$('#rnSearch');e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)">${f.q?`<button type="button" class="search-x" style="display:grid" onclick="state.rn.q='';rnRefresh()">${icon('x')}</button>`:''}</div>
+        <select class="select" onchange="state.rn.scope=this.value;rnRefresh()" title="Faktur Prepopulated yang ikut direkonsiliasi"><option value="all">Prepopulated: semua masa</option>${masaOpts.map(k=>`<option value="${k}" ${f.scope===k?'selected':''}>Prepopulated masa ${masaLabel(k)}</option>`).join('')}</select></div></div>
+    <div class="table-wrap"><table class="rp-t"><thead><tr><th rowspan="2">No</th><th rowspan="2">Status</th><th colspan="4" class="rp-g acc">Buku Besar Akuntansi</th><th colspan="4" class="rp-g tax">Prepopulated Pajak Masukan (Coretax)</th><th rowspan="2" class="num">Selisih</th>${ed?'<th rowspan="2"></th>':''}</tr>
+      <tr><th>Tgl / No Dokumen</th><th>No Faktur</th><th>Nama (Text)</th><th class="num">PPN</th><th>No Faktur</th><th>Penjual</th><th>Masa</th><th class="num">PPN</th></tr></thead><tbody>
+      ${rows.slice(0,1500).map((p,i)=>{ const a=p.a, o=p.o, st=RN_ST[p.st]; return `<tr class="rp-${p.st==='ok'?'ok':p.st==='pp'?'tax':p.st==='acc'?'acc':'dev'}"><td>${i+1}</td><td><span class="badge ${st.c}">${st.l}</span>${p.note?`<br><small class="sub-t">${esc(p.note)}</small>`:''}</td>
+        <td>${a?`${fmtDate(a.posting||a.docDate)}<br><small class="sub-t">${esc(a.docNo||'')}</small>`:'<span class="sub-t">—</span>'}</td>
+        <td>${a?`<span class="${a.fp&&a.fp.length===17?'':'rn-bad'}" title="${a.fp?a.fp.length+' digit':'tidak ada nomor faktur'}">${esc(a.fp?rnFmtFp(a.fp):'—')}</span>${a.fp&&a.fp.length!==17?`<br><small class="rn-bad">${a.fp.length} digit</small>`:''}`:''}</td>
+        <td class="rp-txt">${a?esc(a.nama||rnNameOf(a.text)):'<span class="sub-t">belum dibukukan</span>'}</td><td class="num">${a?fmt(p.accAmt):'—'}</td>
+        <td>${o?esc(rnFmtFp(o.fp)):p.cand?`<small class="sub-t">Kandidat (cek manual):</small>${p.cand.map(c=>`<br><small><b>${esc(rnFmtFp(c.fp))}</b></small>`).join('')}`:'<span class="sub-t">—</span>'}</td>
+        <td>${o?`<b>${esc(o.r.nama||'')}</b><br><small class="sub-t">${esc(o.r.npwp||'')}</small>`:p.cand?p.cand.map(c=>`<small>${esc(c.r.nama||'')}</small>`).join('<br>'):''}</td><td>${o?masaLabel(o.k):''}</td><td class="num">${o?fmt(p.ppAmt):'—'}</td>
+        <td class="num" style="font-weight:700;color:${Math.abs(p.dev)<1?'var(--success)':'var(--danger)'}">${Math.abs(p.dev)<1?'0':fmt(p.dev)}</td>
+        ${ed?`<td><div class="row-act" style="opacity:1">${a&&can('RPPN','edit')?`<button class="icon-btn xs" title="Ubah / lengkapi nomor faktur" onclick="openRnForm('${a.id}')">${icon('edit')}</button>`:''}${a&&can('RPPN','del')?`<button class="icon-btn xs" title="Hapus baris" onclick="rnDel('${a.id}')">${icon('trash')}</button>`:''}</div></td>`:''}</tr>`; }).join('')||`<tr><td colspan="12" class="sub-t" style="text-align:center;padding:24px">Tidak ada data sesuai filter</td></tr>`}
+      </tbody><tfoot><tr><td colspan="5">TOTAL ${f.st==='all'&&!q?'':'(sesuai filter)'}</td><td class="num">${fmt(rows.reduce((s,p)=>s+p.accAmt,0))}</td><td colspan="3"></td><td class="num">${fmt(rows.reduce((s,p)=>s+p.ppAmt,0))}</td><td class="num">${fmt(rows.reduce((s,p)=>s+p.dev,0))}</td>${ed?'<td></td>':''}</tr></tfoot></table></div>`
+    :`<div class="empty">${icon('upload')}<b>Belum ada data untuk direkonsiliasi</b>Import buku besar PPN Masukan dari akuntansi (Excel format apa pun). Sistem mencari kolom <b>nomor faktur / keterangan</b> dan <b>nilai PPN (Debit)</b> — kolom <b>Saldo</b> (kumulatif) tidak dipakai.<br><br><button class="btn btn-primary adm p-add" onclick="openRnImport()">${icon('upload')} Import Laporan Akuntansi</button></div>`}
+  </div>`;
 }
+/* ---------- import: format bebas ---------- */
+let RNI=null, RNW=null;
+const RN_MAP=[['fp','Nomor faktur (boleh kolom keterangan)',1],['name','Nama penjual / Keterangan',0],['amt','Nilai PPN (Debit)',1],['kr','Kredit / pengurang (opsional)',0],['pd','Tanggal posting',0],['dd','Tanggal dokumen',0],['dn','Nomor dokumen',0]];
+const RN_HDR={fp:[/no\.? ?faktur|nomor faktur|faktur pajak|nsfp|no\.? ?fp|e-?faktur/,/^text$|^teks$/,/keterangan|uraian|deskripsi|description|narasi|memo/],name:[/nama.*(vendor|penjual|rekanan|supplier|pemasok|lawan)|(vendor|supplier) name|^nama$|^vendor$|^penjual$|^supplier$/,/^text$|^teks$/,/keterangan|uraian/],
+  amt:[/^debit$|^debet$/,/debit|debet|^ppn$|ppn masukan|pajak masukan|^ppn \(rp\)|nilai ppn/,/amount in lc|^amount$|jumlah|nilai|nominal/],kr:[/^kredit$|^credit$/,/kredit|credit/],
+  pd:[/posting|tgl\.? ?post|tanggal post|tanggal buku|tgl buku/],dd:[/document date|tgl\.? ?dok|tanggal dok|tanggal faktur|tgl faktur|^tanggal$|^tgl$|^date$/],dn:[/document number|doc\.? ?no|no\.? ?dok|nomor dok|no\.? ?bukti|nomor bukti|voucher|journal|jurnal/]};
+const RN_NOT=/saldo|balance|kumulatif|cumulative|running|dpp|dasar pengenaan/;
+function rnGuess(A){
+  const nh=x=>String(x??'').toLowerCase().replace(/\s+/g,' ').trim(), all=Object.values(RN_HDR).flat();
+  let hr=-1,best=1; for(let i=0;i<Math.min(A.length,30);i++){ const sc=(A[i]||[]).map(nh).filter(v=>v&&v.length<45&&(all.some(re=>re.test(v))||RN_NOT.test(v))).length; if(sc>best){ best=sc; hr=i; } }
+  const W=Math.max(...A.slice(0,Math.max(hr+60,60)).map(r=>(r||[]).length),0), H=hr>=0?(A[hr]||[]).map(nh):[], data=A.slice(hr+1,hr+1+400);
+  const st=[...Array(W)].map((_,c)=>{ let fp=0,txt=0,num=0,mono=0,prev=null,big=0; for(const r of data){ const v=(r||[])[c]; if(v===''||v==null) continue; if(rnFpOf(v).length>=13) fp++;
+      if(typeof v==='string'&&/[a-z]{2}/i.test(v)) txt++; const n=rpNum(v); if(!isNaN(n)&&!(typeof v==='string'&&/[a-z]/i.test(v))){ num++; if(Math.abs(n)>=100) big++; if(prev!=null&&n>=prev) mono++; prev=n; } }
+    return {fp,txt,num,big,cum:num>4&&mono/num>.9}; });
+  const map={}, used=new Set(), pick=(k,ok)=>{ for(const re of RN_HDR[k]) for(let c=0;c<H.length;c++) if(!used.has(c)&&H[c]&&re.test(H[c])&&!RN_NOT.test(H[c])&&(!ok||ok(c))){ map[k]=c; used.add(c); return true; } return false; };
+  pick('amt',c=>st[c]&&st[c].num>0&&!st[c].cum); pick('kr'); pick('pd'); pick('dd'); pick('dn');
+  /* kolom faktur = kolom yang paling banyak berisi deret nomor faktur */
+  { let b=-1,bc=null; st.forEach((x,c)=>{ if(!used.has(c)&&x.fp>b){ b=x.fp; bc=c; } }); if(b>0){ map.fp=bc; used.add(bc); } else pick('fp'); }
+  if(!pick('name',c=>st[c]&&st[c].txt>0)&&map.fp!=null&&st[map.fp].txt>0) map.name=map.fp;
+  if(map.amt==null){ let b=-1; st.forEach((x,c)=>{ const v=x.big-(x.cum?1e6:0); if(!used.has(c)&&x.num&&v>b){ b=v; map.amt=c; } }); }
+  return {hr,map}; }
+function rnExtract(A,hr,map){ const out=[], g=(r,k)=>map[k]!=null&&map[k]>=0?(r||[])[map[k]]:'';
+  for(let i=hr+1;i<A.length;i++){ const r=A[i]||[], fpv=g(r,'fp'), nmv=map.name!=null?g(r,'name'):fpv, text=String(map.name!=null&&map.name!==map.fp?`${fpv??''} ${nmv??''}`:fpv??'').trim();
+    let amt=rpNum(g(r,'amt')); const kr=rpNum(g(r,'kr')); if((isNaN(amt)||!amt)&&!isNaN(kr)&&kr) amt=-Math.abs(kr); else amt=Math.abs(amt);
+    if(!amt||isNaN(amt)) continue; const fp=rnFpOf(fpv), nm=String(nmv??'').trim();
+    if(!fp&&!/[a-z]{2}/i.test(nm)) continue; if(/^\s*(saldo|jumlah|total|grand total|sub ?total|mutasi)\b/i.test(nm||text)) continue;
+    out.push({id:uid(),fp,text:String(fpv??'').trim()||nm,nama:rnNameOf(map.name!=null&&map.name!==map.fp?nm:String(fpv??'')),amount:Math.round(amt*100)/100,posting:rpIso(g(r,'pd')),docDate:rpIso(g(r,'dd')),docNo:String(g(r,'dn')??'').trim(),src:i+1}); }
+  return out; }
+function openRnImport(){ RNI=null; RNW=null;
+  openModal(`<div class="modal-h"><div><h3>Import Buku Besar PPN Masukan dari Akuntansi</h3><p>Format Excel bebas — kolom dikenali otomatis dan bisa disesuaikan. Rekonsiliasi berjalan otomatis setelah disimpan.</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="note" style="margin:0 0 12px">${icon('alert')} Upload file Excel/CSV dalam bentuk apa pun. Sistem mencari otomatis kolom berisi <b>nomor faktur pajak</b> (mis. kolom Teks: <i>04002600305200181-PK00001092--NAMA PENJUAL</i>) dan <b>nilai PPN dari kolom Debit</b>. Kolom <b>Saldo</b> (kumulatif) tidak dipakai. Baris saldo awal / jumlah dilewati. Jika tebakan kurang tepat, ubah pilihan kolom di bawah.</div>
+      <input type="file" class="input" id="rnFile" accept=".xlsx,.xls,.xlsm,.csv"><div id="rnMapBox"></div>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" id="rnReplace" ${rnAll().length?'checked':''}> Ganti seluruh data akuntansi sebelumnya${rnAll().length?` (${fmt(rnAll().length)} baris)`:''}</label>
+      <div id="rnInfo" style="margin-top:12px"></div></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="rnBtn" disabled onclick="rnImportGo()">${icon('check')} Simpan &amp; Rekonsiliasi</button></div>`,'xl');
+  $('#rnFile').addEventListener('change',async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}); const sheets=wb.SheetNames.map(n=>({n,A:XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:true,blankrows:true})})).filter(s=>s.A.length);
+      if(!sheets.length) throw new Error('File kosong.'); let best=null; sheets.forEach((s,i)=>{ const g=rnGuess(s.A), L=rnExtract(s.A,g.hr,g.map), n=L.filter(x=>x.fp).length*2+L.length; if(!best||n>best.n) best={i,n,g}; });
+      RNW={sheets,si:best.i,hr:best.g.hr,map:best.g.map}; rnMapUI(); }
+    catch(err){ $('#rnInfo').innerHTML=`<div class="tax-info warn">${icon('alert')}<div>${esc(err.message)}</div></div>`; $('#rnBtn').disabled=true; } }); }
+function rnMapUI(){ const S=RNW.sheets[RNW.si], A=S.A, W=Math.max(...A.slice(0,Math.max(RNW.hr+60,60)).map(r=>(r||[]).length),1), H=RNW.hr>=0?A[RNW.hr]||[]:[];
+  const lbl=c=>`${rpColL(c)}${H[c]!==undefined&&String(H[c]).trim()?' · '+String(H[c]).trim().slice(0,28):''}`;
+  const sel=(k,l,req)=>`<div class="field"><label>${l}${req?' <span style="color:var(--danger)">*</span>':''}</label><select class="select" onchange="RNW.map['${k}']=this.value===''?null:+this.value;rnMapUI()"><option value="">${req?'— pilih kolom —':'(tidak ada)'}</option>${[...Array(W)].map((_,c)=>`<option value="${c}" ${RNW.map[k]===c?'selected':''}>${esc(lbl(c))}</option>`).join('')}</select></div>`;
+  $('#rnMapBox').innerHTML=`<div class="rp-map"><div class="rp-map-h">${icon('grid')} <b>Pemetaan kolom</b><span>terdeteksi otomatis — sesuaikan bila perlu (jangan pilih kolom Saldo)</span></div>
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr))">
+      ${RNW.sheets.length>1?`<div class="field"><label>Sheet</label><select class="select" onchange="RNW.si=+this.value;const g=rnGuess(RNW.sheets[RNW.si].A);RNW.hr=g.hr;RNW.map=g.map;rnMapUI()">${RNW.sheets.map((s,i)=>`<option value="${i}" ${i===RNW.si?'selected':''}>${esc(s.n)}</option>`).join('')}</select></div>`:''}
+      <div class="field"><label>Baris judul kolom</label><select class="select" onchange="RNW.hr=+this.value;rnMapUI()"><option value="-1" ${RNW.hr<0?'selected':''}>Tidak ada judul</option>${A.slice(0,30).map((r,i)=>`<option value="${i}" ${RNW.hr===i?'selected':''}>Baris ${i+1}: ${esc((r||[]).filter(x=>String(x).trim()).slice(0,3).join(' | ').slice(0,40))}</option>`).join('')}</select></div>
+      ${RN_MAP.map(([k,l,req])=>sel(k,l,req)).join('')}</div>
+    ${RNW.map.amt!=null&&RN_NOT.test(String(H[RNW.map.amt]||'').toLowerCase())?`<div class="tax-info warn" style="margin-top:8px">${icon('alert')}<div>Kolom nilai yang dipilih tampak seperti <b>Saldo/kumulatif</b> — pilih kolom <b>Debit</b>.</div></div>`:''}</div>`;
+  RNI=RNW.map.fp!=null&&RNW.map.amt!=null?rnExtract(A,RNW.hr,RNW.map):[];
+  const tot=RNI.reduce((s,a)=>s+a.amount,0), inc=RNI.filter(a=>a.fp.length!==17).length;
+  $('#rnInfo').innerHTML=RNI.length?`<div class="tax-info ${inc?'warn':'ok'}">${icon(inc?'alert':'check')}<div><b>${fmt(RNI.length)} baris PPN</b> terbaca dari sheet <b>${esc(S.n)}</b> · total ${rp(tot)}${inc?`<div style="font-size:12px;margin-top:4px"><b>${inc} baris</b> nomor fakturnya tidak 17 digit → akan ditandai <b>cek manual</b></div>`:''}</div></div>
+    <div class="table-wrap" style="max-height:250px;overflow:auto;margin-top:10px"><table class="bpc-t" style="font-size:12.5px"><thead><tr><th>Baris</th><th>Tgl</th><th>No Dokumen</th><th>No Faktur terbaca</th><th>Nama</th><th class="num">PPN</th></tr></thead><tbody>${RNI.slice(0,150).map(a=>`<tr><td>${a.src}</td><td>${a.posting||a.docDate?fmtDate(a.posting||a.docDate):'-'}</td><td>${esc(a.docNo||'-')}</td><td><b class="${a.fp.length===17?'':'rn-bad'}">${esc(a.fp?rnFmtFp(a.fp):'—')}</b>${a.fp.length!==17?` <small class="rn-bad">(${a.fp.length} digit)</small>`:''}</td><td>${esc(a.nama)}</td><td class="num">${fmt(a.amount)}</td></tr>`).join('')}</tbody></table></div>`
+    :`<div class="tax-info warn">${icon('alert')}<div>Belum ada baris yang terbaca. Pastikan kolom <b>Nomor faktur</b> dan <b>Nilai PPN (Debit)</b> sudah dipilih.</div></div>`;
+  $('#rnBtn').disabled=!RNI.length; }
+async function rnImportGo(){ if(!RNI||!RNI.length) return; const d=DB.data.RPPN||(DB.data.RPPN={});
+  if($('#rnReplace').checked) d.all=RNI; else { const k=a=>[a.docNo,a.fp,a.amount].join('|'), have=new Set(rnAll().map(k)); d.all=[...rnAll(),...RNI.filter(a=>!have.has(k(a)))]; }
+  if(await save()){ closeModal(); const R=rnCompute(); toast(`${fmt(RNI.length)} baris tersimpan · ${R.S.ok.n} cocok, ${R.S.dev.n} selisih PPN, ${R.S.inc.n} faktur tidak lengkap, ${R.S.acc.n} tidak di prepopulated`,'success'); state.rn.st='all'; rnRefresh(); } }
+function openRnForm(id){ const a=id?rnAll().find(x=>x.id===id):null;
+  openModal(`<div class="modal-h"><div><h3>${a?'Ubah / Lengkapi':'Input'} Data Akuntansi PPN Masukan</h3><p>Rekonsiliasi dihitung ulang otomatis setelah disimpan</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+    <form onsubmit="saveRnForm(event,'${id||''}')"><div class="modal-b"><div class="form-grid">
+      <div class="field"><label>Tanggal posting</label><input class="input" type="date" name="posting" value="${esc(a?a.posting:todayISO())}"></div>
+      <div class="field"><label>Nomor dokumen</label><input class="input" name="docNo" value="${esc(a?a.docNo:'')}"></div>
+      <div class="field full"><label>Nomor faktur pajak (17 digit) <span style="color:var(--danger)">*</span></label><input class="input" name="fp" required value="${esc(a?a.fp:'')}" placeholder="04002600305200181" oninput="const n=this.value.replace(/\\D/g,'').length;$('#rnFpN').textContent=n+' digit';$('#rnFpN').className=n===17?'sub-t':'rn-bad'"><small id="rnFpN" class="${a&&a.fp.length===17?'sub-t':'rn-bad'}">${a?a.fp.length:0} digit</small></div>
+      <div class="field full"><label>Nama penjual / keterangan</label><input class="input" name="nama" value="${esc(a?a.nama:'')}"></div>
+      <div class="field"><label>Nilai PPN <span style="color:var(--danger)">*</span></label><input class="input" name="amount" required inputmode="decimal" value="${a?fmt(a.amount):''}"></div>
+    </div></div><div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`); }
+async function saveRnForm(e,id){ e.preventDefault(); const fd=new FormData(e.target), v=k=>String(fd.get(k)||'').trim(), amt=Math.abs(rpNum(v('amount'))||0), fp=fpDig(v('fp'));
+  if(!fp||!amt) return toast('Nomor faktur dan nilai PPN wajib diisi','error');
+  const rec={fp,nama:v('nama'),text:`${fp} ${v('nama')}`.trim(),amount:amt,posting:v('posting'),docNo:v('docNo')};
+  if(id){ const a=rnAll().find(x=>x.id===id); if(a) Object.assign(a,rec); } else rnAll().push({id:uid(),manual:true,...rec});
+  if(await save()){ closeModal(); toast(fp.length===17?'Tersimpan · rekonsiliasi diperbarui':'Tersimpan — nomor faktur belum 17 digit, tetap ditandai cek manual','success'); rnRefresh(); } }
+function rnDel(id){ confirmBox('Hapus baris akuntansi?','Baris ini dihapus dari data rekonsiliasi Pajak Masukan.','Hapus',async()=>{ DB.data.RPPN.all=rnAll().filter(a=>a.id!==id); if(await save()){ toast('Baris dihapus','success'); rnRefresh(); } }); }
+function rnClear(){ confirmBox('Hapus semua data akuntansi?',`<b>${fmt(rnAll().length)} baris</b> data akuntansi PPN Masukan dihapus. Data Prepopulated tidak terpengaruh.`,'Hapus semua',async()=>{ DB.data.RPPN.all=[]; if(await save()){ toast('Data akuntansi dihapus','success'); rnRefresh(); } }); }
+/* ---------- export Excel ---------- */
+async function rnExport(){
+  try{ const R=rnCompute(), {S}=R, ExcelJS=await ensureExcelJS(), wb=new ExcelJS.Workbook(); wb.creator='Monitoring Data Pajak'; wb.created=new Date();
+    const NF='#,##0;(#,##0);"-"', NV='FF14365D', thin={style:'thin',color:{argb:'FFC3CCD8'}}, BD={top:thin,left:thin,bottom:thin,right:thin}, fill=c=>({type:'pattern',pattern:'solid',fgColor:{argb:c}});
+    const kso=brandKso(), proy=brandProyek(), per=rnPeriode(), now=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    let strip=null; try{ const s=await lapLogoStrip(await logoImagesForPdf()); if(s.length) strip=s[0]; }catch(e){}
+    const kop=(ws,last,title,sub)=>{ const E=rpColL(last-1); ws.getRow(1).height=30; ws.getRow(2).height=18; ws.getRow(3).height=6;
+      if(strip){ const id=wb.addImage({base64:strip.data,extension:'png'}); const h=40; ws.addImage(id,{tl:{col:0.1,row:0.1},ext:{width:h*strip.w/strip.h,height:h}}); }
+      ws.mergeCells(`A1:${E}1`); Object.assign(ws.getCell('A1'),{value:kso||'KSO'}); ws.getCell('A1').font={bold:true,size:15,color:{argb:NV}}; ws.getCell('A1').alignment={horizontal:'center',vertical:'middle'};
+      ws.mergeCells(`A2:${E}2`); ws.getCell('A2').value=proy; ws.getCell('A2').font={bold:true,size:11,color:{argb:'FF475569'}}; ws.getCell('A2').alignment={horizontal:'center'};
+      for(let c=1;c<=last;c++) ws.getRow(3).getCell(c).border={bottom:{style:'medium',color:{argb:NV}}};
+      ws.mergeCells(`A5:${E}5`); ws.getCell('A5').value=title; ws.getCell('A5').font={bold:true,size:14,color:{argb:'FF0F172A'}}; ws.getCell('A5').alignment={horizontal:'center'};
+      ws.mergeCells(`A6:${E}6`); ws.getCell('A6').value=sub; ws.getCell('A6').font={italic:true,size:10,color:{argb:'FF64748B'}}; ws.getCell('A6').alignment={horizontal:'center'}; };
+    const head=(ws,row,vals,c1)=>{ const r=ws.getRow(row); r.values=vals; r.height=28; r.eachCell((c,i)=>{ if(i<(c1||1)) return; c.font={bold:true,color:{argb:'FFFFFFFF'},size:10}; c.fill=fill(NV); c.alignment={horizontal:'center',vertical:'middle',wrapText:true}; c.border=BD; }); };
+    const setup=(ws,t,o)=>{ ws.pageSetup={paperSize:9,orientation:o||'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.4,right:.4,top:.5,bottom:.5,header:.2,footer:.2},printTitlesRow:t,horizontalCentered:true};
+      ws.headerFooter={oddFooter:`&L&8Rekonsiliasi Pajak Masukan · ${proy}&R&8Halaman &P dari &N`}; };
+    /* 1. RINGKASAN */
+    const s1=wb.addWorksheet('RINGKASAN',{views:[{showGridLines:false}]}); s1.columns=[{width:4},{width:46},{width:13},{width:21},{width:21},{width:19},{width:3}];
+    kop(s1,6,'REKONSILIASI PAJAK MASUKAN (PPN)','Buku Besar PPN Masukan (Akuntansi) terhadap Prepopulated Pajak Masukan Coretax — belum dikreditkan');
+    [['Periode buku besar',per],['Cakupan prepopulated',state.rn.scope==='all'?'Semua masa (status APPROVED, belum dikreditkan)':masaLabel(state.rn.scope)],['Kriteria cocok','Nomor faktur 17 digit DAN nilai PPN sama persis'],['Tanggal disusun',now]]
+      .forEach((x,i)=>{ const r=s1.getRow(8+i); r.getCell(2).value=x[0]; r.getCell(3).value=': '+x[1]; s1.mergeCells(`C${8+i}:F${8+i}`); r.getCell(2).font={bold:true,size:10}; r.getCell(3).font={size:10}; });
+    let y=13; const sec=t=>{ s1.getCell(`B${y}`).value=t; s1.getCell(`B${y}`).font={bold:true,size:11,color:{argb:NV}}; y++; };
+    sec('A. HASIL REKONSILIASI');
+    const kpi=[['PPN Masukan menurut Akuntansi',S.accT,R.nAcc+' baris'],['PPN Prepopulated belum dikreditkan',S.ppT,R.nPP+' faktur'],['PPN yang cocok',S.ok.acc,`${S.ok.n} faktur (${R.nAcc?Math.round(S.ok.n/R.nAcc*100):0}% baris akuntansi)`],['Selisih (Akuntansi − Prepopulated)',S.accT-S.ppT,'']];
+    kpi.forEach(([l,v,n],i)=>{ const r=s1.getRow(y); r.getCell(2).value=l; r.getCell(5).value=v; r.getCell(5).numFmt=NF; r.getCell(6).value=n; s1.mergeCells(`B${y}:D${y}`);
+      r.getCell(2).font={bold:i===3,size:10}; r.getCell(5).font={bold:true,size:10,color:{argb:i===3?(Math.abs(v)<1?'FF166534':'FFB91C1C'):'FF0F172A'}}; r.getCell(6).font={size:9,color:{argb:'FF64748B'}};
+      [2,3,4,5,6].forEach(c=>{ r.getCell(c).border={bottom:{style:'hair',color:{argb:'FFCBD5E1'}}}; if(i===3) r.getCell(c).fill=fill('FFF1F5F9'); }); y++; });
+    y++; sec('B. RINGKASAN PER STATUS');
+    head(s1,y,[null,'Status','Jumlah','PPN Akuntansi','PPN Prepopulated','Selisih'],2); const y0=++y;
+    Object.entries(RN_ST).forEach(([k,v])=>{ const r=s1.getRow(y); r.values=[null,v.l,S[k].n,S[k].acc,S[k].pp,{formula:`D${y}-E${y}`,result:S[k].acc-S[k].pp}];
+      [2,3,4,5,6].forEach(c=>{ const x=r.getCell(c); x.border=BD; x.font={size:10}; if(c>3) x.numFmt=NF; if(c===3) x.alignment={horizontal:'center'}; }); r.getCell(2).fill=fill(v.x); r.getCell(2).font={bold:true,size:10,color:{argb:v.t}}; y++; });
+    { const r=s1.getRow(y); r.values=[null,'TOTAL',{formula:`SUM(C${y0}:C${y-1})`,result:R.pairs.length},{formula:`SUM(D${y0}:D${y-1})`,result:S.accT},{formula:`SUM(E${y0}:E${y-1})`,result:S.ppT},{formula:`SUM(F${y0}:F${y-1})`,result:S.sel}];
+      [2,3,4,5,6].forEach(c=>{ const x=r.getCell(c); x.border={...BD,top:{style:'medium'},bottom:{style:'double'}}; x.font={bold:true,size:10}; x.fill=fill('FFE2E8F0'); if(c>3) x.numFmt=NF; if(c===3) x.alignment={horizontal:'center'}; }); y++; }
+    y++; sec('C. KETERANGAN STATUS'); Object.values(RN_ST).forEach(v=>{ const r=s1.getRow(y); r.getCell(2).value=v.l; r.getCell(2).font={bold:true,size:9.5,color:{argb:v.t}}; r.getCell(3).value=v.a; s1.mergeCells(`C${y}:F${y}`); r.getCell(3).font={size:9.5}; y++; });
+    y+=2; s1.getCell(`F${y-1}`).value=`Jakarta, ${now}`; s1.getCell(`F${y-1}`).alignment={horizontal:'center'}; s1.getCell(`F${y-1}`).font={size:10};
+    [['B','Disiapkan oleh,','Tax Staff'],['D','Diperiksa oleh,','Accounting'],['F','Disetujui oleh,','Finance Manager']].forEach(([c,a,b])=>{ s1.getCell(`${c}${y}`).value=a; s1.getCell(`${c}${y+5}`).value='(..............................)'; s1.getCell(`${c}${y+6}`).value=b; [y,y+5,y+6].forEach(r=>{ s1.getCell(`${c}${r}`).alignment={horizontal:'center'}; s1.getCell(`${c}${r}`).font={size:10,bold:r===y+6}; }); });
+    setup(s1,'1:6','portrait'); s1.pageSetup.fitToHeight=1;
+    /* 2. DETAIL */
+    const s2=wb.addWorksheet('DETAIL',{views:[{state:'frozen',xSplit:2,ySplit:9,showGridLines:false}]}); s2.columns=[6,20,12,13,22,34,16,22,34,13,16,15,44].map(w=>({width:w}));
+    kop(s2,13,'DETAIL REKONSILIASI PAJAK MASUKAN',`Periode buku besar: ${per} · disusun ${now}`);
+    ['A8:A9','B8:B9','C8:G8','H8:L8','M8:M9'].forEach(m=>s2.mergeCells(m));
+    const g8=s2.getRow(8); g8.getCell(1).value='No'; g8.getCell(2).value='Status'; g8.getCell(3).value='BUKU BESAR AKUNTANSI'; g8.getCell(8).value='PREPOPULATED PAJAK MASUKAN (CORETAX)'; g8.getCell(13).value='Keterangan';
+    ['','','Tgl Posting','No Dokumen','No Faktur','Nama (Teks)','PPN','No Faktur','Penjual','Masa','PPN','Selisih'].forEach((v,i)=>{ if(v) s2.getRow(9).getCell(i+1).value=v; });
+    [8,9].forEach(rn=>{ const r=s2.getRow(rn); r.height=rn===8?20:26; for(let c=1;c<=13;c++){ const x=r.getCell(c); x.font={bold:true,color:{argb:'FFFFFFFF'},size:10}; x.alignment={horizontal:'center',vertical:'middle',wrapText:true}; x.border=BD; x.fill=fill(c>=3&&c<=7?'FF14365D':c>=8&&c<=11?'FF0F5132':'FF334155'); } });
+    const dI=d=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||''); return m?new Date(Date.UTC(+m[1],+m[2]-1,+m[3])):null; }, ord={inc:0,dev:1,acc:2,pp:3,ok:4};
+    const P=[...R.pairs].sort((a,b)=>ord[a.st]-ord[b.st]); let rr=10;
+    P.forEach((p,i)=>{ const a=p.a||{}, o=p.o, st=RN_ST[p.st], r=s2.getRow(rr);
+      r.values=[i+1,st.l,dI(a.posting||a.docDate),a.docNo||'',a.fp?rnFmtFp(a.fp):'',a.nama||'',p.a?p.accAmt:null,o?rnFmtFp(o.fp):(p.cand?'Kandidat: '+p.cand.map(c=>rnFmtFp(c.fp)).join(', '):''),o?o.r.nama:'',o?masaLabel(o.k):'',o?p.ppAmt:null,{formula:`N(G${rr})-N(K${rr})`,result:p.dev},(p.note?p.note+' · ':'')+RN_SH[p.st]];
+      for(let c=1;c<=13;c++){ const x=r.getCell(c); x.border=BD; x.font={size:9.5}; x.alignment={vertical:'top',wrapText:[6,8,9,13].includes(c)}; if(i%2) x.fill=fill('FFF8FAFC'); }
+      r.getCell(3).numFmt='dd/mm/yyyy'; [7,11,12].forEach(c=>r.getCell(c).numFmt=NF); r.getCell(1).alignment={horizontal:'center',vertical:'top'};
+      r.getCell(2).fill=fill(st.x); r.getCell(2).font={bold:true,size:9.5,color:{argb:st.t}}; if(a.fp&&a.fp.length!==17) r.getCell(5).font={bold:true,size:9.5,color:{argb:'FFC2410C'}}; if(Math.abs(p.dev)>=1) r.getCell(12).font={bold:true,size:9.5,color:{argb:'FFB91C1C'}}; rr++; });
+    { const r=s2.getRow(rr); r.getCell(1).value='TOTAL'; s2.mergeCells(`A${rr}:F${rr}`); r.getCell(7).value={formula:`SUBTOTAL(9,G10:G${rr-1})`,result:S.accT}; r.getCell(11).value={formula:`SUBTOTAL(9,K10:K${rr-1})`,result:S.ppT}; r.getCell(12).value={formula:`SUBTOTAL(9,L10:L${rr-1})`,result:S.sel};
+      for(let c=1;c<=13;c++){ const x=r.getCell(c); x.font={bold:true,size:10}; x.border={...BD,top:{style:'medium'},bottom:{style:'double'}}; x.fill=fill('FFE2E8F0'); if([7,11,12].includes(c)) x.numFmt=NF; } r.getCell(1).alignment={horizontal:'center'}; }
+    s2.autoFilter={from:'A9',to:`M${rr-1}`}; setup(s2,'8:9');
+    /* 3. CEK MANUAL */
+    const s3=wb.addWorksheet('PERLU CEK MANUAL',{views:[{state:'frozen',ySplit:8,showGridLines:false}]}); s3.columns=[6,20,22,36,16,16,15,52].map(w=>({width:w}));
+    kop(s3,8,'DAFTAR YANG PERLU DICEK MANUAL','Faktur tidak lengkap, selisih PPN, dan faktur yang tidak ada di prepopulated');
+    head(s3,8,['No','Status','No Faktur (Akuntansi)','Nama / Keterangan','PPN Akuntansi','PPN Prepopulated','Selisih','Tindak Lanjut']);
+    let r3=9; P.filter(p=>['inc','dev','acc'].includes(p.st)).forEach((p,i)=>{ const st=RN_ST[p.st], r=s3.getRow(r3);
+      r.values=[i+1,st.l,p.a.fp?rnFmtFp(p.a.fp)+(p.a.fp.length!==17?` (${p.a.fp.length} digit)`:''):'—',p.a.nama||p.a.text,p.accAmt,p.o?p.ppAmt:null,{formula:`N(E${r3})-N(F${r3})`,result:p.dev},(p.cand?`Kandidat: ${p.cand.map(c=>rnFmtFp(c.fp)+' · '+(c.r.nama||'')).join('; ')} · `:'')+(p.note?p.note+' · ':'')+st.a];
+      for(let c=1;c<=8;c++){ const x=r.getCell(c); x.border=BD; x.font={size:9.5}; x.alignment={vertical:'top',wrapText:[4,8].includes(c)}; } [5,6,7].forEach(c=>r.getCell(c).numFmt=NF); r.getCell(1).alignment={horizontal:'center',vertical:'top'};
+      r.getCell(2).fill=fill(st.x); r.getCell(2).font={bold:true,size:9.5,color:{argb:st.t}}; r3++; });
+    if(r3===9){ s3.mergeCells('A9:H9'); s3.getCell('A9').value='Tidak ada data yang perlu dicek manual.'; s3.getCell('A9').alignment={horizontal:'center'}; }
+    setup(s3,'8:8');
+    saveBytes(new Uint8Array(await wb.xlsx.writeBuffer()),`Rekonsiliasi Pajak Masukan - Akuntansi vs Prepopulated (${per.replace(/\//g,'-')}).xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    toast('Rekonsiliasi Pajak Masukan diunduh','success');
+  }catch(e){ console.error(e); toast('Gagal export: '+e.message,'error'); } }
+
 function renderRpmOld(){
   const o=rpmOpts(), R=rpmCompute(o), kso=brandKso(), adm=isAdmin();
   $('#view').innerHTML=`
@@ -7758,12 +7976,13 @@ const PERM_CHK={openImport:t=>can(t,'add'),commitImport:()=>IMPORT&&can(IMPORT.t
   openBupotCtx:()=>can('VPR','edit'),bpcGo:()=>can('VPR','edit'),openMrkForm:id=>can('MRK',id?'edit':'add'),saveMrkForm:()=>can('MRK',$('#mrkForm')&&$('#mrkForm').MRK_ID?'edit':'add'),mrkImportPph:()=>can('MRK','add'),
   openSptForm:rk=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),saveSpt:(e,rk)=>can('spt',DB.spt[`${key(state.year,state.month)}|${rk}`]?'edit':'add'),deleteSpt:()=>can('spt','del'),
   openRestNew:()=>can('rest','add'),saveRest:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),resetRest:()=>can('rest','del'),
+  openRnImport:()=>can('RPPN','add'),rnImportGo:()=>can('RPPN','add'),openRnForm:id=>can('RPPN',id?'edit':'add'),saveRnForm:(e,id)=>can('RPPN',id?'edit':'add'),rnDel:()=>can('RPPN','del'),rnClear:()=>can('RPPN','del'),
   openArsUpload:()=>can('ARS','add'),saveArsUpload:()=>can('ARS','add'),openArsEdit:()=>can('ARS','edit'),saveArsEdit:()=>can('ARS','edit'),arsDel:()=>can('ARS','del'),
   openRpImport:()=>can('RPPH','add'),rpImportGo:()=>can('RPPH','add'),openRpForm:id=>can('RPPH',id?'edit':'add'),saveRpForm:(e,id)=>can('RPPH',id?'edit':'add'),rpDel:()=>can('RPPH','del'),rpClear:()=>can('RPPH','del'),
   openTglBayar:()=>can('PM','edit'),tbyGo:()=>can('PM','edit'),openKrImp:()=>can('PP','edit'),kriGo:()=>can('PP','edit'),
   korAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add'),docAdd:()=>REST_ED&&can('rest',DB.restitusi[REST_ED.k]?'edit':'add')};
 ['openImport','commitImport','openRowForm','saveRowForm','deleteRow','clearMonth','toggleBayar','bulkBayar','selRow','selPage',
- 'openArsUpload','saveArsUpload','openArsEdit','saveArsEdit','arsDel','openRpImport','rpImportGo','openRpForm','saveRpForm','rpDel','rpClear','openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
+ 'openRnImport','rnImportGo','openRnForm','saveRnForm','rnDel','rnClear','openArsUpload','saveArsUpload','openArsEdit','saveArsEdit','arsDel','openRpImport','rpImportGo','openRpForm','saveRpForm','rpDel','rpClear','openTglBayar','tbyGo','openKrImp','kriGo','saveVprForm','vprDelete','vprBulkDelete','openImportVpr','vprImportGo','vprLapor','openBupotSubmit','saveBupotSubmit','openBupotCtx','bpcGo','openMrkForm','saveMrkForm','mrkImportPph',
  'openReport','saveReport','openSptForm','saveSpt','deleteSpt','openRestNew','saveRest','resetRest','openRestCfg','saveRestCfg','korAdd','docAdd',
  'uploadLogo','setLogo','setLogoBox','setSetting','cleanExistingLogo','saveAccount','backupData','restoreData','resetData','newRecovery',
  'downloadTemplate','saveIdentity','openRekonImport','saveRekonImport','delRekon','openRekonMap','saveRekonMap','saveRekonNote','openKredit','doKredit','openUserForm','saveUser','toggleUser','deleteUser','exportPackage'].forEach(n=>{
