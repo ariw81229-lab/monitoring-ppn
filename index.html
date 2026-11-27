@@ -324,6 +324,13 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .ars-sheets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.ars-sheets button{padding:6px 12px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;font-weight:600;color:var(--muted)}.ars-sheets button.on{background:var(--primary);border-color:var(--primary);color:#fff}
 .ars-xv{overflow:auto;max-height:62vh;border:1px solid var(--border);border-radius:10px}.ars-xv table{border-collapse:collapse;font-size:12px;width:max-content!important;min-width:100%;table-layout:auto}.ars-xv td{border:1px solid var(--border);padding:4px 8px;white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis}.ars-xv tr:nth-child(even) td{background:var(--bg)}
 @media(max-width:560px){.ars-kind{flex:1;min-width:0}}
+.ars-masa{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}.ars-masa>div{display:flex;flex-direction:column;gap:4px}.ars-masa small{font-size:11.5px;color:var(--muted)}.ars-my{display:flex;gap:6px}.ars-my .select{min-width:120px}.ars-sd{padding-bottom:11px;color:var(--muted);font-weight:600}
+.ars-auto-t{margin-left:6px;font-size:11px;font-weight:600;color:var(--success);background:rgba(22,163,74,.1);padding:1px 8px;border-radius:999px}
+.ars-hint{display:flex;gap:8px;align-items:flex-start;margin:4px 0 14px;font-size:12.5px;color:var(--muted);line-height:1.5}.ars-hint svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--primary)}
+.ars-t tbody.ars-grp{border-top:8px solid var(--bg)}.ars-t tr.ars-gh td{background:rgba(var(--primary-rgb),.06);padding-top:10px;padding-bottom:10px;border-bottom:1px solid rgba(var(--primary-rgb),.15)}.ars-t tr.ars-gh b{font-size:13.5px}
+.ars-no{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:800;font-size:13px}
+.ars-tree{position:relative}.ars-tree span{position:absolute;left:27px;top:0;bottom:50%;width:14px;border-left:2px solid rgba(var(--primary-rgb),.25);border-bottom:2px solid rgba(var(--primary-rgb),.25);border-bottom-left-radius:6px}
+.ars-tt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ars-tt b{font-weight:700}
 .ars-up{border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px}.ars-up .ars-file{margin-bottom:8px}
 .rn-bad{color:#c2410c;font-weight:700}
 .rrs-wrap{max-height:72vh;overflow:auto}.rrs-t{font-size:12.5px;border-collapse:separate;border-spacing:0}
@@ -7066,15 +7073,58 @@ const arsKindOf=f=>/\.pdf$/i.test(f.name)?'pdf':/\.(xlsx|xls|xlsm)$/i.test(f.nam
 const ARS_MAX=25*1048576;
 const arsAll=()=>{ const d=DB.data.ARS||(DB.data.ARS={}); if(!Array.isArray(d.all)) d.all=[]; return d.all; };
 if(!state.ars) state.ars={f:'1',q:'',y:'all',k:'pdf'};
+/* ---- masa / periode arsip: selalu disimpan 'YYYY-MM' (masa = bulan akhir, masaFrom = bulan awal bila rentang) ---- */
+const ARS_MON=[['JANUARI','JANUARY','JAN'],['FEBRUARI','PEBRUARI','FEBRUARY','FEB','PEB'],['MARET','MARCH','MAR'],['APRIL','APR'],['MEI','MAY'],['JUNI','JUNE','JUN'],['JULI','JULY','JUL'],['AGUSTUS','AUGUST','AGUS','AGS','AGT','AGU','AUG'],['SEPTEMBER','SEPT','SEP'],['OKTOBER','OCTOBER','OKT','OCT'],['NOVEMBER','NOPEMBER','NOV','NOP'],['DESEMBER','DECEMBER','DES','DEC']];
+const ARS_MRE=new RegExp(`(?:^|[^A-Z])(${ARS_MON.flat().sort((a,b)=>b.length-a.length).join('|')})(?![A-Z])`,'gi');
+const arsMonIdx=w=>ARS_MON.findIndex(a=>a.includes(String(w).toUpperCase()));
+/* baca bulan & tahun dari teks bebas: "SEPTEMBER 2026", "Juli - September 2026", "Sept 2026", "09/2026", "2026-09" */
+function arsParseMasa(t){ t=String(t||''); if(!t.trim()) return null; let m;
+  if((m=/^(\d{4})-(\d{1,2})$/.exec(t.trim()))&&+m[2]>=1&&+m[2]<=12) return {to:`${m[1]}-${String(+m[2]).padStart(2,'0')}`};
+  const yr=[...t.matchAll(/(?:^|\D)(20\d{2})(?!\d)/g)].map(x=>+x[1]), ms=[]; let x; ARS_MRE.lastIndex=0;
+  while((x=ARS_MRE.exec(t))){ const i=arsMonIdx(x[1]); if(i>=0) ms.push(i); }
+  if(!ms.length){ if((m=/(?:^|\D)(\d{1,2})\s*[\/.\-]\s*(20\d{2})(?!\d)/.exec(t))&&+m[1]>=1&&+m[1]<=12) return {to:`${m[2]}-${String(+m[1]).padStart(2,'0')}`}; return null; }
+  if(!yr.length) return null; const y=yr[yr.length-1], a=ms[0], b=ms[ms.length-1], ya=yr.length>1&&a>b?yr[0]:(a>b?y-1:y);
+  const to=`${y}-${String(b+1).padStart(2,'0')}`, from=`${ya}-${String(a+1).padStart(2,'0')}`; return from<to?{from,to}:{to}; }
+/* periode arsip (perbaiki data lama yang tersimpan sebagai teks, mis. "Sept 2026") */
+function arsPer(a){ if(a.masa&&!/^\d{4}-\d{2}$/.test(a.masa)){ let p=arsParseMasa(a.masa); const t=arsParseMasa(a.title); if(t&&t.from&&p&&t.to===p.to) p=t; if(p){ a.masa=p.to; if(p.from) a.masaFrom=p.from; } }
+  const to=/^\d{4}-\d{2}$/.test(a.masa||'')?a.masa:''; let from=/^\d{4}-\d{2}$/.test(a.masaFrom||'')&&a.masaFrom<to?a.masaFrom:'';
+  if(to&&!from&&a.masaFrom==null){ const t=arsParseMasa(a.title); if(t&&t.from&&t.to===to) from=t.from; } return {to,from}; }
+const arsPerLbl=p=>!p.to?'':p.from?(p.from.slice(0,4)===p.to.slice(0,4)?`${MONTHS[+p.from.slice(5)-1]} – ${masaLabel(p.to)}`:`${masaLabel(p.from)} – ${masaLabel(p.to)}`):masaLabel(p.to);
+/* nomor urut set dokumen ("6. EQUAL PPN …" → 6) & peran dokumen di dalam set */
+const arsNo=a=>{ const m=/^\s*(\d{1,3})\s*[.)\-_]/.exec(a.title||a.name||''); return m?+m[1]:null; };
+const ARS_ROLE={main:{l:'Dokumen Utama',c:'b-primary',o:0},evd:{l:'Eviden Coretax',c:'b-amber',o:2},sup:{l:'Pendukung',c:'b-muted',o:1}};
+const arsRole=(a,fk)=>{ const t=`${a.title} ${a.name}`.toUpperCase(); if(/PREPOPULATED|CORETAX|EVIDEN|EVIDENCE/.test(t)) return 'evd';
+  if(/EQUAL|EKUALISASI|REKON|BERITA ACARA|\bBA\b|LAPORAN|HASIL/.test(t)) return 'main'; return fk==='3'?'main':'sup'; };
+/* pemilih bulan + tahun (tidak bergantung dukungan browser untuk input type=month) */
+function arsMasaCtl(pre,p){ const cy=new Date().getFullYear(), ys=[]; for(let y=Math.min(2023,+String(p.from||p.to||cy).slice(0,4));y<=cy+1;y++) ys.push(y);
+  const sel=(n,v,ph,opts)=>`<select class="select" name="${pre}${n}" data-ars="${n}">${`<option value="">${ph}</option>`}${opts.map(([k,l])=>`<option value="${k}" ${String(v)===String(k)?'selected':''}>${l}</option>`).join('')}</select>`;
+  const mo=MONTHS.map((l,i)=>[String(i+1).padStart(2,'0'),l]), yo=ys.map(y=>[y,y]);
+  return `<div class="ars-masa"><div><small>Masa / bulan (awal bila rentang)</small><div class="ars-my">${sel('fm',p.from?p.from.slice(5):p.to?p.to.slice(5):'','Bulan',mo)}${sel('fy',(p.from||p.to||'').slice(0,4),'Tahun',yo)}</div></div>
+    <span class="ars-sd">s.d.</span><div><small>Sampai (opsional, bila rentang)</small><div class="ars-my">${sel('tm',p.from?p.to.slice(5):'','—',mo)}${sel('ty',p.from?p.to.slice(0,4):'','—',yo)}</div></div></div>`; }
+function arsMasaRead(root,pre){ const g=n=>(root.querySelector(`[name="${pre}${n}"]`)||{}).value||''; const fm=g('fm'), fy=g('fy'), tm=g('tm'), ty=g('ty');
+  const a=fm&&fy?`${fy}-${fm}`:'', b=tm?`${ty||fy}-${tm}`:''; if(!a) return {masa:'',masaFrom:''}; if(b&&b>a) return {masa:b,masaFrom:a}; return {masa:a,masaFrom:''}; }
+
 function renderArsip(){
   const A=arsAll(), F=state.ars; if(!F.k) F.k='pdf'; const fo=ARS_FOLDERS.find(x=>x.k===F.f)||ARS_FOLDERS[0], K=ARS_KIND[F.k]||ARS_KIND.pdf, q=(F.q||'').toLowerCase().trim();
+  A.forEach(arsPer);
   const inF=A.filter(a=>a.folder===fo.k), inK=inF.filter(a=>arsKind(a)===F.k), nK=k=>inF.filter(a=>arsKind(a)===k).length;
   const yrs=[...new Set(inK.map(a=>(a.masa||a.at||'').slice(0,4)).filter(Boolean))].sort().reverse();
-  const rows=inK.filter(a=>(F.y==='all'||(a.masa||a.at||'').startsWith(F.y))&&(!q||[a.title,a.name,a.ket,a.masa&&masaLabel(a.masa)].some(v=>String(v||'').toLowerCase().includes(q))))
-    .sort((a,b)=>String(b.masa||'').localeCompare(String(a.masa||''))||String(b.at).localeCompare(String(a.at)));
+  const rows=inK.filter(a=>(F.y==='all'||(a.masa||a.at||'').startsWith(F.y))&&(!q||[a.title,a.name,a.ket,arsPerLbl(arsPer(a))].some(v=>String(v||'').toLowerCase().includes(q))));
+  /* kelompokkan: nomor urut yang sama = satu set; tanpa nomor → per masa. Urut periode Januari → Desember */
+  const G=new Map(); rows.forEach(a=>{ const n=arsNo(a), p=arsPer(a), k=n!=null?`n${n}`:p.to?`m${p.to}`:`x${a.id}`; if(!G.has(k)) G.set(k,{n,items:[]}); G.get(k).items.push(a); });
+  const groups=[...G.values()].map(g=>{ g.items.sort((a,b)=>ARS_ROLE[arsRole(a,fo.k)].o-ARS_ROLE[arsRole(b,fo.k)].o||String(a.title).localeCompare(String(b.title),'id',{numeric:true}));
+    const main=g.items.find(a=>arsRole(a,fo.k)==='main')||g.items[0], pm=arsPer(main), tos=g.items.map(a=>arsPer(a).to).filter(Boolean).sort();
+    g.per=pm.to?pm:(tos.length?{to:tos[tos.length-1],from:''}:{to:'',from:''}); return g; })
+    .sort((a,b)=>(a.per.to?0:1)-(b.per.to?0:1)||String(a.per.to).localeCompare(String(b.per.to))||(a.n??1e9)-(b.n??1e9));
   const size=A.reduce((s,a)=>s+(+a.size||0),0), canA=can('ARS','add'), canE=can('ARS','edit'), canD=can('ARS','del');
   const last=[...A].sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0];
   const fileCell=a=>{ const k=arsKind(a); return `<span class="ars-file ${k}">${icon(ARS_KIND[k].ic)}<span>${esc(a.name)}<small>${ARS_KIND[k].l} · ${fmtSize(+a.size||0)}</small></span></span>`; };
+  const grpLbl=g=>{ const per=arsPerLbl(g.per); if(g.n==null&&!per) return 'Dokumen lainnya (tanpa nomor urut & masa)'; return fo.k==='1'?`Rekonsiliasi PPN${per?` · Masa ${per}`:''}`:fo.k==='2'?`Rekonsiliasi PPh${per?` · Masa ${per}`:''}`:`Laporan PPh${per?` · Masa ${per}`:''}`; };
+  const rowHTML=(a,g)=>{ const r=arsRole(a,fo.k), p=arsPer(a), mp=g.per.to&&p.to===g.per.to&&!p.from;
+    return `<tr class="ars-item"><td class="ars-tree"><span></span></td><td><div class="ars-tt"><b>${esc(a.title)}</b><span class="badge ${ARS_ROLE[r].c}">${ARS_ROLE[r].l}</span></div>${r==='evd'?'<small class="sub-t">Data pajak masukan dari Coretax sebagai eviden bahan rekonsiliasi</small>':''}</td>
+      <td>${p.to?`<span>${arsPerLbl(p)}</span>`:'<span class="sub-t">-</span>'}</td><td style="white-space:normal;max-width:240px">${esc(a.ket||'-')}</td>
+      <td>${fileCell(a)}</td><td>${new Date(a.at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}<br><small class="sub-t">${esc(a.by||'')}</small></td>
+      <td><div class="row-act" style="opacity:1"><button class="icon-btn xs" title="Lihat" onclick="arsView('${a.id}')">${icon('eye')}</button><button class="icon-btn xs" title="Unduh" onclick="openStoredFile('${a.fileId}','${esc(a.name)}',true)">${icon('download')}</button>${canE?`<button class="icon-btn xs" title="Ubah data" onclick="openArsEdit('${a.id}')">${icon('edit')}</button>`:''}${canD?`<button class="icon-btn xs" title="Hapus" onclick="arsDel('${a.id}')">${icon('trash')}</button>`:''}</div></td></tr>`; };
   $('#view').innerHTML=`
   <div class="subtabs ars-tabs" role="tablist" aria-label="Folder arsip">${ARS_FOLDERS.map(x=>`<button type="button" role="tab" class="${x.k===fo.k?'active':''}" onclick="state.ars.f='${x.k}';state.ars.y='all';renderArsip()">${icon('folder')}<span>${esc(x.l)}</span><i class="nav-cnt">${A.filter(a=>a.folder===x.k).length}</i></button>`).join('')}</div>
   <div class="grid minis">
@@ -7088,12 +7138,12 @@ function renderArsip(){
     <div class="ars-kinds">${Object.entries(ARS_KIND).map(([k,x])=>`<button type="button" class="ars-kind ${k} ${k===F.k?'on':''}" onclick="state.ars.k='${k}';state.ars.y='all';renderArsip()">${icon(x.ic)}<span><b>${x.t}</b><small>${fmt(nK(k))} file</small></span></button>`).join('')}</div>
     ${inK.length?`<div class="card-b" style="padding-bottom:0"><div class="toolbar filters">
       <div class="search">${icon('search')}<input class="input" id="arsQ" placeholder="Cari judul, nama file, keterangan, atau masa…" value="${esc(F.q)}" oninput="state.ars.q=this.value;clearTimeout(window._arsT);window._arsT=setTimeout(()=>{renderArsip();const e=$('#arsQ');e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)">${F.q?`<button type="button" class="search-x" style="display:grid" onclick="state.ars.q='';renderArsip()">${icon('x')}</button>`:''}</div>
-      <select class="select" onchange="state.ars.y=this.value;renderArsip()"><option value="all">Semua tahun</option>${yrs.map(y=>`<option ${F.y===y?'selected':''}>${y}</option>`).join('')}</select></div></div>
-    <div class="table-wrap"><table><thead><tr><th>No</th><th>Judul Dokumen</th><th>Masa / Periode</th><th>Keterangan</th><th>File</th><th>Diunggah</th><th></th></tr></thead><tbody>
-      ${rows.map((a,i)=>`<tr><td>${i+1}</td><td><b>${esc(a.title)}</b></td><td>${a.masa?masaLabel(a.masa):'-'}</td><td style="white-space:normal;max-width:280px">${esc(a.ket||'-')}</td>
-        <td>${fileCell(a)}</td><td>${new Date(a.at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}<br><small class="sub-t">${esc(a.by||'')}</small></td>
-        <td><div class="row-act" style="opacity:1"><button class="icon-btn xs" title="Lihat" onclick="arsView('${a.id}')">${icon('eye')}</button><button class="icon-btn xs" title="Unduh" onclick="openStoredFile('${a.fileId}','${esc(a.name)}',true)">${icon('download')}</button>${canE?`<button class="icon-btn xs" title="Ubah keterangan" onclick="openArsEdit('${a.id}')">${icon('edit')}</button>`:''}${canD?`<button class="icon-btn xs" title="Hapus" onclick="arsDel('${a.id}')">${icon('trash')}</button>`:''}</div></td></tr>`).join('')||`<tr><td colspan="7" class="sub-t" style="text-align:center;padding:24px">Tidak ada dokumen sesuai filter</td></tr>`}
-    </tbody></table></div>`
+      <select class="select" onchange="state.ars.y=this.value;renderArsip()"><option value="all">Semua tahun</option>${yrs.map(y=>`<option ${F.y===y?'selected':''}>${y}</option>`).join('')}</select></div>
+      <p class="ars-hint">${icon('alert')}<span>Dokumen dengan <b>nomor urut yang sama</b> (mis. <i>6. EQUAL PPN …</i> dan <i>6. PM MASA … (PREPOPULATED CORETAX)</i>) dikelompokkan menjadi <b>satu set</b> — dokumen utama di atas, eviden Coretax di bawahnya. Urutan set mengikuti periode Januari → Desember.</span></p></div>
+    <div class="table-wrap"><table class="ars-t"><thead><tr><th style="width:56px">No</th><th>Judul Dokumen</th><th>Masa / Periode</th><th>Keterangan</th><th>File</th><th>Diunggah</th><th></th></tr></thead>
+      ${groups.map(g=>`<tbody class="ars-grp"><tr class="ars-gh"><td><span class="ars-no">${g.n!=null?g.n:'•'}</span></td><td colspan="6"><b>${esc(grpLbl(g))}</b><span class="sub-t"> · ${g.items.length} file</span></td></tr>
+        ${g.items.map(a=>rowHTML(a,g)).join('')}</tbody>`).join('')||`<tbody><tr><td colspan="7" class="sub-t" style="text-align:center;padding:24px">Tidak ada dokumen sesuai filter</td></tr></tbody>`}
+    </table></div>`
     :`<div class="empty">${icon(K.ic)}<b>${K.t} masih kosong</b>Belum ada ${K.t.toLowerCase()} di ${esc(fo.l)} — ${K.d}.${canA?`<br><br><button class="btn btn-primary" onclick="openArsUpload()">${icon('upload')} Import File</button>`:''}</div>`}
   </div>`;
 }
@@ -7125,15 +7175,15 @@ function openArsUpload(){ ARSU=[];
       <div id="arsList"></div></div>
     <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit" id="arsBtn" disabled>${icon('upload')} Simpan ke Arsip</button></div></form>`,'lg');
   $('#arsFile').addEventListener('change',e=>{ const bad=[]; ARSU=[];
-    [...e.target.files].forEach(f=>{ const k=arsKindOf(f); if(!k) bad.push(`${f.name} (bukan PDF / Excel)`); else if(f.size>ARS_MAX) bad.push(`${f.name} (lebih dari ${fmtSize(ARS_MAX)})`); else ARSU.push({f,kind:k,title:f.name.replace(/\.(pdf|xlsx|xls|xlsm)$/i,''),masa:'',ket:''}); });
+    [...e.target.files].forEach(f=>{ const k=arsKindOf(f); if(!k) bad.push(`${f.name} (bukan PDF / Excel)`); else if(f.size>ARS_MAX) bad.push(`${f.name} (lebih dari ${fmtSize(ARS_MAX)})`); else ARSU.push({f,kind:k,per:arsParseMasa(f.name)||{to:''},auto:!!arsParseMasa(f.name),title:f.name.replace(/\.(pdf|xlsx|xls|xlsm)$/i,''),masa:'',ket:''}); });
     $('#arsList').innerHTML=(bad.length?`<div class="tax-info warn" style="margin-bottom:10px">${icon('alert')}<div><b>${bad.length} file ditolak</b> — hanya PDF dan Excel yang dapat diarsipkan:<br>${bad.map(esc).join('<br>')}</div></div>`:'')
       +ARSU.map((u,i)=>`<div class="ars-up"><div class="ars-file ${u.kind}">${icon(ARS_KIND[u.kind].ic)}<span>${esc(u.f.name)}<small>${ARS_KIND[u.kind].t} · ${fmtSize(u.f.size)}</small></span></div>
-        <div class="form-grid" style="grid-template-columns:2fr 1fr"><div class="field"><label>Judul dokumen</label><input class="input" value="${esc(u.title)}" oninput="ARSU[${i}].title=this.value"></div>
-        <div class="field"><label>Masa / periode</label><input class="input" type="month" oninput="ARSU[${i}].masa=this.value"></div>
+        <div class="form-grid" style="grid-template-columns:1fr"><div class="field"><label>Judul dokumen</label><input class="input" value="${esc(u.title)}" oninput="ARSU[${i}].title=this.value"></div>
+        <div class="field"><label>Masa / periode ${u.auto?'<span class="ars-auto-t">terisi otomatis dari nama file</span>':''}</label>${arsMasaCtl(`u${i}_`,u.per)}</div>
         <div class="field full" style="grid-column:1/-1"><label>Keterangan (opsional)</label><input class="input" oninput="ARSU[${i}].ket=this.value" placeholder="mis. ditandatangani Finance Manager & Tax Staff"></div></div></div>`).join('');
     $('#arsBtn').disabled=!ARSU.length; }); }
-async function saveArsUpload(e){ e.preventDefault(); if(!ARSU.length) return; const folder=new FormData(e.target).get('folder'), me=currentUser(), btn=$('#arsBtn'); btn.disabled=true; btn.textContent='Mengunggah…';
-  try{ for(const u of ARSU){ const fileId=uid(); await putFile(fileId,u.f); arsAll().push({id:uid(),folder,kind:u.kind,fileId,name:u.f.name,size:u.f.size,title:(u.title||u.f.name).trim(),masa:u.masa||'',ket:(u.ket||'').trim(),at:new Date().toISOString(),by:me?me.name||me.username:''}); }
+async function saveArsUpload(e){ e.preventDefault(); if(!ARSU.length) return; ARSU.forEach((u,i)=>Object.assign(u,arsMasaRead(e.target,`u${i}_`))); const folder=new FormData(e.target).get('folder'), me=currentUser(), btn=$('#arsBtn'); btn.disabled=true; btn.textContent='Mengunggah…';
+  try{ for(const u of ARSU){ const fileId=uid(); await putFile(fileId,u.f); arsAll().push({id:uid(),folder,kind:u.kind,fileId,name:u.f.name,size:u.f.size,title:(u.title||u.f.name).trim(),masa:u.masa||'',masaFrom:u.masaFrom||'',ket:(u.ket||'').trim(),at:new Date().toISOString(),by:me?me.name||me.username:''}); }
     if((STORAGE_MODE==='local'||STORAGE_MODE==='memory')) toast('Penyimpanan browser terbatas: file hanya tersimpan sementara','error');
     if(await save()){ closeModal(); state.ars.f=folder; state.ars.k=ARSU[ARSU.length-1].kind; toast(`${ARSU.length} dokumen diarsipkan ke ${ARS_FOLDERS.find(x=>x.k===folder).l}`,'success'); renderArsip(); } }
   catch(err){ toast('Gagal upload: '+err.message,'error'); btn.disabled=false; btn.innerHTML=`${icon('upload')} Simpan ke Arsip`; } }
@@ -7142,11 +7192,11 @@ function openArsEdit(id){ const a=arsAll().find(x=>x.id===id); if(!a) return;
     <form onsubmit="saveArsEdit(event,'${id}')"><div class="modal-b"><div class="form-grid">
       <div class="field full"><label>Judul dokumen</label><input class="input" name="title" required value="${esc(a.title)}"></div>
       <div class="field"><label>Folder</label><select class="select" name="folder">${ARS_FOLDERS.map(x=>`<option value="${x.k}" ${x.k===a.folder?'selected':''}>${esc(x.l)}</option>`).join('')}</select></div>
-      <div class="field"><label>Masa / periode</label><input class="input" type="month" name="masa" value="${esc(a.masa||'')}"></div>
+      <div class="field full"><label>Masa / periode</label>${arsMasaCtl('e_',arsPer(a))}</div>
       <div class="field full"><label>Keterangan</label><input class="input" name="ket" value="${esc(a.ket||'')}"></div></div></div>
     <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`); }
 async function saveArsEdit(e,id){ e.preventDefault(); const a=arsAll().find(x=>x.id===id), fd=new FormData(e.target); if(!a) return;
-  Object.assign(a,{title:String(fd.get('title')||'').trim()||a.title,folder:String(fd.get('folder')),masa:String(fd.get('masa')||''),ket:String(fd.get('ket')||'').trim()});
+  Object.assign(a,{title:String(fd.get('title')||'').trim()||a.title,folder:String(fd.get('folder')),...arsMasaRead(e.target,'e_'),ket:String(fd.get('ket')||'').trim()});
   if(await save()){ closeModal(); toast('Data arsip diperbarui','success'); renderArsip(); } }
 function arsDel(id){ const a=arsAll().find(x=>x.id===id); if(!a) return;
   confirmBox('Hapus dokumen arsip?',`<b>${esc(a.title)}</b> (${esc(a.name)}) akan dihapus permanen.`,'Hapus',async()=>{ await delFile(a.fileId); DB.data.ARS.all=arsAll().filter(x=>x.id!==id); if(await save()){ toast('Dokumen dihapus dari arsip','success'); renderArsip(); } }); }
