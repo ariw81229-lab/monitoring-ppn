@@ -327,6 +327,11 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .ars-masa{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}.ars-masa>div{display:flex;flex-direction:column;gap:4px}.ars-masa small{font-size:11.5px;color:var(--muted)}.ars-my{display:flex;gap:6px}.ars-my .select{min-width:120px}.ars-sd{padding-bottom:11px;color:var(--muted);font-weight:600}
 .ars-auto-t{margin-left:6px;font-size:11px;font-weight:600;color:var(--success);background:rgba(22,163,74,.1);padding:1px 8px;border-radius:999px}
 .ars-hint{display:flex;gap:8px;align-items:flex-start;margin:4px 0 14px;font-size:12.5px;color:var(--muted);line-height:1.5}.ars-hint svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--primary)}
+.ars-t tr.ars-gh{cursor:pointer;user-select:none}.ars-t tr.ars-gh:hover td{background:rgba(var(--primary-rgb),.1)}
+.ars-t tbody.ars-grp.closed tr.ars-item{display:none}.ars-t tbody.ars-grp.closed tr.ars-gh td{border-bottom:0}
+.ars-ghi{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ars-ghr{display:flex;align-items:center;gap:6px}
+.ars-gcar{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;color:var(--primary);background:rgba(var(--primary-rgb),.1)}.ars-ghr{margin-left:6px}.ars-gcar svg{width:16px;height:16px;transition:transform .2s;transform:rotate(180deg)}.ars-grp.closed .ars-gcar svg{transform:rotate(0)}
+.ars-oc{display:flex;gap:6px}.ars-oc .btn svg{width:14px;height:14px}.ars-oc .ars-up-i{transform:rotate(180deg)}
 .ars-t tbody.ars-grp{border-top:8px solid var(--bg)}.ars-t tr.ars-gh td{background:rgba(var(--primary-rgb),.06);padding-top:10px;padding-bottom:10px;border-bottom:1px solid rgba(var(--primary-rgb),.15)}.ars-t tr.ars-gh b{font-size:13.5px}
 .ars-no{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:800;font-size:13px}
 .ars-tree{position:relative}.ars-tree span{position:absolute;left:27px;top:0;bottom:50%;width:14px;border-left:2px solid rgba(var(--primary-rgb),.25);border-bottom:2px solid rgba(var(--primary-rgb),.25);border-bottom-left-radius:6px}
@@ -7155,7 +7160,7 @@ function renderArsip(){
   const yrs=[...new Set(inK.map(a=>(a.masa||a.at||'').slice(0,4)).filter(Boolean))].sort().reverse();
   const rows=inK.filter(a=>(F.y==='all'||(a.masa||a.at||'').startsWith(F.y))&&(!q||[a.title,a.name,a.ket,arsPerLbl(arsPer(a))].some(v=>String(v||'').toLowerCase().includes(q))));
   /* kelompokkan: nomor urut yang sama = satu set; tanpa nomor → per masa. Urut periode Januari → Desember */
-  const G=new Map(); rows.forEach(a=>{ const n=arsNo(a), p=arsPer(a), k=n!=null?`n${n}`:p.to?`m${p.to}`:`x${a.id}`; if(!G.has(k)) G.set(k,{n,items:[]}); G.get(k).items.push(a); });
+  const G=new Map(); rows.forEach(a=>{ const n=arsNo(a), p=arsPer(a), k=n!=null?`n${n}`:p.to?`m${p.to}`:`x${a.id}`; if(!G.has(k)) G.set(k,{n,k,items:[]}); G.get(k).items.push(a); });
   const groups=[...G.values()].map(g=>{ g.items.sort((a,b)=>ARS_ROLE[arsRole(a,fo.k)].o-ARS_ROLE[arsRole(b,fo.k)].o||String(a.title).localeCompare(String(b.title),'id',{numeric:true}));
     const main=g.items.find(a=>arsRole(a,fo.k)==='main')||g.items[0], pm=arsPer(main), tos=g.items.map(a=>arsPer(a).to).filter(Boolean).sort();
     g.per=pm.to?pm:(tos.length?{to:tos[tos.length-1],from:''}:{to:'',from:''}); return g; })
@@ -7182,15 +7187,21 @@ function renderArsip(){
     <div class="ars-kinds">${Object.entries(ARS_KIND).map(([k,x])=>`<button type="button" class="ars-kind ${k} ${k===F.k?'on':''}" onclick="state.ars.k='${k}';state.ars.y='all';renderArsip()">${icon(x.ic)}<span><b>${x.t}</b><small>${fmt(nK(k))} file</small></span></button>`).join('')}</div>
     ${inK.length?`<div class="card-b" style="padding-bottom:0"><div class="toolbar filters">
       <div class="search">${icon('search')}<input class="input" id="arsQ" placeholder="Cari judul, nama file, keterangan, atau masa…" value="${esc(F.q)}" oninput="state.ars.q=this.value;clearTimeout(window._arsT);window._arsT=setTimeout(()=>{renderArsip();const e=$('#arsQ');e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)">${F.q?`<button type="button" class="search-x" style="display:grid" onclick="state.ars.q='';renderArsip()">${icon('x')}</button>`:''}</div>
-      <select class="select" onchange="state.ars.y=this.value;renderArsip()"><option value="all">Semua tahun</option>${yrs.map(y=>`<option ${F.y===y?'selected':''}>${y}</option>`).join('')}</select></div>
-      <p class="ars-hint">${icon('alert')}<span>Dokumen dengan <b>nomor urut yang sama</b> (mis. <i>6. EQUAL PPN …</i> dan <i>6. PM MASA … (PREPOPULATED CORETAX)</i>) dikelompokkan menjadi <b>satu set</b> — dokumen utama di atas, eviden Coretax di bawahnya. Urutan set mengikuti periode Januari → Desember.</span></p></div>
+      <select class="select" onchange="state.ars.y=this.value;renderArsip()"><option value="all">Semua tahun</option>${yrs.map(y=>`<option ${F.y===y?'selected':''}>${y}</option>`).join('')}</select>
+      <div class="ars-oc"><button type="button" class="btn btn-outline btn-sm" onclick="arsTogAll(true)">${icon('chev','i ars-up-i')} Buka semua</button><button type="button" class="btn btn-outline btn-sm" onclick="arsTogAll(false)">${icon('chev')} Tutup semua</button></div></div>
+      ${fo.k==='1'?`<p class="ars-hint">${icon('alert')}<span>Dokumen dengan <b>nomor urut yang sama</b> (mis. <i>6. EQUAL PPN …</i> dan <i>6. PM MASA … (PREPOPULATED CORETAX)</i>) dikelompokkan menjadi <b>satu set</b> — dokumen utama di atas, eviden Coretax di bawahnya. Urutan set mengikuti periode Januari → Desember.</span></p>`:'<div style="height:14px"></div>'}</div>
     <div class="table-wrap"><table class="ars-t"><thead><tr><th style="width:56px">No</th><th>Judul Dokumen</th><th>Masa / Periode</th><th>Keterangan</th><th>File</th><th>Diunggah</th><th></th></tr></thead>
-      ${groups.map(g=>`<tbody class="ars-grp"><tr class="ars-gh"><td><span class="ars-no">${g.n!=null?g.n:'•'}</span></td><td colspan="6"><b>${esc(grpLbl(g))}</b><span class="sub-t"> · ${g.items.length} file</span></td></tr>
-        ${g.items.map(a=>rowHTML(a,g)).join('')}</tbody>`).join('')||`<tbody><tr><td colspan="7" class="sub-t" style="text-align:center;padding:24px">Tidak ada dokumen sesuai filter</td></tr></tbody>`}
+      ${groups.map(g=>{ const ok=`${fo.k}|${F.k}|${g.k}`, open=!!q||!!(F.open||{})[ok], rc={}; g.items.forEach(a=>{ const r=arsRole(a,fo.k); rc[r]=(rc[r]||0)+1; });
+        return `<tbody class="ars-grp ${open?'':'closed'}" data-k="${esc(ok)}"><tr class="ars-gh" onclick="arsTog(this)" title="Klik untuk ${open?'menutup':'membuka'} daftar file"><td><span class="ars-no">${g.n!=null?g.n:'•'}</span></td><td colspan="6"><div class="ars-ghi"><span class="ars-gcar">${icon('chev')}</span><b>${esc(grpLbl(g))}</b><span class="sub-t">· ${g.items.length} file</span>
+          <span class="ars-ghr">${Object.keys(ARS_ROLE).filter(r=>rc[r]).map(r=>`<span class="badge ${ARS_ROLE[r].c}">${rc[r]} ${ARS_ROLE[r].l}</span>`).join('')}</span></div></td></tr>
+        ${g.items.map(a=>rowHTML(a,g)).join('')}</tbody>`; }).join('')||`<tbody><tr><td colspan="7" class="sub-t" style="text-align:center;padding:24px">Tidak ada dokumen sesuai filter</td></tr></tbody>`}
     </table></div>`
     :`<div class="empty">${icon(K.ic)}<b>${K.t} masih kosong</b>Belum ada ${K.t.toLowerCase()} di ${esc(fo.l)} — ${K.d}.${canA?`<br><br><button class="btn btn-primary" onclick="openArsUpload()">${icon('upload')} Import File</button>`:''}</div>`}
   </div>`;
 }
+/* buka / tutup daftar file per set (diingat per folder & jenis file) */
+function arsTog(tr){ const tb=tr.closest('tbody'), k=tb.dataset.k, F=state.ars; F.open=F.open||{}; const op=tb.classList.toggle('closed')===false; F.open[k]=op; tr.title=`Klik untuk ${op?'menutup':'membuka'} daftar file`; }
+function arsTogAll(op){ const F=state.ars; F.open=F.open||{}; document.querySelectorAll('.ars-t tbody.ars-grp').forEach(tb=>{ tb.classList.toggle('closed',!op); F.open[tb.dataset.k]=op; }); }
 /* pratinjau: PDF dibuka langsung; Excel ditampilkan sebagai tabel (per sheet) */
 async function arsView(id){ const a=arsAll().find(x=>x.id===id); if(!a) return; if(arsKind(a)==='pdf') return openStoredFile(a.fileId,a.name);
   const blob=await getFile(a.fileId); if(!blob){ toast('File tidak ditemukan','error'); return; }
