@@ -315,6 +315,15 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .rp-map{margin-top:12px;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--surface-2)}.rp-map-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}.rp-map-h svg{width:15px;height:15px;color:var(--primary)}.rp-map-h span{color:var(--muted);font-size:12px}
 .ars-file{display:inline-flex;align-items:center;gap:8px}.ars-file>svg{width:20px;height:20px;color:#dc2626;flex:none}.ars-file span{display:flex;flex-direction:column;font-size:12.5px;line-height:1.3;word-break:break-all}.ars-file small{color:var(--muted);font-size:11px}
 .ars-tabs .nav-cnt{background:var(--surface-2);color:var(--muted);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800}.ars-tabs button.active .nav-cnt{background:rgba(255,255,255,.25);color:#fff}
+.ars-file.xls>svg{color:#16a34a}
+.ars-kinds{display:flex;gap:10px;padding:0 20px 4px;flex-wrap:wrap}
+.ars-kind{display:flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);min-width:190px;text-align:left;transition:all .15s}
+.ars-kind>svg{width:30px;height:30px;padding:6px;border-radius:9px;flex:none}.ars-kind.pdf>svg{color:#dc2626;background:rgba(220,38,38,.1)}.ars-kind.xls>svg{color:#16a34a;background:rgba(22,163,74,.1)}
+.ars-kind span{display:flex;flex-direction:column;line-height:1.25}.ars-kind b{font-size:13.5px;color:var(--text)}.ars-kind small{font-size:12px;color:var(--muted)}
+.ars-kind:hover{border-color:rgba(var(--primary-rgb),.4)}.ars-kind.on{border-color:var(--primary);background:rgba(var(--primary-rgb),.07);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.12)}
+.ars-sheets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.ars-sheets button{padding:6px 12px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;font-weight:600;color:var(--muted)}.ars-sheets button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.ars-xv{overflow:auto;max-height:62vh;border:1px solid var(--border);border-radius:10px}.ars-xv table{border-collapse:collapse;font-size:12px;width:max-content!important;min-width:100%;table-layout:auto}.ars-xv td{border:1px solid var(--border);padding:4px 8px;white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis}.ars-xv tr:nth-child(even) td{background:var(--bg)}
+@media(max-width:560px){.ars-kind{flex:1;min-width:0}}
 .ars-up{border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px}.ars-up .ars-file{margin-bottom:8px}
 .rn-bad{color:#c2410c;font-weight:700}
 .rrs-wrap{max-height:72vh;overflow:auto}.rrs-t{font-size:12.5px;border-collapse:separate;border-spacing:0}
@@ -2135,7 +2144,7 @@ function isAdmin(){ const u=currentUser(); return !!u && u.role!=='user'; }
 /* Hak akses per menu untuk akun pengunjung (diatur admin): add = tambah/import, edit = ubah, del = hapus */
 const PERM_MENUS=[{k:'PM',l:'Pajak Masukan',d:'Monitoring, Resume Restitusi & Prepopulated Pajak Masukan',t:['PM','PP','RRS']},{k:'RPPN',l:'Rekonsiliasi Pajak Masukan',d:'import / input / hapus buku besar PPN Masukan akuntansi',t:['RPPN']},{k:'PK',l:'Pajak Keluaran',d:'Monitoring Pajak Keluaran',t:['PK']},{k:'BPS',l:'Bukti Potong ESDM',t:['BPS']},
   {k:'PPH21',l:'PPh 21',d:'Selain Pegawai Tetap · A1 · Bulanan Pegawai Tetap',t:['PPH21NP','PPH21A1','PPH21']},{k:'PPHU',l:'PPh Unifikasi',d:'PPh 23 & PPh 4 ayat 2',t:['PPH23','PPH42']},
-  {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'RPPH',l:'Rekonsiliasi PPh',d:'import / input / hapus data laporan PPh akuntansi',t:['RPPH']},{k:'MRK',l:'Master Rekanan',t:['MRK']},{k:'ARS',l:'Arsip',d:'upload / ubah / hapus dokumen PDF arsip pajak',t:['ARS']},
+  {k:'VPR',l:'Pencatatan PPh Rekanan',d:'termasuk submit / import nomor bupot',t:['VPR']},{k:'RPPH',l:'Rekonsiliasi PPh',d:'import / input / hapus data laporan PPh akuntansi',t:['RPPH']},{k:'MRK',l:'Master Rekanan',t:['MRK']},{k:'ARS',l:'Arsip',d:'import / ubah / hapus file PDF & Excel arsip pajak',t:['ARS']},
   {k:'spt',l:'Status SPT Rekanan',d:'upload / kelola / hapus bukti SPT PPN rekanan',t:['spt']},{k:'rest',l:'Restitusi PPN',d:'Alur Proses Restitusi: tambah masa, isi alur & dokumen, hapus data proses',t:['rest']}];
 const PERM_ACT=[['add','Tambah'],['edit','Ubah'],['del','Hapus']];
 const permsOf=u=>(u&&u.perms&&typeof u.perms==='object')?u.perms:{};
@@ -7048,59 +7057,85 @@ async function rpExport(){
 /* =====================================================================
    ARSIP PAJAK — kumpulan dokumen final (PDF) per folder · DB.data.ARS.all
    ===================================================================== */
-const ARS_FOLDERS=[{k:'1',l:'1. BA Hasil Rekonsiliasi PPN',d:'Berita acara hasil rekonsiliasi PPN yang sudah ditandatangani'},
-  {k:'2',l:'2. BA Hasil Rekonsiliasi PPh',d:'Berita acara / kertas kerja rekonsiliasi PPh yang sudah ditandatangani'},
-  {k:'3',l:'3. Laporan PPh',d:'Laporan pemotongan & penyetoran PPh yang sudah ditandatangani'}];
+const ARS_FOLDERS=[{k:'1',l:'1. Arsip Hasil Rekonsiliasi PPN',d:'Berita acara & kertas kerja hasil rekonsiliasi PPN'},
+  {k:'2',l:'2. Arsip Hasil Rekonsiliasi PPh',d:'Berita acara & kertas kerja hasil rekonsiliasi PPh'},
+  {k:'3',l:'3. Arsip Laporan PPh',d:'Laporan pemotongan & penyetoran PPh'}];
+const ARS_KIND={pdf:{l:'PDF',t:'File PDF',ic:'file',d:'dokumen final yang sudah ditandatangani'},xls:{l:'Excel',t:'File Excel',ic:'grid',d:'kertas kerja / data pendukung dalam format Excel'}};
+const arsKind=a=>a.kind||(/\.(xlsx|xls|xlsm)$/i.test(a.name||'')?'xls':'pdf');
+const arsKindOf=f=>/\.pdf$/i.test(f.name)?'pdf':/\.(xlsx|xls|xlsm)$/i.test(f.name)?'xls':null;
 const ARS_MAX=25*1048576;
 const arsAll=()=>{ const d=DB.data.ARS||(DB.data.ARS={}); if(!Array.isArray(d.all)) d.all=[]; return d.all; };
-if(!state.ars) state.ars={f:'1',q:'',y:'all'};
+if(!state.ars) state.ars={f:'1',q:'',y:'all',k:'pdf'};
 function renderArsip(){
-  const A=arsAll(), F=state.ars, fo=ARS_FOLDERS.find(x=>x.k===F.f)||ARS_FOLDERS[0], q=(F.q||'').toLowerCase().trim();
-  const yrs=[...new Set(A.filter(a=>a.folder===fo.k).map(a=>(a.masa||a.at||'').slice(0,4)).filter(Boolean))].sort().reverse();
-  const rows=A.filter(a=>a.folder===fo.k&&(F.y==='all'||(a.masa||a.at||'').startsWith(F.y))&&(!q||[a.title,a.name,a.ket,a.masa&&masaLabel(a.masa)].some(v=>String(v||'').toLowerCase().includes(q))))
+  const A=arsAll(), F=state.ars; if(!F.k) F.k='pdf'; const fo=ARS_FOLDERS.find(x=>x.k===F.f)||ARS_FOLDERS[0], K=ARS_KIND[F.k]||ARS_KIND.pdf, q=(F.q||'').toLowerCase().trim();
+  const inF=A.filter(a=>a.folder===fo.k), inK=inF.filter(a=>arsKind(a)===F.k), nK=k=>inF.filter(a=>arsKind(a)===k).length;
+  const yrs=[...new Set(inK.map(a=>(a.masa||a.at||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  const rows=inK.filter(a=>(F.y==='all'||(a.masa||a.at||'').startsWith(F.y))&&(!q||[a.title,a.name,a.ket,a.masa&&masaLabel(a.masa)].some(v=>String(v||'').toLowerCase().includes(q))))
     .sort((a,b)=>String(b.masa||'').localeCompare(String(a.masa||''))||String(b.at).localeCompare(String(a.at)));
   const size=A.reduce((s,a)=>s+(+a.size||0),0), canA=can('ARS','add'), canE=can('ARS','edit'), canD=can('ARS','del');
+  const last=[...A].sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0];
+  const fileCell=a=>{ const k=arsKind(a); return `<span class="ars-file ${k}">${icon(ARS_KIND[k].ic)}<span>${esc(a.name)}<small>${ARS_KIND[k].l} · ${fmtSize(+a.size||0)}</small></span></span>`; };
   $('#view').innerHTML=`
   <div class="subtabs ars-tabs" role="tablist" aria-label="Folder arsip">${ARS_FOLDERS.map(x=>`<button type="button" role="tab" class="${x.k===fo.k?'active':''}" onclick="state.ars.f='${x.k}';state.ars.y='all';renderArsip()">${icon('folder')}<span>${esc(x.l)}</span><i class="nav-cnt">${A.filter(a=>a.folder===x.k).length}</i></button>`).join('')}</div>
   <div class="grid minis">
-    <div class="card mini"><small>Dokumen di folder ini</small><b>${fmt(A.filter(a=>a.folder===fo.k).length)} PDF</b><span class="sub">${esc(fo.d)}</span></div>
-    <div class="card mini"><small>Total Arsip</small><b>${fmt(A.length)} PDF</b><span class="sub">${ARS_FOLDERS.length} folder · ${fmtSize(size||0)}</span></div>
-    <div class="card mini"><small>Unggahan Terakhir</small><b style="font-size:15px">${A.length?esc([...A].sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0].title):'-'}</b><span class="sub">${A.length?new Date([...A].sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0].at).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'belum ada dokumen'}</span></div>
+    <div class="card mini"><small>Dokumen di folder ini</small><b>${fmt(inF.length)} file</b><span class="sub">${fmt(nK('pdf'))} PDF · ${fmt(nK('xls'))} Excel</span></div>
+    <div class="card mini"><small>Total Arsip</small><b>${fmt(A.length)} file</b><span class="sub">${ARS_FOLDERS.length} folder · ${fmtSize(size||0)}</span></div>
+    <div class="card mini"><small>Unggahan Terakhir</small><b style="font-size:15px">${last?esc(last.title):'-'}</b><span class="sub">${last?new Date(last.at).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'belum ada dokumen'}</span></div>
   </div>
   <div class="card">
-    <div class="card-h"><div><h3>${icon('folder')} ${esc(fo.l)}</h3><p>Hanya file <b>PDF</b> — dokumen final yang sudah ditandatangani</p></div>
-      <div class="toolbar">${canA?`<button class="btn btn-primary" onclick="openArsUpload()">${icon('upload')} Upload PDF</button>`:''}</div></div>
-    ${A.filter(a=>a.folder===fo.k).length?`<div class="card-b" style="padding-bottom:0"><div class="toolbar filters">
+    <div class="card-h"><div><h3>${icon('folder')} ${esc(fo.l)}</h3><p>${esc(fo.d)} · tersusun dalam sub-folder <b>File PDF</b> dan <b>File Excel</b></p></div>
+      <div class="toolbar">${canA?`<button class="btn btn-primary" onclick="openArsUpload()">${icon('upload')} Import File</button>`:''}${inK.length?`<button class="btn btn-outline" onclick="arsZip()" title="Unduh semua ${K.t} di folder ini (ZIP)">${icon('download')}<span class="hide-sm">Export ${K.l} (ZIP)</span></button>`:''}</div></div>
+    <div class="ars-kinds">${Object.entries(ARS_KIND).map(([k,x])=>`<button type="button" class="ars-kind ${k} ${k===F.k?'on':''}" onclick="state.ars.k='${k}';state.ars.y='all';renderArsip()">${icon(x.ic)}<span><b>${x.t}</b><small>${fmt(nK(k))} file</small></span></button>`).join('')}</div>
+    ${inK.length?`<div class="card-b" style="padding-bottom:0"><div class="toolbar filters">
       <div class="search">${icon('search')}<input class="input" id="arsQ" placeholder="Cari judul, nama file, keterangan, atau masa…" value="${esc(F.q)}" oninput="state.ars.q=this.value;clearTimeout(window._arsT);window._arsT=setTimeout(()=>{renderArsip();const e=$('#arsQ');e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)">${F.q?`<button type="button" class="search-x" style="display:grid" onclick="state.ars.q='';renderArsip()">${icon('x')}</button>`:''}</div>
       <select class="select" onchange="state.ars.y=this.value;renderArsip()"><option value="all">Semua tahun</option>${yrs.map(y=>`<option ${F.y===y?'selected':''}>${y}</option>`).join('')}</select></div></div>
     <div class="table-wrap"><table><thead><tr><th>No</th><th>Judul Dokumen</th><th>Masa / Periode</th><th>Keterangan</th><th>File</th><th>Diunggah</th><th></th></tr></thead><tbody>
       ${rows.map((a,i)=>`<tr><td>${i+1}</td><td><b>${esc(a.title)}</b></td><td>${a.masa?masaLabel(a.masa):'-'}</td><td style="white-space:normal;max-width:280px">${esc(a.ket||'-')}</td>
-        <td><span class="ars-file">${icon('file')}<span>${esc(a.name)}<small>${fmtSize(+a.size||0)}</small></span></span></td><td>${new Date(a.at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}<br><small class="sub-t">${esc(a.by||'')}</small></td>
-        <td><div class="row-act" style="opacity:1"><button class="icon-btn xs" title="Lihat" onclick="openStoredFile('${a.fileId}','${esc(a.name)}')">${icon('eye')}</button><button class="icon-btn xs" title="Unduh" onclick="openStoredFile('${a.fileId}','${esc(a.name)}',true)">${icon('download')}</button>${canE?`<button class="icon-btn xs" title="Ubah keterangan" onclick="openArsEdit('${a.id}')">${icon('edit')}</button>`:''}${canD?`<button class="icon-btn xs" title="Hapus" onclick="arsDel('${a.id}')">${icon('trash')}</button>`:''}</div></td></tr>`).join('')||`<tr><td colspan="7" class="sub-t" style="text-align:center;padding:24px">Tidak ada dokumen sesuai filter</td></tr>`}
+        <td>${fileCell(a)}</td><td>${new Date(a.at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}<br><small class="sub-t">${esc(a.by||'')}</small></td>
+        <td><div class="row-act" style="opacity:1"><button class="icon-btn xs" title="Lihat" onclick="arsView('${a.id}')">${icon('eye')}</button><button class="icon-btn xs" title="Unduh" onclick="openStoredFile('${a.fileId}','${esc(a.name)}',true)">${icon('download')}</button>${canE?`<button class="icon-btn xs" title="Ubah keterangan" onclick="openArsEdit('${a.id}')">${icon('edit')}</button>`:''}${canD?`<button class="icon-btn xs" title="Hapus" onclick="arsDel('${a.id}')">${icon('trash')}</button>`:''}</div></td></tr>`).join('')||`<tr><td colspan="7" class="sub-t" style="text-align:center;padding:24px">Tidak ada dokumen sesuai filter</td></tr>`}
     </tbody></table></div>`
-    :`<div class="empty">${icon('folder')}<b>Folder masih kosong</b>${esc(fo.d)}.<br>Upload dokumen PDF setelah siap ditandatangani.${canA?`<br><br><button class="btn btn-primary" onclick="openArsUpload()">${icon('upload')} Upload PDF</button>`:''}</div>`}
+    :`<div class="empty">${icon(K.ic)}<b>${K.t} masih kosong</b>Belum ada ${K.t.toLowerCase()} di ${esc(fo.l)} — ${K.d}.${canA?`<br><br><button class="btn btn-primary" onclick="openArsUpload()">${icon('upload')} Import File</button>`:''}</div>`}
   </div>`;
 }
+/* pratinjau: PDF dibuka langsung; Excel ditampilkan sebagai tabel (per sheet) */
+async function arsView(id){ const a=arsAll().find(x=>x.id===id); if(!a) return; if(arsKind(a)==='pdf') return openStoredFile(a.fileId,a.name);
+  const blob=await getFile(a.fileId); if(!blob){ toast('File tidak ditemukan','error'); return; }
+  try{ const wb=XLSX.read(new Uint8Array(await blob.arrayBuffer()),{type:'array'}), names=wb.SheetNames;
+    const sh=i=>{ const ws=wb.Sheets[names[i]]; let R=-1,C=-1; for(const k in ws){ if(k[0]==='!') continue; const c=ws[k]; if(c==null||c.v==null||c.v==='') continue; const d=XLSX.utils.decode_cell(k); if(d.r>R) R=d.r; if(d.c>C) C=d.c; }
+      if(R<0) return '<p class="sub-t" style="padding:16px">Sheet kosong</p>'; const cut=R>2999; ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.min(R,2999),c:Math.min(C,59)}});
+      if(ws['!merges']) ws['!merges']=ws['!merges'].filter(m=>m.s.r<=Math.min(R,2999)&&m.s.c<=Math.min(C,59));
+      const h=XLSX.utils.sheet_to_html(ws,{editable:false})+(cut?'<p class="sub-t" style="padding:8px">Pratinjau dibatasi 3.000 baris pertama — unduh file untuk melihat seluruhnya.</p>':''); const m=/<table[\s\S]*<\/table>/.exec(h); return m?m[0]+(cut?h.slice(h.lastIndexOf('<p class="sub-t"')):''):'<p class="sub-t">Sheet kosong</p>'; };
+    openModal(`<div class="modal-h"><div><h3>${esc(a.title)}</h3><p>${esc(a.name)} · ${names.length} sheet</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+      <div class="modal-b">${names.length>1?`<div class="ars-sheets">${names.map((n,i)=>`<button type="button" class="${i?'':'on'}" onclick="this.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on');document.querySelectorAll('.ars-xv').forEach((d,j)=>d.hidden=j!==${i})">${esc(n)}</button>`).join('')}</div>`:''}
+        ${names.map((n,i)=>`<div class="ars-xv" ${i?'hidden':''}>${sh(i)}</div>`).join('')}</div>
+      <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Tutup</button><button class="btn btn-primary" onclick="openStoredFile('${a.fileId}','${esc(a.name)}',true)">${icon('download')} Unduh Excel</button></div>`,'xl');
+  }catch(e){ console.error(e); toast('Excel tidak dapat dipratinjau — silakan unduh','error'); } }
+/* export: semua file pada sub-folder aktif dalam satu ZIP */
+async function arsZip(){ const F=state.ars, L=arsAll().filter(a=>a.folder===F.f&&arsKind(a)===F.k), fo=ARS_FOLDERS.find(x=>x.k===F.f)||ARS_FOLDERS[0]; if(!L.length) return;
+  try{ const JSZip=await ensureJSZip(), z=new JSZip(), used=new Set(); let n0=0;
+    for(const a of L){ const b=await getFile(a.fileId); if(!b) continue; let n=a.name, i=1; while(used.has(n.toLowerCase())) n=a.name.replace(/(\.[^.]+)$/,` (${++i})$1`); used.add(n.toLowerCase()); z.file(n,b); n0++; }
+    const out=await z.generateAsync({type:'uint8array'}); saveBytes(out,`${fo.l} - ${ARS_KIND[F.k].t}.zip`,'application/zip'); toast(`${n0} file diunduh (ZIP)`,'success');
+  }catch(e){ toast('Gagal export: '+e.message,'error'); } }
 let ARSU=[];
 function openArsUpload(){ ARSU=[];
-  openModal(`<div class="modal-h"><div><h3>Upload Dokumen Arsip</h3><p>Hanya file PDF · maks. ${fmtSize(ARS_MAX)} per file · bisa beberapa file sekaligus</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
+  openModal(`<div class="modal-h"><div><h3>Import File Arsip</h3><p>File PDF &amp; Excel · maks. ${fmtSize(ARS_MAX)} per file · bisa beberapa file sekaligus — otomatis masuk sub-folder File PDF / File Excel</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
     <form id="arsForm" onsubmit="saveArsUpload(event)"><div class="modal-b">
       <div class="field"><label>Folder</label><select class="select" name="folder">${ARS_FOLDERS.map(x=>`<option value="${x.k}" ${x.k===state.ars.f?'selected':''}>${esc(x.l)}</option>`).join('')}</select></div>
-      <div class="field"><label>File PDF <span style="color:var(--danger)">*</span></label><input type="file" class="input" id="arsFile" accept="application/pdf,.pdf" multiple></div>
+      <div class="field"><label>File PDF / Excel <span style="color:var(--danger)">*</span></label><input type="file" class="input" id="arsFile" accept=".pdf,.xlsx,.xls,.xlsm,application/pdf" multiple></div>
       <div id="arsList"></div></div>
     <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit" id="arsBtn" disabled>${icon('upload')} Simpan ke Arsip</button></div></form>`,'lg');
   $('#arsFile').addEventListener('change',e=>{ const bad=[]; ARSU=[];
-    [...e.target.files].forEach(f=>{ const pdf=/\.pdf$/i.test(f.name)&&(!f.type||f.type==='application/pdf'); if(!pdf) bad.push(`${f.name} (bukan PDF)`); else if(f.size>ARS_MAX) bad.push(`${f.name} (lebih dari ${fmtSize(ARS_MAX)})`); else ARSU.push({f,title:f.name.replace(/\.pdf$/i,''),masa:'',ket:''}); });
-    $('#arsList').innerHTML=(bad.length?`<div class="tax-info warn" style="margin-bottom:10px">${icon('alert')}<div><b>${bad.length} file ditolak</b> — hanya PDF yang dapat diarsipkan:<br>${bad.map(esc).join('<br>')}</div></div>`:'')
-      +ARSU.map((u,i)=>`<div class="ars-up"><div class="ars-file">${icon('file')}<span>${esc(u.f.name)}<small>${fmtSize(u.f.size)}</small></span></div>
+    [...e.target.files].forEach(f=>{ const k=arsKindOf(f); if(!k) bad.push(`${f.name} (bukan PDF / Excel)`); else if(f.size>ARS_MAX) bad.push(`${f.name} (lebih dari ${fmtSize(ARS_MAX)})`); else ARSU.push({f,kind:k,title:f.name.replace(/\.(pdf|xlsx|xls|xlsm)$/i,''),masa:'',ket:''}); });
+    $('#arsList').innerHTML=(bad.length?`<div class="tax-info warn" style="margin-bottom:10px">${icon('alert')}<div><b>${bad.length} file ditolak</b> — hanya PDF dan Excel yang dapat diarsipkan:<br>${bad.map(esc).join('<br>')}</div></div>`:'')
+      +ARSU.map((u,i)=>`<div class="ars-up"><div class="ars-file ${u.kind}">${icon(ARS_KIND[u.kind].ic)}<span>${esc(u.f.name)}<small>${ARS_KIND[u.kind].t} · ${fmtSize(u.f.size)}</small></span></div>
         <div class="form-grid" style="grid-template-columns:2fr 1fr"><div class="field"><label>Judul dokumen</label><input class="input" value="${esc(u.title)}" oninput="ARSU[${i}].title=this.value"></div>
         <div class="field"><label>Masa / periode</label><input class="input" type="month" oninput="ARSU[${i}].masa=this.value"></div>
         <div class="field full" style="grid-column:1/-1"><label>Keterangan (opsional)</label><input class="input" oninput="ARSU[${i}].ket=this.value" placeholder="mis. ditandatangani Finance Manager & Tax Staff"></div></div></div>`).join('');
     $('#arsBtn').disabled=!ARSU.length; }); }
 async function saveArsUpload(e){ e.preventDefault(); if(!ARSU.length) return; const folder=new FormData(e.target).get('folder'), me=currentUser(), btn=$('#arsBtn'); btn.disabled=true; btn.textContent='Mengunggah…';
-  try{ for(const u of ARSU){ const fileId=uid(); await putFile(fileId,u.f); arsAll().push({id:uid(),folder,fileId,name:u.f.name,size:u.f.size,title:(u.title||u.f.name).trim(),masa:u.masa||'',ket:(u.ket||'').trim(),at:new Date().toISOString(),by:me?me.name||me.username:''}); }
-    if((STORAGE_MODE==='local'||STORAGE_MODE==='memory')) toast('Penyimpanan browser terbatas: file PDF hanya tersimpan sementara','error');
-    if(await save()){ closeModal(); state.ars.f=folder; toast(`${ARSU.length} dokumen diarsipkan ke ${ARS_FOLDERS.find(x=>x.k===folder).l}`,'success'); renderArsip(); } }
+  try{ for(const u of ARSU){ const fileId=uid(); await putFile(fileId,u.f); arsAll().push({id:uid(),folder,kind:u.kind,fileId,name:u.f.name,size:u.f.size,title:(u.title||u.f.name).trim(),masa:u.masa||'',ket:(u.ket||'').trim(),at:new Date().toISOString(),by:me?me.name||me.username:''}); }
+    if((STORAGE_MODE==='local'||STORAGE_MODE==='memory')) toast('Penyimpanan browser terbatas: file hanya tersimpan sementara','error');
+    if(await save()){ closeModal(); state.ars.f=folder; state.ars.k=ARSU[ARSU.length-1].kind; toast(`${ARSU.length} dokumen diarsipkan ke ${ARS_FOLDERS.find(x=>x.k===folder).l}`,'success'); renderArsip(); } }
   catch(err){ toast('Gagal upload: '+err.message,'error'); btn.disabled=false; btn.innerHTML=`${icon('upload')} Simpan ke Arsip`; } }
 function openArsEdit(id){ const a=arsAll().find(x=>x.id===id); if(!a) return;
   openModal(`<div class="modal-h"><div><h3>Ubah Data Arsip</h3><p>${esc(a.name)}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
