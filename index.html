@@ -319,6 +319,7 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .rn-bad{color:#c2410c;font-weight:700}
 .rrs-wrap{max-height:72vh;overflow:auto}.rrs-t{font-size:12.5px;border-collapse:separate;border-spacing:0}
 .rrs-t thead th{position:sticky;top:0;z-index:3;background:#14365d;color:#fff;font-size:11px;letter-spacing:.03em;text-transform:uppercase;white-space:normal;min-width:90px;vertical-align:bottom;line-height:1.3;border-right:1px solid rgba(255,255,255,.12)}
+.rrs-t thead th,.rrs-t thead th.num{text-align:center!important;vertical-align:middle!important}
 .rrs-t thead th small{display:block;font-size:10px;opacity:.75;text-transform:none;letter-spacing:0;margin-top:2px}
 .rrs-t th.rrs-c0,.rrs-t td:first-child{position:sticky;left:0;z-index:2;min-width:52px;width:52px}.rrs-t th.rrs-c1,.rrs-t td.rrs-nm{position:sticky;left:52px;z-index:2;min-width:230px;max-width:280px;white-space:normal}
 .rrs-t thead th.rrs-c0,.rrs-t thead th.rrs-c1{z-index:4}.rrs-t tbody td:first-child,.rrs-t td.rrs-nm{background:var(--surface)}
@@ -839,6 +840,19 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .al-gate svg.i{width:18px;height:18px;flex:none;margin-top:1px}.al-gate b{display:block;font-size:13.5px}.al-gate span{font-size:12.8px;color:var(--text)}
 .al-fs{border:0;margin:0;padding:0;min-width:0}.al-fs[disabled]{opacity:.55}
 .al-lockmsg{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 10px}.al-lockmsg svg.i{width:14px;height:14px}
+.ppn-rk.solo>summary{cursor:default;pointer-events:none}.ppn-rk.solo>summary .chev{display:none}
+.pm-mode{position:relative;display:inline-block;margin:0 0 18px}
+.pm-mode-btn{display:inline-flex;align-items:center;gap:9px;height:42px;padding:0 14px 0 13px;border-radius:12px;border:1px solid rgba(var(--primary-rgb),.28);background:rgba(var(--primary-rgb),.08);color:var(--text);font-weight:700;font-size:14px;box-shadow:var(--shadow);transition:background .15s,border-color .15s}
+.pm-mode-btn:hover,.pm-mode-btn.on{background:rgba(var(--primary-rgb),.14);border-color:rgba(var(--primary-rgb),.45)}
+.pm-mode-btn>.i:first-child{width:18px;height:18px;color:var(--primary)}.pm-mode-btn .pm-car{width:16px;height:16px;color:var(--muted);transition:transform .2s}.pm-mode-btn.on .pm-car{transform:rotate(180deg)}
+.pm-mode-pop{position:absolute;top:calc(100% + 8px);left:0;right:auto;width:auto;z-index:40;min-width:330px;padding:8px;border-radius:14px;background:var(--surface);border:1px solid var(--border);box-shadow:0 18px 40px -12px rgba(15,23,42,.28)}
+.pm-mode-lbl{padding:8px 12px 6px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pm-mode-pop>button{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:10px;text-align:left;color:var(--text)}
+.pm-mode-pop>button:hover{background:var(--bg)}.pm-mode-pop>button.on{background:rgba(var(--primary-rgb),.08)}
+.pm-mode-pop>button>.i:first-child{width:18px;height:18px;color:var(--muted);flex:none}.pm-mode-pop>button.on>.i:first-child{color:var(--primary)}
+.pm-mode-pop>button>span{flex:1;display:flex;flex-direction:column;gap:2px}.pm-mode-pop>button b{font-size:14px;font-weight:700}.pm-mode-pop>button small{font-size:12px;color:var(--muted);font-weight:500}
+.pm-mode-pop .pm-ok{width:16px;height:16px;color:var(--primary);flex:none}
+@media(max-width:560px){.pm-mode,.pm-mode-btn{width:100%}.pm-mode-btn span{flex:1;text-align:left}.pm-mode-pop{min-width:0;right:0}}
 .ppn-rk>summary{list-style:none;cursor:pointer}.ppn-rk>summary::-webkit-details-marker{display:none}
 .ppn-rk>summary .chev{transition:transform .2s;color:var(--muted);flex:none}.ppn-rk[open]>summary .chev{transform:rotate(180deg)}
 .ppn-rk tr.cur td{background:rgba(var(--primary-rgb),.05)}
@@ -2235,7 +2249,7 @@ function render(){
   $('#yearSel').innerHTML=(ck?`<option value="all" ${comb?'selected':''}>Semua Tahun (Gabungan)</option>`:'')
     +ys.map(y=>`<option value="${y}" ${!comb&&y===state.year?'selected':''}>Tahun ${y}</option>`).join('');
   $('#yearSel').hidden=state.view==='settings'||state.view==='tema'||state.view==='RPM'||state.view==='RRS'||state.view==='RPPH'||state.view==='ARS'||state.view==='GL'||state.view==='VPR'||state.view==='MRK';
-  $('#pageTitle').textContent=TITLES[state.view]||'';
+  $('#pageTitle').textContent=state.view==='PM'&&state.pmMode==='rekap'?'Monitoring Pajak Masukan · Rekap PPN per Masa Pajak':TITLES[state.view]||'';
   { const v=state.view, b=document.body.classList; b.toggle('pa',!isAdmin()&&can(v,'add')); b.toggle('pe',!isAdmin()&&can(v,'edit')); b.toggle('pd',!isAdmin()&&can(v,'del')); }
   if(state.view==='dashboard') renderDashboard();
   else if(state.view==='settings') renderSettings();
@@ -2254,9 +2268,19 @@ function render(){
 }
 /* Pemisah antar halaman dalam satu menu (pengganti sub menu di sidebar) */
 const SUB_IC={RRS:'file',VPR:'clip',RPPH:'grid',PM:'in',PP:'clock',GL:'file',RPM:'grid',PPH21NP:'users',PPH21A1:'file',PPH21:'user',PPH23:'receipt',PPH42:'receipt',PK:'out',BPS:'folder'};
+/* Monitoring Pajak Masukan: 3 tampilan dalam satu menu (dipilih lewat dropdown) */
+const PM_MODES=[{k:'rekap',l:'Rekap PPN per Masa Pajak',d:'Pelaporan SPT Masa PPN, BPE & dokumen',ic:'calendar'},{k:'kredit',l:'Telah Dikreditkan Pajak Masukan',d:'Faktur pajak masukan yang sudah dikreditkan',ic:'check'},{k:'rrs',l:'Resume Restitusi PPN',d:'Pratinjau, import & export Excel resume',ic:'file'}];
+function pmGo(k){ if(k==='rrs'){ if(state.view!=='RRS') go('RRS'); else render(); return; } state.pmMode=k; if(state.view!=='PM') go('PM'); else { render(); window.scrollTo(0,0); } }
+function pmModeBar(cur){ const c=PM_MODES.find(x=>x.k===cur)||PM_MODES[1];
+  return `<div class="pm-mode"><button type="button" class="pm-mode-btn" onclick="event.stopPropagation();const p=this.nextElementSibling;const h=p.hidden;document.querySelectorAll('.popover').forEach(x=>x.hidden=true);p.hidden=!h;this.classList.toggle('on',h)">${icon(c.ic)}<span>${c.l}</span>${icon('chev','i pm-car')}</button>
+    <div class="popover pm-mode-pop" hidden onclick="event.stopPropagation()"><div class="pm-mode-lbl">Monitoring Pajak Masukan</div>${PM_MODES.map(x=>`<button type="button" class="${x.k===c.k?'on':''}" onclick="this.parentElement.hidden=true;pmGo('${x.k}')">${icon(x.ic)}<span><b>${x.l}</b><small>${x.d}</small></span>${x.k===c.k?icon('check','i pm-ok'):''}</button>`).join('')}</div></div>`; }
+function renderPmRekap(){ const y=state.year, comb=isComb('PM');
+  $('#view').innerHTML=pmModeBar('rekap')+(comb?`<div class="card"><div class="empty">${icon('calendar')}<b>Pilih tahun</b>Rekap PPN per Masa Pajak ditampilkan per tahun — pilih tahun pada pilihan di kanan atas.</div></div>`
+    :ppnRekapCard(y).replace('<details class="card mb ppn-rk"','<details open class="card mb ppn-rk solo"')); }
 function subTabsHTML(g){
   const urgent=g.items.includes('PP')?batasScan().akhir.n:0;
-  return `<div class="subtabs" role="tablist" aria-label="${esc(g.grp)}">${g.items.map(id=>`<button type="button" role="tab" class="${id===state.view?'active':''}" aria-selected="${id===state.view}" onclick="go('${id}')">${icon(SUB_IC[id]||'file')}<span>${NAV_LBL[id]||(TYPES[id]?TYPES[id].sub||TYPES[id].menu:id)}</span>${id==='PP'&&urgent?`<i class="nav-cnt">${urgent}</i>`:''}</button>`).join('')}</div>`;
+  const isOn=id=>id===state.view||(id==='PM'&&state.view==='RRS');
+  return `<div class="subtabs" role="tablist" aria-label="${esc(g.grp)}">${g.items.filter(id=>id!=='RRS').map(id=>`<button type="button" role="tab" class="${isOn(id)?'active':''}" aria-selected="${isOn(id)}" onclick="${id==='PM'?'pmGo(state.view===\'RRS\'?\'rrs\':(state.pmMode||\'kredit\'))':`go('${id}')`}">${icon(SUB_IC[id]||'file')}<span>${NAV_LBL[id]||(TYPES[id]?TYPES[id].sub||TYPES[id].menu:id)}</span>${id==='PP'&&urgent?`<i class="nav-cnt">${urgent}</i>`:''}</button>`).join('')}</div>`;
 }
 
 /* =========================================================
@@ -2678,7 +2702,7 @@ function oblChip(R){ const d=R.diff;
     soon:[`H-${d}`,`${d} hari lagi batas ${R.kind}`],near:[`H-${d}`,`${d} hari lagi batas ${R.kind}`],wait:[`H-${d}`,`${d} hari lagi batas ${R.kind}`]}[R.st]; }
 function oblTip(R){ const c=oblChip(R); return `${R.o.l} · ${R.kind==='setor'?'Setor':'Lapor'} masa ${MONTHS[R.i]} ${R.y}\nBatas: ${HARI[R.eff.getDay()]}, ${fmtDate(isoD(R.eff))}${R.shifted?` (semula ${fmtDate(isoD(R.due))}, bergeser karena ${shiftWhy(R.due,R.eff)})`:''}\nStatus: ${c[1]}${R.doneAt&&R.doneAt!=='ada'?` · tanggal ${fmtDate(R.doneAt)}`:''}${R.partial?` · data lapor ${R.partial}/4`:''}${R.rekap?` · Rekap PPN: ${R.rekap}`:''}`; }
 function oblOpen(id,y,i){ const o=OBL.find(x=>x.id===id); state.month=i; state.year=y;
-  if(o.id==='ppn'){ goD('PM'); if(isAdmin()) setTimeout(()=>openPpnRep(y,i),60); else setTimeout(()=>{ const e=$('#ppnRekap'); e&&e.scrollIntoView({behavior:'smooth'}); },80); }
+  if(o.id==='ppn'){ state.pmMode='rekap'; goD('PM'); if(isAdmin()) setTimeout(()=>openPpnRep(y,i),60); else setTimeout(()=>{ const e=$('#ppnRekap'); e&&e.scrollIntoView({behavior:'smooth'}); },80); }
   else { goD(o.view); if(isAdmin()) setTimeout(()=>openReport(o.view),60); } }
 /* SPT Tahunan PPh Badan */
 const tahunanRep=ty=>((DB.reports||{}).TAHUNAN||{})[ty]||null;
@@ -2949,6 +2973,7 @@ function monthTabs(t,y,m,extra){
     return `<button class="mtab ${i===m?'active':''}" onclick="setMonth(${i})" title="${n} ${y}">${x}<span>${MONTHS_S[i]}</span>${c?`<b class="cnt">${fmt(c)}</b>`:'<i class="dot"></i>'}</button>`; }).join('')}</div>`;
 }
 function renderData(t){
+  if(t==='PM'&&state.pmMode==='rekap'){ renderPmRekap(); return; }
   if((t==='VPR'||t==='MRK')&&!state.mrkSynced) setTimeout(mrkAutoSync,0);
   const T=TYPES[t], y=state.year, m=state.month, comb=isComb(t), rows=viewRows(t);
   if(t==='PPH21A1') rows.forEach(r=>a1Norm(r,comb?MASA_OF.get(r):key(y,m)));
@@ -3014,11 +3039,11 @@ function renderData(t){
   const descNote=t==='PM'?`<div class="kr-hd ok">${icon('check')}<div><b>Pajak Masukan Telah Dikreditkan</b><span>Seluruh faktur pada halaman ini telah <strong>dikreditkan</strong> dalam SPT Masa PPN sesuai data Coretax — menjadi dasar perhitungan PPN lebih bayar dan restitusi.</span></div></div>`
     :t==='PP'?`<div class="kr-hd wait">${icon('clock')}<div><b>Pajak Masukan Belum Dikreditkan</b><span>Faktur prepopulated dari Coretax yang <strong>belum dikreditkan</strong>. Setelah dikreditkan, faktur berpindah ke <a class="link" onclick="go('PM')">Monitoring Pajak Masukan</a>. Perhatikan batas waktu pengkreditan.</span></div></div>`
     :T.desc?`<div class="note" style="margin:0 0 18px">${icon('alert')} ${T.desc}</div>`:'';
-  $('#view').innerHTML=`
+  $('#view').innerHTML=`${t==='PM'?pmModeBar('kredit'):''}
   ${t==='PP'?batasAlerts():''}
   ${t==='VPR'||t==='MRK'?'':comb?combTabs(t,yy=>{ let c=0; for(let i=0;i<12;i++) c+=getRows(t,yy,i).length; return c; }):monthTabs(t,y,m,flag)}
   ${descNote}<div class="grid minis">${minis}</div>
-  ${T.report&&!comb?reportCard(t,y,m,rows):''}${t==='PM'&&!comb?ppnRekapCard(y):''}
+  ${T.report&&!comb?reportCard(t,y,m,rows):''}
   <div class="card">
     <div class="card-h">
       <div><h3>${t==='PM'?'<span class="kr-chip ok">Telah Dikreditkan</span>':t==='PP'?'<span class="kr-chip wait">Belum Dikreditkan</span>':''}${T.label}${t==='MRK'?'':' — '}${t==='MRK'?'':t==='VPR'?'Gabungan Semua Masa':comb?combLabel():`${MONTHS[m]} ${y}`}</h3><p>${rows.length?`${fmt(rows.length)} ${T.unit} tersimpan${comb?' di seluruh tahun':''}`:comb?'Belum ada data di seluruh tahun':'Belum ada data untuk masa pajak ini'}</p></div>
@@ -3037,7 +3062,6 @@ function renderData(t){
       </div>`:comb?`<div class="toolbar"><button class="btn btn-outline" onclick="openExport('${t}')">${icon('download')}<span class="hide-sm">Export</span></button></div>`:`<div class="toolbar">
         <button class="btn btn-primary" onclick="openImport('${t}')">${icon('upload')} Import Excel</button>
         ${t==='PP'?`<button class="btn btn-outline adm p-edit" onclick="openKrImp()" title="Kreditkan banyak faktur sekaligus dari Excel — otomatis pindah ke Monitoring Pajak Masukan sesuai masa dikreditkan">${icon('check')}<span class="hide-sm">Import Dikreditkan</span></button>`:''}
-        ${t==='PM'?`<button class="btn btn-outline" onclick="go('RRS')" title="Pratinjau & export Excel resume restitusi (pajak masukan yang sudah dikreditkan)">${icon('file')}<span class="hide-sm">Resume Restitusi</span></button>`:''}
         ${t==='PM'?`<button class="btn btn-outline adm p-edit" onclick="openTglBayar()" title="Isi tanggal bukti bayar banyak faktur sekaligus dari Excel">${icon('calendar')}<span class="hide-sm">Import Tgl Bayar</span></button>`:''}
         <button class="btn btn-outline" onclick="openRowForm('${t}')">${icon('plus')}<span class="hide-sm">Tambah</span></button>
         <button class="btn btn-outline" onclick="downloadTemplate('${t}')">${icon('file')}<span class="hide-sm">Template</span></button>
@@ -4921,7 +4945,7 @@ function alurSptStepHTML(s,open){
       <div class="al-auto ${c.ok?'ok':''}"><div class="al-auto-h">${icon(c.ok?'check':'alert')}<b>${c.ok?'Tahap 0 terisi otomatis dari Rekap PPN per Masa Pajak':'Tahap 0 terisi otomatis — data pelaporan belum lengkap'}</b></div>
         <p>Status langkah, tanggal SPT lengkap diterima, nomor BPE, serta dokumen BPE dan SPT Induk pada tahap ini terisi secara otomatis dari <b>Rekap PPN per Masa Pajak</b> pada menu <b>Monitoring Pajak Masukan</b>, sehingga tidak dapat diubah di sini.${c.ok?'':' Silakan lengkapi terlebih dahulu nomor BPE, tanggal pelaporan, serta unggah dokumen BPE dan SPT Induk untuk masa '+MONTHS[m]+' '+y+' agar proses dapat dilanjutkan ke langkah berikutnya.'}</p>
         <ul class="al-check">${chk(c.no,'Nomor BPE')}${chk(c.tgl,'Tanggal pelaporan')}${chk(c.bpe,'Dokumen BPE')}${chk(c.spt,'Dokumen SPT Induk')}</ul>
-        <button type="button" class="btn btn-outline btn-sm al-go ro-keep" onclick="closeModal();state.month=${m};goY('PM',${y});setTimeout(()=>{const e=$('#ppnRekap');e&&e.scrollIntoView({behavior:'smooth',block:'start'})},80)">${icon('arrow')} Buka Rekap PPN · ${MONTHS[m]} ${y}</button></div>
+        <button type="button" class="btn btn-outline btn-sm al-go ro-keep" onclick="closeModal();state.month=${m};state.pmMode='rekap';goY('PM',${y});setTimeout(()=>{const e=$('#ppnRekap');e&&e.scrollIntoView({behavior:'smooth',block:'start'})},80)">${icon('arrow')} Buka Rekap PPN · ${MONTHS[m]} ${y}</button></div>
       <div class="form-grid al-f">
         <div class="field"><label>Status langkah <span class="lock-tag">${icon('lock')} otomatis</span></label><input class="input al-ro" readonly tabindex="-1" value="${ALUR_ST[st][0]}"></div>
         <div class="field"><label>${s.tglL} <span class="lock-tag">${icon('lock')} otomatis</span></label><input class="input al-ro" readonly tabindex="-1" value="${r.tglLapor?fmtDate(r.tglLapor):'—'}"></div>
@@ -7365,7 +7389,7 @@ async function rrsImportGo(){ const f=window._rrsF; if(!f) return; const btn=$('
 function rrsRemove(){ const m=rrsMeta(); if(!m) return; confirmBox('Hapus file resume?',`File <b>${esc(m.name)}</b> dihapus dari website. Data Pajak Masukan tidak terpengaruh.`,'Hapus',async()=>{ DB.data.RRS={all:[]}; if(await save()){ delFile(m.fileId); RRS_C=null; RRS_B=null; toast('File resume dihapus','success'); rrsRefresh(); } }); }
 /* ---------- tampilan ---------- */
 function rrsRefresh(){ renderRrs(); }
-async function renderRrs(){ const m=rrsMeta(), V=$('#view'), addTabs=()=>{ const sg=NAV.find(n=>n.grp&&n.items.includes('RRS')); if(sg&&!V.querySelector('.subtabs')) V.insertAdjacentHTML('afterbegin',subTabsHTML(sg)); };
+async function renderRrs(){ const m=rrsMeta(), V=$('#view'), addTabs=()=>{ if(!V.querySelector('.pm-mode')) V.insertAdjacentHTML('afterbegin',pmModeBar('rrs')); const sg=NAV.find(n=>n.grp&&n.items.includes('RRS')); if(sg&&!V.querySelector('.subtabs')) V.insertAdjacentHTML('afterbegin',subTabsHTML(sg)); };
   if(!m){ V.innerHTML=`<div class="card"><div class="empty">${icon('file')}<b>Belum ada Excel resume restitusi</b>Import file Excel resume restitusi PPN (daftar pajak masukan yang sudah dikreditkan). File disimpan apa adanya dan diperbarui otomatis dari data website.<br><br><button class="btn btn-primary adm p-add" onclick="openRrsImport()">${icon('upload')} Import Excel</button></div></div>`; addTabs(); return; }
   V.innerHTML=`<div class="card"><div class="empty"><div class="spinner" style="margin:0 auto 10px"></div><b>Menyiapkan pratinjau…</b>${esc(m.name)}</div></div>`; addTabs();
   let B; try{ B=await rrsBuild(); }catch(e){ V.innerHTML=`<div class="card"><div class="empty">${icon('alert')}<b>Gagal membaca Excel</b>${esc(e.message)}<br><br><button class="btn btn-primary adm p-add" onclick="openRrsImport()">${icon('upload')} Import ulang</button></div></div>`; addTabs(); return; }
