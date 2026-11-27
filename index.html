@@ -562,6 +562,29 @@ tfoot td{font-weight:800;background:var(--surface-2)}
 .ro.pe [onclick^="openRowForm"][title="Ubah"],.ro.pe .p-edit,
 .ro.pd [onclick^="deleteRow"],.ro.pd [onclick^="clearMonth"],.ro.pd .p-del{display:inline-flex!important}
 .ro.pa [onclick^="openRestNew"]{display:inline-flex!important}
+.uf-sec{display:flex;align-items:center;gap:10px;margin:4px 0 12px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.uf-sec::after{content:'';flex:1;height:1px;background:var(--border)}.uf-sec span{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:rgba(var(--primary-rgb),.1);color:var(--primary);font-size:11.5px;letter-spacing:0}
+.pe-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}.pe-top>div:first-child{display:flex;flex-direction:column;gap:2px}.pe-top small{color:var(--muted);font-size:12.5px;font-weight:500}.pe-top-r{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pe-tot{font-size:12.5px;color:var(--muted);margin-right:4px}.pe-tot b{color:var(--primary)}
+.pe-list{display:flex;flex-direction:column;gap:8px}
+.pe-g{border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}.pe-g[open]{border-color:rgba(var(--primary-rgb),.35);box-shadow:0 4px 14px -8px rgba(var(--primary-rgb),.35)}
+.pe-g>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;user-select:none}.pe-g>summary::-webkit-details-marker{display:none}.pe-g>summary:hover{background:var(--bg)}
+.pe-g>summary>.i:first-child{width:32px;height:32px;padding:7px;border-radius:9px;background:rgba(var(--primary-rgb),.1);color:var(--primary);flex:none}
+.pe-gt{flex:1;display:flex;flex-direction:column;line-height:1.3}.pe-gt b{font-size:14px}.pe-gt small{font-size:12px;color:var(--muted);font-weight:500}
+.pe-cnt{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--bg);color:var(--muted);white-space:nowrap}.pe-cnt.on{background:rgba(22,163,74,.12);color:#15803d}
+.pe-car{width:16px;height:16px;color:var(--muted);transition:transform .2s;flex:none}.pe-g[open] .pe-car{transform:rotate(180deg)}
+.pe-rows{border-top:1px solid var(--border)}
+.pe-row{display:flex;align-items:center;gap:14px;padding:10px 14px 10px 58px;border-bottom:1px solid var(--border)}.pe-row:last-child{border-bottom:0}.pe-row.on{background:rgba(var(--primary-rgb),.035)}
+.pe-m{flex:1;min-width:0;display:flex;flex-direction:column}.pe-m b{font-size:13.5px}.pe-m small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pe-acts{display:flex;align-items:center;gap:6px;flex:none}
+.pe-chip input,.pe-all input{position:absolute;opacity:0;pointer-events:none}
+.pe-chip span{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 11px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;background:var(--surface)}
+.pe-chip span .i{width:13px;height:13px}.pe-chip:hover span{border-color:rgba(var(--primary-rgb),.45)}
+.pe-chip input:checked+span{background:var(--primary);border-color:var(--primary);color:#fff}.pe-chip input:focus-visible+span{box-shadow:0 0 0 3px rgba(var(--primary-rgb),.25)}
+.pe-all{display:inline-flex;align-items:center;gap:6px;margin-left:6px;padding-left:10px;border-left:1px solid var(--border);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;position:relative}
+.pe-all span{width:30px;height:18px;border-radius:999px;background:var(--border);position:relative;transition:background .15s}.pe-all span::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.pe-all input:checked+span{background:var(--success)}.pe-all input:checked+span::after{transform:translateX(12px)}
+.pe-note{display:flex;gap:8px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5}.pe-note svg{width:15px;height:15px;flex:none;margin-top:2px;color:var(--warning)}
+@media(max-width:640px){.pe-row{flex-direction:column;align-items:stretch;padding-left:14px}.pe-acts{flex-wrap:wrap}.pe-m small{white-space:normal}}
 .perm-t{width:100%;border-collapse:collapse;font-size:13px}.perm-t th,.perm-t td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:center}.perm-t th:first-child,.perm-t td:first-child{text-align:left}
 .perm-t td small{display:block;color:var(--muted);font-size:11.5px}.perm-t input{width:16px;height:16px;cursor:pointer}
 .role-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(var(--primary-rgb),.12);color:var(--primary)}
@@ -1688,6 +1711,7 @@ async function loadDB(){
   }
 }
 let DB=defaultDB();
+let LOGIN_PICKED=false; /* tema dipilih di halaman login → dibawa ke akun saat login */
 let LOGIN_THEME={}; try{ LOGIN_THEME=JSON.parse(localStorage.getItem(THEME_KEY)||'null')||{}; }catch(e){}
 let saveChain=Promise.resolve(true);
 function save(){
@@ -1966,13 +1990,13 @@ function setUserTheme(u,patch){ u.theme={...themeOf(),...patch}; try{ localStora
 function setColor(c){
   if(!/^#[0-9a-f]{6}$/i.test(c)){ toast('Kode warna tidak valid (contoh: #2563EB)','error'); return; }
   const u=themeUser();
-  if(u) setUserTheme(u,{color:c.toLowerCase()}); else LOGIN_THEME.color=c.toLowerCase();
+  if(u) setUserTheme(u,{color:c.toLowerCase()}); else { LOGIN_THEME.color=c.toLowerCase(); LOGIN_PICKED=true; }
   saveTheme(u); applyTheme(); refreshThemeUI();
 }
-function setMode(m){ const u=themeUser(); if(u) setUserTheme(u,{mode:m}); else LOGIN_THEME.mode=m; saveTheme(u); applyTheme(); refreshThemeUI(); }
+function setMode(m){ const u=themeUser(); if(u) setUserTheme(u,{mode:m}); else { LOGIN_THEME.mode=m; LOGIN_PICKED=true; } saveTheme(u); applyTheme(); refreshThemeUI(); }
 function saveTheme(u){ try{ localStorage.setItem(THEME_KEY,JSON.stringify(themeOf())); }catch(e){} if(u&&!CLOUD_ON) save(); }
 function themeOf(){ const u=themeUser();
-  if(u){ const t=userTheme(u)||{}, d=u.role==='user'?THEME_DEF:{color:DB.settings.color||THEME_DEF.color,mode:DB.settings.mode||THEME_DEF.mode}; return {color:t.color||d.color, mode:t.mode||d.mode}; }
+  if(u){ const t=userTheme(u)||{}, d=u.role==='user'?{color:LOGIN_THEME.color||THEME_DEF.color,mode:LOGIN_THEME.mode||THEME_DEF.mode}:{color:DB.settings.color||LOGIN_THEME.color||THEME_DEF.color,mode:DB.settings.mode||LOGIN_THEME.mode||THEME_DEF.mode}; return {color:t.color||d.color, mode:t.mode||d.mode}; }
   return {color:LOGIN_THEME.color||THEME_DEF.color, mode:LOGIN_THEME.mode||THEME_DEF.mode}; }
 function refreshThemeUI(){
   ['themePop','loginPop'].forEach(id=>{ const p=document.getElementById(id); if(p && !p.hidden) renderThemePop(id); });
@@ -2167,6 +2191,7 @@ function showApp(){
   $('#uRole').innerHTML=`<span class="role-pill" title="${esc(u.role==='user'&&permSummary(u).length?'Akses edit: '+permSummary(u).join(', '):'')}">${u.role==='user'?(permSummary(u).length?'Pengunjung · akses terbatas':'Pengunjung · lihat & unduh'):'Admin'}</span>`;
   document.body.classList.toggle('ro',u.role==='user');
   if(u.role==='user'&&state.view==='settings') state.view='tema';
+  if(LOGIN_PICKED){ const t=themeOf(); setUserTheme(u,{color:LOGIN_THEME.color||t.color,mode:LOGIN_THEME.mode||t.mode}); saveTheme(u); LOGIN_PICKED=false; }
   applyTheme(); render();
 }
 function tickClock(){
@@ -6112,25 +6137,44 @@ function usersCard(){
     <div class="card-b" style="padding-top:12px">${CLOUD_ON?`<div class="note" style="margin:0">${icon('alert')} Akun tersimpan di server — pengguna dapat masuk dari <b>komputer/HP mana saja</b> dengan username &amp; password yang Anda bagikan. Akun <b>Pengunjung</b> dikunci oleh database: hanya melihat &amp; mengunduh, kecuali menu yang diberi hak akses (perlu menjalankan <b>akses-menu-supabase.sql</b> sekali). Menonaktifkan akun langsung memutus aksesnya.</div>`:`<div class="note" style="margin:0">${icon('alert')} <b>Di browser ini</b>, akun pengunjung otomatis mengikuti data admin — tab yang sedang terbuka ikut diperbarui seketika setelah admin menyimpan. <b>Untuk komputer/HP lain</b>: klik <b>Unduh Paket Data</b> (berisi data, akun, dan semua file PDF), kirim ke pengguna, lalu pengguna memilih <b>“Muat paket data dari admin”</b> di halaman login atau di menu Tema. Ulangi setiap ada perubahan. Bagikan paket hanya kepada orang yang berwenang karena berisi akun login.</div>`}</div></div>`;
 }
 function genPass(){ const ch='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; for(;;){ const a=crypto.getRandomValues(new Uint32Array(12)), p=Array.from(a,v=>ch[v%ch.length]).join(''); if(!pwCheck(p)) return p; } }
+/* editor hak akses pengunjung: dikelompokkan per kategori (dropdown), tiap menu punya tombol Tambah / Ubah / Hapus */
+const PERM_GROUPS=[{l:'PPN',ic:'in',d:'Pajak Masukan, Pajak Keluaran & SPT rekanan',k:['PM','RPPN','PK','BPS','spt']},{l:'Restitusi PPN',ic:'shield',d:'Alur proses restitusi',k:['rest']},
+  {l:'PPh',ic:'receipt',d:'PPh 21, Unifikasi, pencatatan & rekonsiliasi',k:['PPH21','PPHU','VPR','RPPH']},{l:'Sistem',ic:'folder',d:'Master rekanan & arsip dokumen',k:['MRK','ARS']}];
+function permEditor(u){ const P=permsOf(u), G=PERM_GROUPS.map(g=>({...g,m:g.k.map(k=>PERM_MENUS.find(x=>x.k===k)).filter(Boolean)}));
+  const rest=PERM_MENUS.filter(m=>!PERM_GROUPS.some(g=>g.k.includes(m.k))); if(rest.length) G.push({l:'Lainnya',ic:'grid',d:'',m:rest});
+  const on=m=>(P[m.t[0]]||[]);
+  return `<div class="pe-top"><div><small>Menu tanpa centang tetap bisa <b>dilihat &amp; diunduh</b>. Pilih aksi tambahan yang diizinkan per menu.</small></div>
+    <div class="pe-top-r"><span class="pe-tot" id="peTot"></span><button type="button" class="btn btn-outline btn-sm" onclick="permAll(true)">Buka semua</button><button type="button" class="btn btn-outline btn-sm" onclick="permClear()">Kosongkan</button></div></div>
+  <div class="pe-list">${G.map((g,gi)=>`<details class="pe-g" ${g.m.some(m=>on(m).length)?'open':''}><summary>${icon(g.ic)}<span class="pe-gt"><b>${esc(g.l)}</b><small>${esc(g.d)}</small></span><span class="pe-cnt" data-g="${gi}"></span>${icon('chev','i pe-car')}</summary>
+    <div class="pe-rows">${g.m.map(m=>`<div class="pe-row" data-g="${gi}"><div class="pe-m"><b>${esc(m.l)}</b>${m.d?`<small title="${esc(m.d)}">${esc(m.d)}</small>`:''}</div>
+      <div class="pe-acts">${PERM_ACT.map(([a,l])=>`<label class="pe-chip"><input type="checkbox" name="perm" value="${m.k}:${a}" ${on(m).includes(a)?'checked':''} onchange="permSync()"><span>${icon(a==='add'?'plus':a==='edit'?'edit':'trash')}${l}</span></label>`).join('')}
+        <label class="pe-all" title="Semua aksi"><input type="checkbox" ${on(m).length===3?'checked':''} onchange="this.closest('.pe-row').querySelectorAll('[name=perm]').forEach(c=>c.checked=this.checked);permSync()"><span></span>Semua</label></div></div>`).join('')}</div></details>`).join('')}</div>
+  <div class="pe-note">${icon('alert')}<span>Submit / import nomor bukti potong di <b>Pencatatan PPh Rekanan</b> memindahkan data ke menu PPh 21 / PPh Unifikasi, jadi butuh izin <b>Ubah</b> Pencatatan PPh Rekanan dan <b>Tambah</b> di menu tujuan.</span></div>`; }
+function permSync(){ const root=$('#ufPerm'); if(!root) return; let tot=0;
+  root.querySelectorAll('.pe-g').forEach((d,gi)=>{ let n=0, a=0; d.querySelectorAll('.pe-row').forEach(r=>{ const c=[...r.querySelectorAll('[name=perm]')], k=c.filter(x=>x.checked).length; if(k) n++; a+=k; r.classList.toggle('on',k>0); const all=r.querySelector('.pe-all input'); if(all) all.checked=k===c.length; });
+    tot+=n; const el=d.querySelector('.pe-cnt'); el.textContent=n?`${n} menu · ${a} izin`:'lihat & unduh'; el.classList.toggle('on',n>0); });
+  const t=$('#peTot'); if(t) t.innerHTML=tot?`<b>${tot}</b> menu dengan akses edit`:'Semua menu: lihat &amp; unduh saja'; }
+function permAll(open){ document.querySelectorAll('#ufPerm .pe-g').forEach(d=>d.open=open); }
+function permClear(){ document.querySelectorAll('#ufPerm [name=perm]').forEach(c=>c.checked=false); permSync(); }
 function openUserForm(i){
   const u=i!=null?DB.users[i]:null;
   openModal(`<div class="modal-h"><div><h3>${u?'Ubah Akun':'Buat Akun Baru'}</h3><p>${u?esc(u.username):'Akun untuk dibagikan kepada pengguna lain'}</p></div><button class="icon-btn" onclick="closeModal()">${icon('x')}</button></div>
    <form id="userForm" onsubmit="saveUser(event,${u?i:'null'})"><div class="modal-b">
-    <div class="field"><label>Hak Akses</label><div class="fmt-opts">
-      <label class="fmt"><input type="radio" name="role" value="user" ${!u||u.role==='user'?'checked':''} onchange="$('#ufPerm').hidden=false"><span>${icon('eye')}<b>Pengunjung (User)</b><small>Melihat &amp; mengunduh, plus hak akses menu yang dicentang di bawah. Menu Pengaturan diganti menu Tema.</small></span></label>
-      <label class="fmt"><input type="radio" name="role" value="admin" ${u&&u.role!=='user'?'checked':''} onchange="$('#ufPerm').hidden=true"><span>${icon('shield')}<b>Admin</b><small>Melihat, menambah, mengubah data &amp; mengelola akun</small></span></label></div></div>
-    <div class="field" id="ufPerm" ${u&&u.role!=='user'?'hidden':''}><label>Hak Akses Menu untuk Pengunjung <span class="sub-t">(menu yang tidak dicentang tetap hanya bisa dilihat &amp; diunduh)</span></label>
-      <div class="table-wrap" style="border:1px solid var(--border);border-radius:10px"><table class="perm-t"><thead><tr><th>Menu</th>${PERM_ACT.map(([,l])=>`<th>${l}</th>`).join('')}<th>Semua</th></tr></thead><tbody>
-      ${PERM_MENUS.map(m=>{ const P=permsOf(u)[m.t[0]]||[]; return `<tr><td><b>${esc(m.l)}</b>${m.d?`<small>${esc(m.d)}</small>`:''}</td>${PERM_ACT.map(([a])=>`<td><input type="checkbox" name="perm" value="${m.k}:${a}" ${P.includes(a)?'checked':''}></td>`).join('')}<td><input type="checkbox" title="Centang semua" ${P.length===3?'checked':''} onchange="this.closest('tr').querySelectorAll('[name=perm]').forEach(c=>c.checked=this.checked)"></td></tr>`; }).join('')}
-      </tbody></table></div>
-      <div class="sub-t" style="margin-top:6px">Submit / import nomor bukti potong di Pencatatan PPh Rekanan memindahkan data ke menu PPh 21 / PPh Unifikasi, jadi butuh izin <b>Ubah</b> Pencatatan PPh Rekanan dan <b>Tambah</b> di menu tujuan.</div></div>
-    <div class="form-grid">
+    <div class="uf-sec"><span>1</span>Informasi Akun</div>
+    <div class="form-grid" style="margin-bottom:6px">
       <div class="field"><label>Nama Tampilan</label><input class="input" name="name" required value="${esc(u?u.name||'':'')}"></div>
       <div class="field"><label>Username</label><input class="input" name="username" required value="${esc(u?u.username:'')}" autocomplete="off"></div>
       <div class="field full"><label>${u?'Password Baru (kosongkan bila tidak diubah)':'Password'}</label>
         <div style="display:flex;gap:8px"><input class="input" name="password" id="ufPass" ${u?'':'required'} minlength="8" autocomplete="new-password" placeholder="min. 8 karakter, huruf & angka"><button type="button" class="btn btn-outline btn-sm" onclick="$('#ufPass').value=genPass()">Buat otomatis</button></div></div>
-    </div></div>
-   <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`);
+    </div>
+    <div class="uf-sec"><span>2</span>Peran Akun</div>
+    <div class="field"><div class="fmt-opts">
+      <label class="fmt"><input type="radio" name="role" value="user" ${!u||u.role==='user'?'checked':''} onchange="$('#ufPerm').hidden=false;$('#ufPermH').hidden=false"><span>${icon('eye')}<b>Pengunjung (User)</b><small>Melihat &amp; mengunduh, plus hak akses menu yang dicentang di bawah. Menu Pengaturan diganti menu Tema.</small></span></label>
+      <label class="fmt"><input type="radio" name="role" value="admin" ${u&&u.role!=='user'?'checked':''} onchange="$('#ufPerm').hidden=true;$('#ufPermH').hidden=true"><span>${icon('shield')}<b>Admin</b><small>Melihat, menambah, mengubah data &amp; mengelola akun</small></span></label></div></div>
+    <div class="uf-sec" id="ufPermH" ${u&&u.role!=='user'?'hidden':''}><span>3</span>Hak Akses Menu Pengunjung</div>
+    <div class="field" id="ufPerm" ${u&&u.role!=='user'?'hidden':''}>${permEditor(u)}</div>
+</div>
+   <div class="modal-f"><button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" type="submit">${icon('check')} Simpan</button></div></form>`,'lg'); permSync();
 }
 async function saveUser(e,i){
   e.preventDefault();
